@@ -31,19 +31,20 @@ class RegistroCorreosController extends Controller
 
     public function index2($modulo, $registro_id)
     {
-        $result = RegistroCorreos::where('usr_app_registro_correos.modulo','=',$modulo)
-        ->where('usr_app_registro_correos.registro_id','=',$registro_id)
-        ->select(
-            'id',
-            'remitente',
-            'destinatario',
-            'con_copia',
-            'con_copia_oculta',
-            'asunto',
-            'mensaje',
-            'adjunto',
-        )
-       
+        $result = RegistroCorreos::where('usr_app_registro_correos.modulo', '=', $modulo)
+            ->where('usr_app_registro_correos.registro_id', '=', $registro_id)
+            ->select(
+                'id',
+                'remitente',
+                'destinatario',
+                'con_copia',
+                'con_copia_oculta',
+                'asunto',
+                'mensaje',
+                'adjunto',
+                'created_at',
+            )
+
             ->orderby('id', 'DESC')
             ->get();
         return $result;

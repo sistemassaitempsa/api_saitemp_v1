@@ -6,14 +6,13 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
 
-class RegistroCorreos extends Model
+class RegistroIngresoLaboratorio extends Model
 {
     use HasFactory;
-
-    protected $table = 'usr_app_registro_correos';
+    protected $table = 'usr_app_registro_ingreso_laboraorio';
 
     public function fromDateTime($value)
     {
-        return Carbon::parse(parent::fromDateTime($value))->format('Y-d-m H:i:s');
+        return Carbon::parse(parent::fromDateTime($value))->format('Y-d-m');
     }
 }
