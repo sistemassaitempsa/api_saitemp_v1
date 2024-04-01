@@ -768,7 +768,7 @@ Route::group([
 
   Route::get('/estadosingresos', [estadosIngresoController::class, 'index']);
   Route::get('/actualizaestadoingreso/{item}/{estado}', [formularioGestionIngresoController::class, 'actualizaestadoingreso']);
-  Route::get('/actualizaResponsableingreso/{item}/{nombre}', [formularioGestionIngresoController::class, 'actualizaResponsableingreso']);
+  Route::get('/actualizaResponsableingreso/{item}/{responsable_id}/{nombre}', [formularioGestionIngresoController::class, 'actualizaResponsableingreso']);
   Route::get('/responsableingresos/{estado}', [formularioGestionIngresoController::class, 'responsableingresos']);
   Route::get('/gestioningresospdf/{modulo}/{id}', [formularioGestionIngresoController::class, 'gestioningresospdf']);
 
