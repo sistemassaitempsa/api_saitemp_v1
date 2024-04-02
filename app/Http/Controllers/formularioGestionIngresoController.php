@@ -9,6 +9,7 @@ use App\Models\FormularioIngresoResponsable;
 use App\Models\FormularioIngresoPendientes;
 use App\Models\ListaTrump;
 use App\Models\RegistroIngresoLaboratorio;
+use App\Models\FormularioIngresoSeguimiento;
 use Carbon\Carbon;
 use TCPDF;
 use Illuminate\Support\Facades\DB;
@@ -30,7 +31,8 @@ class formularioGestionIngresoController extends Controller
             ->select(
                 'usr_app_formulario_ingreso.id',
                 'usr_app_formulario_ingreso.created_at',
-                'usr_app_formulario_ingreso.fecha_ingreso',
+                DB::raw("FORMAT(CAST(usr_app_formulario_ingreso.fecha_ingreso AS DATE), 'dd/MM/yyyy') as fecha_ingreso"),
+                'usr_app_formulario_ingreso.fecha_examen',
                 'est.nombre as estado_ingreso',
                 'usr_app_formulario_ingreso.responsable',
                 'usr_app_formulario_ingreso.responsable_anterior',
@@ -46,6 +48,9 @@ class formularioGestionIngresoController extends Controller
             )
             ->orderby('usr_app_formulario_ingreso.id', 'DESC')
             ->paginate($cantidad);
+        foreach ($result as $item) {
+            $item->fecha_examen = $item->fecha_examen ? date('d/m/Y H:i', strtotime($item->fecha_examen)) : null;
+        }
         return response()->json($result);
     }
 
@@ -119,20 +124,32 @@ class formularioGestionIngresoController extends Controller
 
     public function actualizaResponsableingreso($item_id, $responsable_id, $nombre_responsable)
     {
-        $user = auth()->user();
-        $registro_ingreso = formularioGestionIngreso::where('usr_app_formulario_ingreso.id', '=', $item_id)
-            ->first();
-        if ($registro_ingreso->responsable_id != null && $registro_ingreso->responsable_id != $user->id) {
-            return response()->json(['status' => 'error', 'message' => 'Solo el responsable puede realizar esta acción.']);
-        }
+        DB::beginTransaction();
+        try {
+            $user = auth()->user();
+            $registro_ingreso = formularioGestionIngreso::where('usr_app_formulario_ingreso.id', '=', $item_id)
+                ->first();
 
-        $registro_ingreso->responsable_anterior = $registro_ingreso->responsable;
-        $registro_ingreso->responsable = $nombre_responsable;
-        $registro_ingreso->responsable_id = $responsable_id;
-        if ($registro_ingreso->save()) {
+
+            if ($registro_ingreso->responsable_id != null && $registro_ingreso->responsable_id != $user->id) {
+                return response()->json(['status' => 'error', 'message' => 'Solo el responsable puede realizar esta acción.']);
+            }
+
+            $registro_ingreso->responsable_anterior = $registro_ingreso->responsable;
+            $registro_ingreso->responsable = $nombre_responsable;
+            $registro_ingreso->responsable_id = $responsable_id;
+            $registro_ingreso->save();
+            $seguimiento = new FormularioIngresoSeguimiento;
+            $seguimiento->estado_ingreso_id = $registro_ingreso->estado_ingreso_id;
+            $seguimiento->usuario = $registro_ingreso->responsable;
+            $seguimiento->formulario_ingreso_id = $item_id;
+            $seguimiento->save();
+            DB::commit();
             return response()->json(['status' => 'success', 'message' => 'Registro actualizado de manera exitosa.']);
+        } catch (\Exception $e) {
+            DB::rollback();
+            return response()->json(['status' => 'error', 'message' => 'Error al actualizar registro.']);
         }
-        return response()->json(['status' => 'error', 'message' => 'Error al actualizar registro.']);
     }
     public function responsableingresos($estado)
     {
@@ -230,6 +247,19 @@ class formularioGestionIngresoController extends Controller
             )
             ->get();
         $result['archivos'] = $archivos;
+
+
+        $seguimiento = FormularioIngresoSeguimiento::join('usr_app_estados_ingreso as ei', 'ei.id', '=', 'usr_app_formulario_ingreso_seguimiento.estado_ingreso_id')
+            ->where('usr_app_formulario_ingreso_seguimiento.formulario_ingreso_id', $id)
+            ->select(
+                'usr_app_formulario_ingreso_seguimiento.usuario',
+                'ei.nombre as estado',
+                'usr_app_formulario_ingreso_seguimiento.created_at',
+
+            )
+            ->orderby('usr_app_formulario_ingreso_seguimiento.id', 'desc')
+            ->get();
+        $result['seguimiento'] = $seguimiento;
         return response()->json($result);
     }
 
@@ -300,110 +330,520 @@ class formularioGestionIngresoController extends Controller
         $ancho_maximo = 70;
 
 
-        if (strlen($razon_social) < 35 && strlen($direccion_empresa) < 35) {
-
-            $pdf->SetFont('helvetica', 'B', 11);
-            $pdf->SetX(20);
-            $pdf->Cell(95, 10, 'Empresa usuaria:', 0, 0, 'L');
-
-            $pdf->SetX(120);
-            $pdf->Cell(95, 10, 'Dirección empresa:', 0, 1, 'L');
-            $pdf->SetFont('helvetica', '', 11);
-
-            $pdf->SetX(20);
-            $pdf->Cell(10, 1, $razon_social != null ? $razon_social : 'Sin datos', 0, 0, 'L');
-
-            $pdf->SetX(120);
-            $pdf->Cell(65, 1, $direccion_empresa != null ? $direccion_empresa : 'Sin datos', 0, 1, 'L');
-            $pdf->Ln(3);
-
-            $pdf->SetFont('helvetica', 'B', 11);
-            $pdf->SetX(20);
-            $pdf->Cell(95, 10, 'Tipo de servicio:', 0, 0, 'L');
-            $pdf->SetFont('helvetica', '', 11);
-            $pdf->Ln(10);
-            $pdf->SetX(20);
-            $ancho_texto = $pdf->GetStringWidth($nombre_servicio);
-
-            $pdf->MultiCell($ancho_texto + 7, 7, $nombre_servicio != null ? $nombre_servicio : 'Sin datos', 0, 'L');
-            $pdf->Ln(1);
-        } else if (strlen($direccion_empresa) < 35) {
-
-            $pdf->SetFont('helvetica', 'B', 11);
-            $pdf->SetX(20);
-            $pdf->Cell(95, 10, 'Empresa usuaria:', 0, 0, 'L');
-            $pdf->SetFont('helvetica', '', 11);
-
-            $pdf->Ln(10);
-            $pdf->SetX(20);
-            $ancho_texto = $pdf->GetStringWidth($razon_social);
-
-            $pdf->MultiCell($ancho_texto + 7, 7, $razon_social != null ? $razon_social : 'Sin datos', 0, 'L');
-
-            $pdf->SetFont('helvetica', 'B', 11);
-            $pdf->SetX(20);
-            $pdf->Cell(95, 10, 'Dirección empresa:', 0, 0, 'L');
-
-            $pdf->SetX(120);
-            $pdf->Cell(95, 10, 'Tipo de servicio:', 0, 1, 'L');
-            $pdf->SetFont('helvetica', '', 11);
-
-            $pdf->SetX(20);
-            $pdf->Cell(10, 1, $direccion_empresa != null ? $direccion_empresa : 'Sin datos', 0, 0, 'L');
-
-            $pdf->SetX(120);
-            $pdf->Cell(65, 1, $nombre_servicio != null ? $nombre_servicio : 'Sin datos', 0, 1, 'L');
-            $pdf->Ln(3);
-        } else {
-            $pdf->SetFont('helvetica', 'B', 11);
-            $pdf->SetX(20);
-            $pdf->Cell(95, 10, 'Empresa usuaria:', 0, 0, 'L');
-            $pdf->SetFont('helvetica', '', 11);
-
-            $pdf->Ln(10);
-            $pdf->SetX(20);
-            $ancho_texto = $pdf->GetStringWidth($razon_social);
-            $pdf->MultiCell($ancho_texto + 7, 7, $razon_social != null ? $razon_social : 'Sin datos', 0, 'L');
-
-
-            $pdf->SetFont('helvetica', 'B', 11);
-            $pdf->SetX(20);
-            $pdf->Cell(95, 10, 'Dirección empresa:', 0, 0, 'L');
-            $pdf->SetFont('helvetica', '', 11);
-
-            $pdf->ln(10);
-            $pdf->SetX(20);
-            $ancho_texto = $pdf->GetStringWidth($direccion_empresa);
-            $pdf->MultiCell($ancho_texto + 7, 7, $direccion_empresa != null ? $direccion_empresa : 'Sin datos', 0, 'L');
-
-
-            $pdf->SetFont('helvetica', 'B', 11);
-            $pdf->SetX(20);
-            $pdf->Cell(95, 10, 'Tipo de servicio:', 0, 0, 'L');
-            $pdf->SetFont('helvetica', '', 11);
-
-            $pdf->ln(10);
-            $pdf->SetX(20);
-            $ancho_texto = $pdf->GetStringWidth($nombre_servicio);
-            $pdf->MultiCell($ancho_texto + 7, 7, $nombre_servicio != null ? $nombre_servicio : 'Sin datos', 0, 'L');
-        }
-
         if ($tipo_servicio_id == 2) {
 
+            if (strlen($razon_social) < 35 && strlen($direccion_empresa) < 35) {
+
+                $pdf->SetFont('helvetica', 'B', 11);
+                $pdf->SetX(20);
+                $pdf->Cell(95, 10, 'Empresa usuaria:', 0, 0, 'L');
+
+                $pdf->SetX(120);
+                $pdf->Cell(95, 10, 'Dirección empresa:', 0, 1, 'L');
+                $pdf->SetFont('helvetica', '', 11);
+
+                $pdf->SetX(20);
+                $pdf->Cell(10, 1, $razon_social != null ? $razon_social : 'Sin datos', 0, 0, 'L');
+
+                $pdf->SetX(120);
+                $pdf->Cell(65, 1, $direccion_empresa != null ? $direccion_empresa : 'Sin datos', 0, 1, 'L');
+                $pdf->Ln(3);
+
+                $pdf->SetFont('helvetica', 'B', 11);
+                $pdf->SetX(20);
+                $pdf->Cell(95, 10, 'Tipo de servicio:', 0, 0, 'L');
+                $pdf->SetFont('helvetica', '', 11);
+                $pdf->Ln(10);
+                $pdf->SetX(20);
+                $ancho_texto = $pdf->GetStringWidth($nombre_servicio);
+
+                $pdf->MultiCell($ancho_texto + 7, 7, $nombre_servicio != null ? $nombre_servicio : 'Sin datos', 0, 'L');
+                $pdf->Ln(1);
+            } else if (strlen($direccion_empresa) < 35) {
+
+                $pdf->SetFont('helvetica', 'B', 11);
+                $pdf->SetX(20);
+                $pdf->Cell(95, 10, 'Empresa usuaria:', 0, 0, 'L');
+                $pdf->SetFont('helvetica', '', 11);
+
+                $pdf->Ln(10);
+                $pdf->SetX(20);
+                $ancho_texto = $pdf->GetStringWidth($razon_social);
+
+                $pdf->MultiCell($ancho_texto + 7, 7, $razon_social != null ? $razon_social : 'Sin datos', 0, 'L');
+
+                $pdf->SetFont('helvetica', 'B', 11);
+                $pdf->SetX(20);
+                $pdf->Cell(95, 10, 'Dirección empresa:', 0, 0, 'L');
+
+                $pdf->SetX(120);
+                $pdf->Cell(95, 10, 'Tipo de servicio:', 0, 1, 'L');
+                $pdf->SetFont('helvetica', '', 11);
+
+                $pdf->SetX(20);
+                $pdf->Cell(10, 1, $direccion_empresa != null ? $direccion_empresa : 'Sin datos', 0, 0, 'L');
+
+                $pdf->SetX(120);
+                $pdf->Cell(65, 1, $nombre_servicio != null ? $nombre_servicio : 'Sin datos', 0, 1, 'L');
+                $pdf->Ln(3);
+            } else {
+                $pdf->SetFont('helvetica', 'B', 11);
+                $pdf->SetX(20);
+                $pdf->Cell(95, 10, 'Empresa usuaria:', 0, 0, 'L');
+                $pdf->SetFont('helvetica', '', 11);
+
+                $pdf->Ln(10);
+                $pdf->SetX(20);
+                $ancho_texto = $pdf->GetStringWidth($razon_social);
+                $pdf->MultiCell($ancho_texto + 7, 7, $razon_social != null ? $razon_social : 'Sin datos', 0, 'L');
+
+
+                $pdf->SetFont('helvetica', 'B', 11);
+                $pdf->SetX(20);
+                $pdf->Cell(95, 10, 'Dirección empresa:', 0, 0, 'L');
+                $pdf->SetFont('helvetica', '', 11);
+
+                $pdf->ln(10);
+                $pdf->SetX(20);
+                $ancho_texto = $pdf->GetStringWidth($direccion_empresa);
+                $pdf->MultiCell($ancho_texto + 7, 7, $direccion_empresa != null ? $direccion_empresa : 'Sin datos', 0, 'L');
+
+
+                $pdf->SetFont('helvetica', 'B', 11);
+                $pdf->SetX(20);
+                $pdf->Cell(95, 10, 'Tipo de servicio:', 0, 0, 'L');
+                $pdf->SetFont('helvetica', '', 11);
+
+                $pdf->ln(10);
+                $pdf->SetX(20);
+                $ancho_texto = $pdf->GetStringWidth($nombre_servicio);
+                $pdf->MultiCell($ancho_texto + 7, 7, $nombre_servicio != null ? $nombre_servicio : 'Sin datos', 0, 'L');
+            }
+
+            if ($tipo_servicio_id == 2) {
+
+                $pdf->SetFont('helvetica', 'B', 11);
+                $pdf->SetX(20);
+                $pdf->Cell(95, 10, 'Número de contrataciones:', 0, 0, 'L');
+                $pdf->SetFont('helvetica', '', 11);
+
+                $pdf->Ln(10);
+                $pdf->SetX(20);
+                $ancho_texto = $pdf->GetStringWidth($numero_contrataciones);
+
+                $pdf->MultiCell($ancho_texto + 20, 7, $numero_contrataciones != null ? $numero_contrataciones : 'Sin datos', 0, 'L');
+            }
+
+
+            if ($tipo_servicio_id == 3 || $tipo_servicio_id == 4) {
+                $pdf->SetFont('helvetica', 'B', 11);
+                $pdf->SetX(20);
+                $pdf->Cell(95, 10, 'Número de vacantes:', 0, 0, 'L');
+
+                $pdf->SetX(120);
+                $pdf->Cell(95, 10, 'Citación entrevista:', 0, 1, 'L');
+                $pdf->SetFont('helvetica', '', 11);
+
+                $pdf->SetX(20);
+                $pdf->Cell(10, 1, $numero_vacantes != null ? $numero_vacantes : 'Sin datos', 0, 0, 'L');
+
+                $pdf->SetX(120);
+                $pdf->Cell(65, 1, $citacion_entrevista != null ? $citacion_entrevista : 'Sin datos', 0, 1, 'L');
+                $pdf->Ln(3);
+
+
+                $pdf->SetFont('helvetica', 'B', 11);
+                $pdf->SetX(20);
+                $pdf->Cell(95, 10, 'Profesional:', 0, 0, 'L');
+                $pdf->SetFont('helvetica', '', 11);
+
+                $pdf->Ln(10);
+                $pdf->SetX(20);
+                $ancho_texto = $pdf->GetStringWidth($profesional);
+
+                $pdf->MultiCell($ancho_texto + 7, 7, $profesional != null ? $profesional : 'Sin datos', 0, 'L');
+
+
+                $pdf->SetFont('helvetica', 'B', 11);
+                $pdf->SetX(20);
+                $pdf->Cell(95, 10, 'Informe selección:', 0, 0, 'L');
+                $pdf->SetFont('helvetica', '', 11);
+                $pdf->Ln(10);
+                $pdf->SetX(20);
+                $lineas = explode("\n", wordwrap($informe_seleccion != null ? $informe_seleccion : 'Sin datos', $ancho_maximo, "\n"));
+
+                foreach ($lineas as $linea) {
+                    $ancho_texto = $pdf->GetStringWidth($linea);
+                    $pdf->SetX(20);
+                    $pdf->MultiCell($ancho_texto + 7, 7, $linea, 0, 'L');
+                }
+            }
+
             $pdf->SetFont('helvetica', 'B', 11);
             $pdf->SetX(20);
-            $pdf->Cell(95, 10, 'Número de contrataciones:', 0, 0, 'L');
+            $pdf->Cell(95, 10, 'Fecha de ingreso:', 0, 0, 'L');
+
+            $pdf->SetX(120);
+            $pdf->Cell(95, 10, 'Número de identificación:', 0, 1, 'L');
+            $pdf->SetFont('helvetica', '', 11);
+
+            $pdf->SetX(20);
+            $pdf->Cell(10, 1, $fecha_ingreso != null ? $fecha_ingreso : 'Sin datos', 0, 0, 'L');
+
+            $pdf->SetX(120);
+            $pdf->Cell(65, 1, $numero_identificacion != null ? $numero_identificacion : 'Sin datos', 0, 1, 'L');
+            $pdf->Ln(3);
+
+            $pdf->SetFont('helvetica', 'B', 11);
+            $pdf->SetX(20);
+            $pdf->Cell(95, 10, 'Apellidos y nombres:', 0, 0, 'L');
+
+            $pdf->SetX(120);
+            $pdf->Cell(95, 10, 'Número contacto:', 0, 1, 'L');
+            $pdf->SetFont('helvetica', '', 11);
+
+            $pdf->SetX(20);
+            $pdf->Cell(10, 1, $nombre_completo != null ? $nombre_completo : 'Sin datos', 0, 0, 'L');
+
+            $pdf->SetX(120);
+            $pdf->Cell(65, 1, $numero_contacto != null ? $numero_contacto : 'Sin datos', 0, 1, 'L');
+            $pdf->Ln(2);
+
+
+            if (strlen($cargo) < 35) {
+                $pdf->SetFont('helvetica', 'B', 11);
+                $pdf->SetX(20);
+                $pdf->Cell(95, 10, 'Cargo:', 0, 0, 'L');
+
+                $pdf->SetX(120);
+                $pdf->Cell(95, 10, 'Salario:', 0, 1, 'L');
+                $pdf->SetFont('helvetica', '', 11);
+
+                $pdf->SetX(20);
+                $pdf->Cell(10, 1, $cargo != null ? $cargo : 'Sin datos', 0, 0, 'L');
+
+                $pdf->SetX(120);
+                $pdf->Cell(65, 1, $salario != null ? $salario : 'Sin datos', 0, 1, 'L');
+                $pdf->Ln(2);
+            } else {
+                $pdf->SetFont('helvetica', 'B', 11);
+                $pdf->SetX(20);
+                $pdf->Cell(95, 10, 'Cargo:', 0, 0, 'L');
+                $pdf->SetFont('helvetica', '', 11);
+                $pdf->Ln(10);
+                $pdf->SetX(20);
+                $lineas = explode("\n", wordwrap($cargo != null ? $cargo : 'Sin datos', $ancho_maximo, "\n"));
+
+                foreach ($lineas as $linea) {
+                    $ancho_texto = $pdf->GetStringWidth($linea);
+                    $pdf->SetX(20);
+                    $pdf->MultiCell($ancho_texto + 7, 7, $linea, 0, 'L');
+                }
+
+                $pdf->SetFont('helvetica', 'B', 11);
+                $pdf->SetX(20);
+                $pdf->Cell(95, 10, 'Salario:', 0, 0, 'L');
+                $pdf->SetFont('helvetica', '', 11);
+
+                $pdf->Ln(10);
+                $pdf->SetX(20);
+                $ancho_texto = $pdf->GetStringWidth($salario);
+
+                $pdf->MultiCell($ancho_texto + 7, 7, $salario != null ? $salario : 'Sin datos', 0, 'L');
+            }
+
+            $pdf->SetFont('helvetica', 'B', 11);
+            $pdf->SetX(20);
+            $pdf->Cell(95, 10, 'Departamento de prestación de servicios:', 0, 0, 'L');
+
+            $pdf->SetX(120);
+            $pdf->Cell(95, 10, 'Ciudad de prestación de servicios:', 0, 1, 'L');
+            $pdf->SetFont('helvetica', '', 11);
+
+            $pdf->SetX(20);
+            $pdf->Cell(10, 1, $departamento, 0, 0, 'L');
+
+            $pdf->SetX(120);
+            $pdf->Cell(65, 1, $municipio, 0, 1, 'L');
+            $pdf->Ln(2);
+
+
+            $pdf->SetFont('helvetica', 'B', 11);
+            $pdf->SetX(20);
+            $pdf->Cell(95, 10, 'Departamento ubicación laboratorio médico:', 0, 0, 'L');
+
+            $pdf->SetX(120);
+            $pdf->Cell(95, 10, 'Ciudad ubicación laboratorio médico:', 0, 1, 'L');
+            $pdf->SetFont('helvetica', '', 11);
+
+            $pdf->SetX(20);
+            $pdf->Cell(10, 1, $depatamento_laboratorio != '' ? $depatamento_laboratorio : 'Sin datos', 0, 0, 'L');
+
+            $pdf->SetX(120);
+            $pdf->Cell(65, 1, $municipio_laboratorio != '' ? $municipio_laboratorio : 'Sin datos', 0, 1, 'L');
+            $pdf->Ln(2);
+
+            $pdf->SetFont('helvetica', 'B', 11);
+            $pdf->SetX(20);
+            $pdf->Cell(95, 10, 'Laboratorio médico:', 0, 0, 'L');
             $pdf->SetFont('helvetica', '', 11);
 
             $pdf->Ln(10);
             $pdf->SetX(20);
-            $ancho_texto = $pdf->GetStringWidth($numero_contrataciones);
-
-            $pdf->MultiCell($ancho_texto + 20, 7, $numero_contrataciones != null ? $numero_contrataciones : 'Sin datos', 0, 'L');
-        }
+            $ancho_texto = $pdf->GetStringWidth($laboratorio_medico);
+            $pdf->MultiCell($ancho_texto + 30, 7, $laboratorio_medico != '' ? $laboratorio_medico : 'Sin datos', 0, 'L');
 
 
-        if ($tipo_servicio_id == 3 || $tipo_servicio_id == 4) {
+            if (strlen($direccion_laboratorio) < 30) {
+
+                $pdf->SetFont('helvetica', 'B', 11);
+                $pdf->SetX(20);
+                $pdf->Cell(95, 10, 'Otro laboratorio:', 0, 0, 'L');
+
+                $pdf->SetX(120);
+                $pdf->Cell(95, 10, 'Dirección laboratorio:', 0, 1, 'L');
+                $pdf->SetFont('helvetica', '', 11);
+
+                $pdf->SetX(20);
+                $pdf->Cell(10, 1, $otro_laboratorio != null ? $otro_laboratorio : 'Sin datos', 0, 0, 'L');
+
+                $pdf->SetX(120);
+                $pdf->Cell(65, 1, $direccion_laboratorio != null ? $direccion_laboratorio : 'Sin datos', 0, 1, 'L');
+                $pdf->Ln(2);
+            } else {
+                $pdf->SetFont('helvetica', 'B', 11);
+                $pdf->SetX(20);
+                $pdf->Cell(95, 10, 'Laboratorio:', 0, 0, 'L');
+                $pdf->SetFont('helvetica', '', 11);
+
+                $pdf->Ln(10);
+                $pdf->SetX(20);
+                $ancho_texto = $pdf->GetStringWidth($otro_laboratorio);
+                $pdf->MultiCell($ancho_texto + 30, 7, $otro_laboratorio != '' ? $otro_laboratorio : 'Sin datos', 0, 'L');
+
+
+                $pdf->SetFont('helvetica', 'B', 11);
+                $pdf->SetX(20);
+                $pdf->Cell(95, 10, 'Dirección laboratorio:', 0, 0, 'L');
+                $pdf->SetFont('helvetica', '', 11);
+
+                $pdf->ln(10);
+                $pdf->SetX(20);
+                $ancho_texto = $pdf->GetStringWidth($direccion_laboratorio);
+                $pdf->MultiCell($ancho_texto + 7, 7, $direccion_laboratorio != null ? $direccion_laboratorio : 'Sin datos', 0, 'L');
+            }
+
+
+            if ($tipo_servicio_id == 3 || $tipo_servicio_id == 4) {
+                $pdf->AddPage();
+                $url = public_path('\/upload\/MEMBRETE.png');
+                $img_file = $url;
+                $pdf->Image($img_file, -0.5, 0, $pdf->getPageWidth() + 0.5, $pdf->getPageHeight(), '', '', '', false, 300, '', false, false, 0);
+                $pdf->Ln(45);
+                if (strlen($examenes) < 30 && strlen($recomendaciones_examen) < 30) {
+                    $pdf->SetFont('helvetica', 'B', 11);
+                    $pdf->SetX(20);
+                    $pdf->Cell(95, 10, 'Exámenes:', 0, 0, 'L');
+
+                    $pdf->SetX(120);
+                    $pdf->Cell(95, 10, 'Recomendaciones exámenes:', 0, 1, 'L');
+                    $pdf->SetFont('helvetica', '', 11);
+
+                    $pdf->SetX(20);
+                    $pdf->Cell(10, 1, $examenes != null ? $examenes : 'Sin datos', 0, 0, 'L');
+
+                    $pdf->SetX(120);
+                    $pdf->Cell(65, 1, $recomendaciones_examen != null ? $recomendaciones_examen : 'N/A', 0, 1, 'L');
+                    $pdf->Ln(2);
+                } else {
+                    $pdf->SetFont('helvetica', 'B', 11);
+                    $pdf->SetX(20);
+                    $pdf->Cell(95, 10, 'Exámenes:', 0, 0, 'L');
+                    $pdf->SetFont('helvetica', '', 11);
+                    $pdf->Ln(10);
+                    $pdf->SetX(20);
+                    $lineas = explode("\n", wordwrap($examenes != null ? $examenes : 'Sin datos', $ancho_maximo, "\n"));
+
+                    foreach ($lineas as $linea) {
+                        $ancho_texto = $pdf->GetStringWidth($linea);
+                        $pdf->SetX(20);
+                        $pdf->MultiCell($ancho_texto + 7, 7, $linea, 0, 'L');
+                    }
+
+                    $pdf->SetFont('helvetica', 'B', 11);
+                    $pdf->SetX(20);
+                    $pdf->Cell(95, 10, 'Recomendaciones exámenes:', 0, 0, 'L');
+                    $pdf->SetFont('helvetica', '', 11);
+                    $pdf->Ln(10);
+                    $pdf->SetX(20);
+                    $lineas = explode("\n", wordwrap($recomendaciones_examen != null ? $recomendaciones_examen : 'N/A', $ancho_maximo, "\n"));
+
+                    foreach ($lineas as $linea) {
+                        $ancho_texto = $pdf->GetStringWidth($linea);
+                        $pdf->SetX(20);
+                        $pdf->MultiCell($ancho_texto + 7, 7, $linea, 0, 'L');
+                    }
+                }
+
+                $pdf->SetFont('helvetica', 'B', 11);
+                $pdf->SetX(20);
+                $pdf->Cell(95, 10, 'Fecha de exámenes:', 0, 0, 'L');
+                $pdf->SetFont('helvetica', '', 11);
+
+                $pdf->Ln(10);
+                $pdf->SetX(20);
+                $ancho_texto = $pdf->GetStringWidth($fecha_examen);
+                $pdf->MultiCell($ancho_texto + 30, 7, $fecha_examen != '' ? $fecha_examen : 'Sin datos', 0, 'L');
+            } else {
+                if (strlen($examenes) < 30 && strlen($recomendaciones_examen) < 30 && strlen($direccion_empresa) < 30) {
+                    $pdf->SetFont('helvetica', 'B', 11);
+                    $pdf->SetX(20);
+                    $pdf->Cell(95, 10, 'Exámenes:', 0, 0, 'L');
+
+                    $pdf->SetX(120);
+                    $pdf->Cell(95, 10, 'Recomendaciones exámenes:', 0, 1, 'L');
+                    $pdf->SetFont('helvetica', '', 11);
+
+                    $pdf->SetX(20);
+                    $pdf->Cell(10, 1, $examenes != null ? $examenes : 'Sin datos', 0, 0, 'L');
+
+                    $pdf->SetX(120);
+                    $pdf->Cell(65, 1, $recomendaciones_examen != null ? $recomendaciones_examen : 'Sin datos', 0, 1, 'L');
+                    $pdf->Ln(2);
+                } else {
+                    $pdf->AddPage();
+                    $url = public_path('\/upload\/MEMBRETE.png');
+                    $img_file = $url;
+                    $pdf->Image($img_file, -0.5, 0, $pdf->getPageWidth() + 0.5, $pdf->getPageHeight(), '', '', '', false, 300, '', false, false, 0);
+                    $pdf->Ln(45);
+
+                    $pdf->SetFont('helvetica', 'B', 11);
+                    $pdf->SetX(20);
+                    $pdf->Cell(95, 10, 'Exámenes:', 0, 0, 'L');
+                    $pdf->SetFont('helvetica', '', 11);
+                    $pdf->Ln(10);
+                    $pdf->SetX(20);
+                    $lineas = explode("\n", wordwrap($examenes != null ? $examenes : 'Sin datos', $ancho_maximo, "\n"));
+
+                    foreach ($lineas as $linea) {
+                        $ancho_texto = $pdf->GetStringWidth($linea);
+                        $pdf->SetX(20);
+                        $pdf->MultiCell($ancho_texto + 7, 7, $linea, 0, 'L');
+                    }
+
+                    $pdf->SetFont('helvetica', 'B', 11);
+                    $pdf->SetX(20);
+                    $pdf->Cell(95, 10, 'Recomendaciones exámenes:', 0, 0, 'L');
+                    $pdf->SetFont('helvetica', '', 11);
+                    $pdf->Ln(10);
+                    $pdf->SetX(20);
+                    $lineas = explode("\n", wordwrap($recomendaciones_examen != null ? $recomendaciones_examen : 'N/A', $ancho_maximo, "\n"));
+
+                    foreach ($lineas as $linea) {
+                        $ancho_texto = $pdf->GetStringWidth($linea);
+                        $pdf->SetX(20);
+                        $pdf->MultiCell($ancho_texto + 7, 7, $linea, 0, 'L');
+                    }
+                }
+                $pdf->SetFont('helvetica', 'B', 11);
+                $pdf->SetX(20);
+                $pdf->Cell(95, 10, 'Fecha de exámenes:', 0, 0, 'L');
+                $pdf->SetFont('helvetica', '', 11);
+
+                $pdf->Ln(10);
+                $pdf->SetX(20);
+                $ancho_texto = $pdf->GetStringWidth($fecha_examen);
+                $pdf->MultiCell($ancho_texto + 30, 7, $fecha_examen != '' ? $fecha_examen : 'Sin datos', 0, 'L');
+            }
+        } else if ($tipo_servicio_id == 3 || $tipo_servicio_id == 4) {
+
+            if (strlen($razon_social) < 35 && strlen($direccion_empresa) < 35) {
+
+                $pdf->SetFont('helvetica', 'B', 11);
+                $pdf->SetX(20);
+                $pdf->Cell(95, 10, 'Empresa usuaria:', 0, 0, 'L');
+
+                $pdf->SetX(120);
+                $pdf->Cell(95, 10, 'Dirección empresa:', 0, 1, 'L');
+                $pdf->SetFont('helvetica', '', 11);
+
+                $pdf->SetX(20);
+                $pdf->Cell(10, 1, $razon_social != null ? $razon_social : 'Sin datos', 0, 0, 'L');
+
+                $pdf->SetX(120);
+                $pdf->Cell(65, 1, $direccion_empresa != null ? $direccion_empresa : 'Sin datos', 0, 1, 'L');
+                $pdf->Ln(3);
+
+                $pdf->SetFont('helvetica', 'B', 11);
+                $pdf->SetX(20);
+                $pdf->Cell(95, 10, 'Tipo de servicio:', 0, 0, 'L');
+                $pdf->SetFont('helvetica', '', 11);
+                $pdf->Ln(10);
+                $pdf->SetX(20);
+                $ancho_texto = $pdf->GetStringWidth($nombre_servicio);
+
+                $pdf->MultiCell($ancho_texto + 7, 7, $nombre_servicio != null ? $nombre_servicio : 'Sin datos', 0, 'L');
+                $pdf->Ln(1);
+            } else if (strlen($direccion_empresa) < 35) {
+
+                $pdf->SetFont('helvetica', 'B', 11);
+                $pdf->SetX(20);
+                $pdf->Cell(95, 10, 'Empresa usuaria:', 0, 0, 'L');
+                $pdf->SetFont('helvetica', '', 11);
+
+                $pdf->Ln(10);
+                $pdf->SetX(20);
+                $ancho_texto = $pdf->GetStringWidth($razon_social);
+
+                $pdf->MultiCell($ancho_texto + 7, 7, $razon_social != null ? $razon_social : 'Sin datos', 0, 'L');
+
+                $pdf->SetFont('helvetica', 'B', 11);
+                $pdf->SetX(20);
+                $pdf->Cell(95, 10, 'Dirección empresa:', 0, 0, 'L');
+
+                $pdf->SetX(120);
+                $pdf->Cell(95, 10, 'Tipo de servicio:', 0, 1, 'L');
+                $pdf->SetFont('helvetica', '', 11);
+
+                $pdf->SetX(20);
+                $pdf->Cell(10, 1, $direccion_empresa != null ? $direccion_empresa : 'Sin datos', 0, 0, 'L');
+
+                $pdf->SetX(120);
+                $pdf->Cell(65, 1, $nombre_servicio != null ? $nombre_servicio : 'Sin datos', 0, 1, 'L');
+                $pdf->Ln(3);
+            } else {
+                $pdf->SetFont('helvetica', 'B', 11);
+                $pdf->SetX(20);
+                $pdf->Cell(95, 10, 'Empresa usuaria:', 0, 0, 'L');
+                $pdf->SetFont('helvetica', '', 11);
+
+                $pdf->Ln(10);
+                $pdf->SetX(20);
+                $ancho_texto = $pdf->GetStringWidth($razon_social);
+                $pdf->MultiCell($ancho_texto + 7, 7, $razon_social != null ? $razon_social : 'Sin datos', 0, 'L');
+
+
+                $pdf->SetFont('helvetica', 'B', 11);
+                $pdf->SetX(20);
+                $pdf->Cell(95, 10, 'Dirección empresa:', 0, 0, 'L');
+                $pdf->SetFont('helvetica', '', 11);
+
+                $pdf->ln(10);
+                $pdf->SetX(20);
+                $ancho_texto = $pdf->GetStringWidth($direccion_empresa);
+                $pdf->MultiCell($ancho_texto + 7, 7, $direccion_empresa != null ? $direccion_empresa : 'Sin datos', 0, 'L');
+
+
+                $pdf->SetFont('helvetica', 'B', 11);
+                $pdf->SetX(20);
+                $pdf->Cell(95, 10, 'Tipo de servicio:', 0, 0, 'L');
+                $pdf->SetFont('helvetica', '', 11);
+
+                $pdf->ln(10);
+                $pdf->SetX(20);
+                $ancho_texto = $pdf->GetStringWidth($nombre_servicio);
+                $pdf->MultiCell($ancho_texto + 7, 7, $nombre_servicio != null ? $nombre_servicio : 'Sin datos', 0, 'L');
+            }
             $pdf->SetFont('helvetica', 'B', 11);
             $pdf->SetX(20);
             $pdf->Cell(95, 10, 'Número de vacantes:', 0, 0, 'L');
@@ -445,192 +885,60 @@ class formularioGestionIngresoController extends Controller
                 $pdf->SetX(20);
                 $pdf->MultiCell($ancho_texto + 7, 7, $linea, 0, 'L');
             }
-        }
 
-        $pdf->SetFont('helvetica', 'B', 11);
-        $pdf->SetX(20);
-        $pdf->Cell(95, 10, 'Fecha de ingreso:', 0, 0, 'L');
-
-        $pdf->SetX(120);
-        $pdf->Cell(95, 10, 'Número de identificación:', 0, 1, 'L');
-        $pdf->SetFont('helvetica', '', 11);
-
-        $pdf->SetX(20);
-        $pdf->Cell(10, 1, $fecha_ingreso != null ? $fecha_ingreso : 'Sin datos', 0, 0, 'L');
-
-        $pdf->SetX(120);
-        $pdf->Cell(65, 1, $numero_identificacion != null ? $numero_identificacion : 'Sin datos', 0, 1, 'L');
-        $pdf->Ln(3);
-
-        $pdf->SetFont('helvetica', 'B', 11);
-        $pdf->SetX(20);
-        $pdf->Cell(95, 10, 'Apellidos y nombres:', 0, 0, 'L');
-
-        $pdf->SetX(120);
-        $pdf->Cell(95, 10, 'Número contacto:', 0, 1, 'L');
-        $pdf->SetFont('helvetica', '', 11);
-
-        $pdf->SetX(20);
-        $pdf->Cell(10, 1, $nombre_completo != null ? $nombre_completo : 'Sin datos', 0, 0, 'L');
-
-        $pdf->SetX(120);
-        $pdf->Cell(65, 1, $numero_contacto != null ? $numero_contacto : 'Sin datos', 0, 1, 'L');
-        $pdf->Ln(2);
-
-
-        if (strlen($cargo) < 35) {
             $pdf->SetFont('helvetica', 'B', 11);
             $pdf->SetX(20);
-            $pdf->Cell(95, 10, 'Cargo:', 0, 0, 'L');
+            $pdf->Cell(95, 10, 'Fecha de ingreso:', 0, 0, 'L');
 
             $pdf->SetX(120);
-            $pdf->Cell(95, 10, 'Salario:', 0, 1, 'L');
+            $pdf->Cell(95, 10, 'Número de identificación:', 0, 1, 'L');
             $pdf->SetFont('helvetica', '', 11);
 
             $pdf->SetX(20);
-            $pdf->Cell(10, 1, $cargo != null ? $cargo : 'Sin datos', 0, 0, 'L');
+            $pdf->Cell(10, 1, $fecha_ingreso != null ? $fecha_ingreso : 'Sin datos', 0, 0, 'L');
 
             $pdf->SetX(120);
-            $pdf->Cell(65, 1, $salario != null ? $salario : 'Sin datos', 0, 1, 'L');
+            $pdf->Cell(65, 1, $numero_identificacion != null ? $numero_identificacion : 'Sin datos', 0, 1, 'L');
+            $pdf->Ln(3);
+
+            $pdf->SetFont('helvetica', 'B', 11);
+            $pdf->SetX(20);
+            $pdf->Cell(95, 10, 'Apellidos y nombres:', 0, 0, 'L');
+
+            $pdf->SetX(120);
+            $pdf->Cell(95, 10, 'Número contacto:', 0, 1, 'L');
+            $pdf->SetFont('helvetica', '', 11);
+
+            $pdf->SetX(20);
+            $pdf->Cell(10, 1, $nombre_completo != null ? $nombre_completo : 'Sin datos', 0, 0, 'L');
+
+            $pdf->SetX(120);
+            $pdf->Cell(65, 1, $numero_contacto != null ? $numero_contacto : 'Sin datos', 0, 1, 'L');
             $pdf->Ln(2);
-        } else {
-            $pdf->SetFont('helvetica', 'B', 11);
-            $pdf->SetX(20);
-            $pdf->Cell(95, 10, 'Cargo:', 0, 0, 'L');
-            $pdf->SetFont('helvetica', '', 11);
-            $pdf->Ln(10);
-            $pdf->SetX(20);
-            $lineas = explode("\n", wordwrap($cargo != null ? $cargo : 'Sin datos', $ancho_maximo, "\n"));
 
-            foreach ($lineas as $linea) {
-                $ancho_texto = $pdf->GetStringWidth($linea);
-                $pdf->SetX(20);
-                $pdf->MultiCell($ancho_texto + 7, 7, $linea, 0, 'L');
-            }
-
-            $pdf->SetFont('helvetica', 'B', 11);
-            $pdf->SetX(20);
-            $pdf->Cell(95, 10, 'Salario:', 0, 0, 'L');
-            $pdf->SetFont('helvetica', '', 11);
-
-            $pdf->Ln(10);
-            $pdf->SetX(20);
-            $ancho_texto = $pdf->GetStringWidth($salario);
-
-            $pdf->MultiCell($ancho_texto + 7, 7, $salario != null ? $salario : 'Sin datos', 0, 'L');
-        }
-
-        $pdf->SetFont('helvetica', 'B', 11);
-        $pdf->SetX(20);
-        $pdf->Cell(95, 10, 'Departamento de prestación de servicios:', 0, 0, 'L');
-
-        $pdf->SetX(120);
-        $pdf->Cell(95, 10, 'Ciudad de prestación de servicios:', 0, 1, 'L');
-        $pdf->SetFont('helvetica', '', 11);
-
-        $pdf->SetX(20);
-        $pdf->Cell(10, 1, $departamento, 0, 0, 'L');
-
-        $pdf->SetX(120);
-        $pdf->Cell(65, 1, $municipio, 0, 1, 'L');
-        $pdf->Ln(2);
-
-
-        $pdf->SetFont('helvetica', 'B', 11);
-        $pdf->SetX(20);
-        $pdf->Cell(95, 10, 'Departamento ubicación laboratorio médico:', 0, 0, 'L');
-
-        $pdf->SetX(120);
-        $pdf->Cell(95, 10, 'Ciudad ubicación laboratorio médico:', 0, 1, 'L');
-        $pdf->SetFont('helvetica', '', 11);
-
-        $pdf->SetX(20);
-        $pdf->Cell(10, 1, $depatamento_laboratorio, 0, 0, 'L');
-
-        $pdf->SetX(120);
-        $pdf->Cell(65, 1, $municipio_laboratorio, 0, 1, 'L');
-        $pdf->Ln(2);
-
-        $pdf->SetFont('helvetica', 'B', 11);
-        $pdf->SetX(20);
-        $pdf->Cell(95, 10, 'Laboratorio médico:', 0, 0, 'L');
-        $pdf->SetFont('helvetica', '', 11);
-
-        $pdf->Ln(10);
-        $pdf->SetX(20);
-        $ancho_texto = $pdf->GetStringWidth($laboratorio_medico);
-        $pdf->MultiCell($ancho_texto + 30, 7, $laboratorio_medico != '' ? $laboratorio_medico : 'Sin datos', 0, 'L');
-
-
-        if (strlen($direccion_laboratorio) < 30) {
-
-            $pdf->SetFont('helvetica', 'B', 11);
-            $pdf->SetX(20);
-            $pdf->Cell(95, 10, 'Otro laboratorio:', 0, 0, 'L');
-
-            $pdf->SetX(120);
-            $pdf->Cell(95, 10, 'Dirección laboratorio:', 0, 1, 'L');
-            $pdf->SetFont('helvetica', '', 11);
-
-            $pdf->SetX(20);
-            $pdf->Cell(10, 1, $otro_laboratorio != null ? $otro_laboratorio : 'Sin datos', 0, 0, 'L');
-
-            $pdf->SetX(120);
-            $pdf->Cell(65, 1, $direccion_laboratorio != null ? $direccion_laboratorio : 'Sin datos', 0, 1, 'L');
-            $pdf->Ln(2);
-        } else {
-            $pdf->SetFont('helvetica', 'B', 11);
-            $pdf->SetX(20);
-            $pdf->Cell(95, 10, 'Laboratorio:', 0, 0, 'L');
-            $pdf->SetFont('helvetica', '', 11);
-
-            $pdf->Ln(10);
-            $pdf->SetX(20);
-            $ancho_texto = $pdf->GetStringWidth($otro_laboratorio);
-            $pdf->MultiCell($ancho_texto + 30, 7, $otro_laboratorio != '' ? $otro_laboratorio : 'Sin datos', 0, 'L');
-
-
-            $pdf->SetFont('helvetica', 'B', 11);
-            $pdf->SetX(20);
-            $pdf->Cell(95, 10, 'Dirección laboratorio:', 0, 0, 'L');
-            $pdf->SetFont('helvetica', '', 11);
-
-            $pdf->ln(10);
-            $pdf->SetX(20);
-            $ancho_texto = $pdf->GetStringWidth($direccion_laboratorio);
-            $pdf->MultiCell($ancho_texto + 7, 7, $direccion_laboratorio != null ? $direccion_laboratorio : 'Sin datos', 0, 'L');
-        }
-
-
-        if ($tipo_servicio_id == 3 || $tipo_servicio_id == 4) {
-            $pdf->AddPage();
-            $url = public_path('\/upload\/MEMBRETE.png');
-            $img_file = $url;
-            $pdf->Image($img_file, -0.5, 0, $pdf->getPageWidth() + 0.5, $pdf->getPageHeight(), '', '', '', false, 300, '', false, false, 0);
-            $pdf->Ln(45);
-            if (strlen($examenes) < 30 && strlen($recomendaciones_examen) < 30) {
+            if (strlen($cargo) < 35) {
                 $pdf->SetFont('helvetica', 'B', 11);
                 $pdf->SetX(20);
-                $pdf->Cell(95, 10, 'Exámenes:', 0, 0, 'L');
+                $pdf->Cell(95, 10, 'Cargo:', 0, 0, 'L');
 
                 $pdf->SetX(120);
-                $pdf->Cell(95, 10, 'Recomendaciones exámenes:', 0, 1, 'L');
+                $pdf->Cell(95, 10, 'Salario:', 0, 1, 'L');
                 $pdf->SetFont('helvetica', '', 11);
 
                 $pdf->SetX(20);
-                $pdf->Cell(10, 1, $examenes != null ? $examenes : 'Sin datos', 0, 0, 'L');
+                $pdf->Cell(10, 1, $cargo != null ? $cargo : 'Sin datos', 0, 0, 'L');
 
                 $pdf->SetX(120);
-                $pdf->Cell(65, 1, $recomendaciones_examen != null ? $recomendaciones_examen : 'N/A', 0, 1, 'L');
+                $pdf->Cell(65, 1, $salario != null ? $salario : 'Sin datos', 0, 1, 'L');
                 $pdf->Ln(2);
             } else {
                 $pdf->SetFont('helvetica', 'B', 11);
                 $pdf->SetX(20);
-                $pdf->Cell(95, 10, 'Exámenes:', 0, 0, 'L');
+                $pdf->Cell(95, 10, 'Cargo:', 0, 0, 'L');
                 $pdf->SetFont('helvetica', '', 11);
                 $pdf->Ln(10);
                 $pdf->SetX(20);
-                $lineas = explode("\n", wordwrap($examenes != null ? $examenes : 'Sin datos', $ancho_maximo, "\n"));
+                $lineas = explode("\n", wordwrap($cargo != null ? $cargo : 'Sin datos', $ancho_maximo, "\n"));
 
                 foreach ($lineas as $linea) {
                     $ancho_texto = $pdf->GetStringWidth($linea);
@@ -640,88 +948,30 @@ class formularioGestionIngresoController extends Controller
 
                 $pdf->SetFont('helvetica', 'B', 11);
                 $pdf->SetX(20);
-                $pdf->Cell(95, 10, 'Recomendaciones exámenes:', 0, 0, 'L');
+                $pdf->Cell(95, 10, 'Salario:', 0, 0, 'L');
                 $pdf->SetFont('helvetica', '', 11);
+
                 $pdf->Ln(10);
                 $pdf->SetX(20);
-                $lineas = explode("\n", wordwrap($recomendaciones_examen != null ? $recomendaciones_examen : 'N/A', $ancho_maximo, "\n"));
+                $ancho_texto = $pdf->GetStringWidth($salario);
 
-                foreach ($lineas as $linea) {
-                    $ancho_texto = $pdf->GetStringWidth($linea);
-                    $pdf->SetX(20);
-                    $pdf->MultiCell($ancho_texto + 7, 7, $linea, 0, 'L');
-                }
+                $pdf->MultiCell($ancho_texto + 7, 7, $salario != null ? $salario : 'Sin datos', 0, 'L');
             }
 
             $pdf->SetFont('helvetica', 'B', 11);
             $pdf->SetX(20);
-            $pdf->Cell(95, 10, 'Fecha de exámenes:', 0, 0, 'L');
+            $pdf->Cell(95, 10, 'Departamento de prestación de servicios:', 0, 0, 'L');
+
+            $pdf->SetX(120);
+            $pdf->Cell(95, 10, 'Ciudad de prestación de servicios:', 0, 1, 'L');
             $pdf->SetFont('helvetica', '', 11);
 
-            $pdf->Ln(10);
             $pdf->SetX(20);
-            $ancho_texto = $pdf->GetStringWidth($fecha_examen);
-            $pdf->MultiCell($ancho_texto + 30, 7, $fecha_examen != '' ? $fecha_examen : 'Sin datos', 0, 'L');
-        } else {
-            if (strlen($examenes) < 30 && strlen($recomendaciones_examen) < 30 && strlen($direccion_empresa) < 30) {
-                $pdf->SetFont('helvetica', 'B', 11);
-                $pdf->SetX(20);
-                $pdf->Cell(95, 10, 'Exámenes:', 0, 0, 'L');
+            $pdf->Cell(10, 1, $departamento, 0, 0, 'L');
 
-                $pdf->SetX(120);
-                $pdf->Cell(95, 10, 'Recomendaciones exámenes:', 0, 1, 'L');
-                $pdf->SetFont('helvetica', '', 11);
-
-                $pdf->SetX(20);
-                $pdf->Cell(10, 1, $examenes != null ? $examenes : 'Sin datos', 0, 0, 'L');
-
-                $pdf->SetX(120);
-                $pdf->Cell(65, 1, $recomendaciones_examen != null ? $recomendaciones_examen : 'Sin datos', 0, 1, 'L');
-                $pdf->Ln(2);
-            } else {
-                $pdf->AddPage();
-                $url = public_path('\/upload\/MEMBRETE.png');
-                $img_file = $url;
-                $pdf->Image($img_file, -0.5, 0, $pdf->getPageWidth() + 0.5, $pdf->getPageHeight(), '', '', '', false, 300, '', false, false, 0);
-                $pdf->Ln(45);
-
-                $pdf->SetFont('helvetica', 'B', 11);
-                $pdf->SetX(20);
-                $pdf->Cell(95, 10, 'Exámenes:', 0, 0, 'L');
-                $pdf->SetFont('helvetica', '', 11);
-                $pdf->Ln(10);
-                $pdf->SetX(20);
-                $lineas = explode("\n", wordwrap($examenes != null ? $examenes : 'Sin datos', $ancho_maximo, "\n"));
-
-                foreach ($lineas as $linea) {
-                    $ancho_texto = $pdf->GetStringWidth($linea);
-                    $pdf->SetX(20);
-                    $pdf->MultiCell($ancho_texto + 7, 7, $linea, 0, 'L');
-                }
-
-                $pdf->SetFont('helvetica', 'B', 11);
-                $pdf->SetX(20);
-                $pdf->Cell(95, 10, 'Recomendaciones exámenes:', 0, 0, 'L');
-                $pdf->SetFont('helvetica', '', 11);
-                $pdf->Ln(10);
-                $pdf->SetX(20);
-                $lineas = explode("\n", wordwrap($recomendaciones_examen != null ? $recomendaciones_examen : 'N/A', $ancho_maximo, "\n"));
-
-                foreach ($lineas as $linea) {
-                    $ancho_texto = $pdf->GetStringWidth($linea);
-                    $pdf->SetX(20);
-                    $pdf->MultiCell($ancho_texto + 7, 7, $linea, 0, 'L');
-                }
-            }
-            $pdf->SetFont('helvetica', 'B', 11);
-            $pdf->SetX(20);
-            $pdf->Cell(95, 10, 'Fecha de exámenes:', 0, 0, 'L');
-            $pdf->SetFont('helvetica', '', 11);
-
-            $pdf->Ln(10);
-            $pdf->SetX(20);
-            $ancho_texto = $pdf->GetStringWidth($fecha_examen);
-            $pdf->MultiCell($ancho_texto + 30, 7, $fecha_examen != '' ? $fecha_examen : 'Sin datos', 0, 'L');
+            $pdf->SetX(120);
+            $pdf->Cell(65, 1, $municipio, 0, 1, 'L');
+            $pdf->Ln(2);
         }
 
         if ($modulo != 'null') {
@@ -747,7 +997,6 @@ class formularioGestionIngresoController extends Controller
         $result = $EnvioCorreoController->sendEmail($request);
         return $result;
     }
-
     public function filtro($cadena)
     {
         $cadenaJSON = base64_decode($cadena);
@@ -766,9 +1015,11 @@ class formularioGestionIngresoController extends Controller
             ->select(
                 'usr_app_formulario_ingreso.id',
                 'usr_app_formulario_ingreso.created_at',
-                'usr_app_formulario_ingreso.fecha_ingreso',
+                DB::raw("FORMAT(CAST(usr_app_formulario_ingreso.fecha_ingreso AS DATE), 'dd/MM/yyyy') as fecha_ingreso"),
+                'usr_app_formulario_ingreso.fecha_examen',
                 'est.nombre as estado_ingreso',
                 'usr_app_formulario_ingreso.responsable',
+                'usr_app_formulario_ingreso.responsable_anterior',
                 'usr_app_formulario_ingreso.numero_identificacion',
                 'usr_app_formulario_ingreso.nombre_completo',
                 'cli.razon_social',
@@ -779,7 +1030,6 @@ class formularioGestionIngresoController extends Controller
                 'est.id as estado_ingreso_id'
             )
             ->orderBy('usr_app_formulario_ingreso.created_at', 'DESC');
-
         $numElementos = count($campo);
 
         for ($i = 0; $i < $numElementos; $i++) {
@@ -817,8 +1067,6 @@ class formularioGestionIngresoController extends Controller
                     $query->where($prefijoCampo . $campoActual, '=', $valorCompararActual);
                     break;
                 case 'Entre':
-                    // Suponiendo que $valor_comparar2 contiene el segundo valor en el rango
-
                     $valorComparar2Actual = $valor_comparar2[$i];
                     $query->whereDate($prefijoCampo . $campoActual, '>=', $valorCompararActual);
                     $query->whereDate($prefijoCampo . $campoActual, '<=', $valorComparar2Actual);
@@ -827,6 +1075,7 @@ class formularioGestionIngresoController extends Controller
                     $query->where($prefijoCampo . $campoActual, '=', $valorCompararActual);
                     break;
                 case 'Igual a fecha':
+                    //    return $prefijoCampo .''. $campoActual. '='. $valorCompararActual;
                     $query->whereDate($prefijoCampo . $campoActual, '=', $valorCompararActual);
                     break;
                 case 'Contiene':
@@ -841,6 +1090,11 @@ class formularioGestionIngresoController extends Controller
 
         // Al final, ejecutar la consulta y obtener los resultados
         $resultados = $query->paginate(); // paginamos los resultados
+
+        foreach ($query as $item) {
+            $item->fecha_examen = $item->fecha_examen ? date('d/m/Y H:i', strtotime($item->fecha_examen)) : null;
+        }
+
         return $resultados;
     }
 
@@ -1115,6 +1369,12 @@ class formularioGestionIngresoController extends Controller
 
             $result->save();
 
+            $seguimiento = new FormularioIngresoSeguimiento;
+            $seguimiento->estado_ingreso_id = $request->estado_id;
+            $seguimiento->usuario = $request->consulta_encargado;
+            $seguimiento->formulario_ingreso_id = $id;
+            $seguimiento->save();
+
             $laboratorio = RegistroIngresoLaboratorio::where('registro_ingreso_id', $id)->get();
 
             if ($request->filled('laboratorio_medico_id')) {
@@ -1132,7 +1392,6 @@ class formularioGestionIngresoController extends Controller
                     $laboratorio->laboratorio_medico_id = $request->laboratorio_medico_id;
                     $laboratorio->save();
                 }
-            } else {
             }
 
             DB::commit();

@@ -125,7 +125,7 @@ class MenuController extends Controller
                 'ct.nombre as categoria',
                 'usr_app_menus.powerbi',
             )
-            ->orderby('posicion', 'DESC')
+            ->orderby('usr_app_menus.id', 'desc')
             ->paginate($cantidad);
         return response()->json($result);
     }
