@@ -695,9 +695,9 @@ class formularioDebidaDiligenciaController extends Controller
                     if ($campo == "vendedor") {
                         $query->where('ven.nom_ven', 'like', '%' . $valor . '%');
                     }
-                    // else if ($campo == "nombre_estado_firma") {
-                    //     $query->where('estf.nombre', 'like', '%' . $valor . '%');
-                    // } 
+                    else if ($campo == "nombre_estado_firma") {
+                        $query->where('estf.nombre', 'like', '%' . $valor . '%');
+                    } 
                     else {
                         $query->where($campo, 'like', '%' . $valor . '%');
                     }

@@ -3,9 +3,9 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Models\estadosIngreso;
+use App\Models\Sede;
 
-class estadosIngresoController extends Controller
+class SedeController extends Controller
 {
     /**
      * Display a listing of the resource.
@@ -14,12 +14,10 @@ class estadosIngresoController extends Controller
      */
     public function index()
     {
-        $result = estadosIngreso::select(
+        $result = Sede::select(
             'id',
-            'nombre',
-            'color'
+            'nombre'
         )
-            ->orderby('posicion')
             ->get();
         return response()->json($result);
     }

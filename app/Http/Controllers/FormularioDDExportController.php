@@ -357,36 +357,36 @@ class FormularioDDExportController extends Controller
                             $item->{'nombre_cargo' . $i} = $item8->nombre;
                             $item->{'riesgo_laboral_cargo' . $i} = $item8->riesgo_laboral_id;
                             $i++;
-                        //     $examenes = '';
-                        //     $resultados9 = DB::table('usr_app_cargos_examenes')
-                        //     ->select(
-                        //         'id',
-                        //         'nombre',
-                        //         'riesgo_laboral_id',
-                        //         // 'cliente_id'
-                        //     )
-                        //     ->where('usr_app_cargos_examenes.cargo_id', '=', $item8->id)
-                        //     ->get();
-                        //     foreach ($resultados9 as $item9) {
-                        //         $examenes .= $item9->examen_id;
-                        //     }
-                        //     $item->{'examenes' . $i} = $examenes;
+                            //     $examenes = '';
+                            //     $resultados9 = DB::table('usr_app_cargos_examenes')
+                            //     ->select(
+                            //         'id',
+                            //         'nombre',
+                            //         'riesgo_laboral_id',
+                            //         // 'cliente_id'
+                            //     )
+                            //     ->where('usr_app_cargos_examenes.cargo_id', '=', $item8->id)
+                            //     ->get();
+                            //     foreach ($resultados9 as $item9) {
+                            //         $examenes .= $item9->examen_id;
+                            //     }
+                            //     $item->{'examenes' . $i} = $examenes;
 
-                        //     $requisitos= '';
-                        //     $resultados10 = DB::table('usr_app_cargos_requisitos')
-                        //     ->select(
-                        //         'id',
-                        //         'nombre',
-                        //         'riesgo_laboral_id',
-                        //         // 'cliente_id'
-                        //     )
-                        //     ->where('usr_app_cargos_requisitos.cargo_id', '=', $item8->id)
-                        //     ->get();
-                         
-                        //     foreach ($resultados10 as $item10) {
-                        //         $requisitos .= $item10->requisito_id;
-                        //     }
-                        //     $item->{'requsitos' . $i} = $requisitos;
+                            //     $requisitos= '';
+                            //     $resultados10 = DB::table('usr_app_cargos_requisitos')
+                            //     ->select(
+                            //         'id',
+                            //         'nombre',
+                            //         'riesgo_laboral_id',
+                            //         // 'cliente_id'
+                            //     )
+                            //     ->where('usr_app_cargos_requisitos.cargo_id', '=', $item8->id)
+                            //     ->get();
+
+                            //     foreach ($resultados10 as $item10) {
+                            //         $requisitos .= $item10->requisito_id;
+                            //     }
+                            //     $item->{'requsitos' . $i} = $requisitos;
 
                         }
                     }
@@ -734,7 +734,7 @@ class FormularioDDExportController extends Controller
                             // )
                             // ->where('usr_app_cargos_examenes.cargo_id', '=', $item8->id)
                             // ->get();
-                            
+
                             // foreach ($resultados9 as $item9) {
                             //     $examenes .= $item9->examen_id;
                             // }
@@ -750,7 +750,7 @@ class FormularioDDExportController extends Controller
                             // )
                             // ->where('usr_app_cargos_requisitos.cargo_id', '=', $item8->id)
                             // ->get();
-                         
+
                             // foreach ($resultados10 as $item10) {
                             //     $requisitos .= $item10->requisito_id;
                             // }

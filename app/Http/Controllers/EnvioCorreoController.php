@@ -92,7 +92,7 @@ class EnvioCorreoController extends Controller
         }
 
         if (file_exists($request->formulario_ingreso)) {
-            $email->attachFromPath($request->formulario_ingreso, 'Formulario de ingreso');
+            $email->attachFromPath($request->formulario_ingreso, $request->nom_membrete);
         }
 
         foreach ($destinatarios as $destinatario) {

@@ -3,9 +3,9 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Models\estadosIngreso;
+use App\Models\ObservacionEstadoFormIngreso;
 
-class estadosIngresoController extends Controller
+class ObservacionEstadoFormIngresoController extends Controller
 {
     /**
      * Display a listing of the resource.
@@ -14,13 +14,11 @@ class estadosIngresoController extends Controller
      */
     public function index()
     {
-        $result = estadosIngreso::select(
+        $result = ObservacionEstadoFormIngreso::select(
             'id',
-            'nombre',
-            'color'
+            'nombre'
         )
-            ->orderby('posicion')
-            ->get();
+        ->get();
         return response()->json($result);
     }
 
