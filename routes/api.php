@@ -117,6 +117,9 @@ use App\Http\Controllers\AfpFormularioIngresoController;
 use App\Http\Controllers\formularioGestionIngresoController;
 use App\Http\Controllers\estadosIngresoController;
 use App\Http\Controllers\FormularioIngresoTipoServicioController;
+use App\Http\Controllers\formularioIngresoExportController;
+use App\Http\Controllers\ObservacionEstadoFormIngresoController;
+use App\Http\Controllers\SedeController;
 
 
 
@@ -218,6 +221,7 @@ Route::group([
   // Exporte formulario debida diligencia
   // Route::get('/formularioddexport/{id}', [FormularioDDExportController::class, 'export']); 
   Route::get('/exportaformulariocliente/{cadena}', [FormularioDDExportController::class, 'export2']);
+  Route::get('/exportaformularioingreso/{cadena}', [formularioIngresoExportController::class, 'export3']);
 
   // Estado civil
   Route::get('/estadocivil', [EstadoCivilController::class, 'index']);
@@ -747,6 +751,7 @@ Route::group([
 
   Route::get('/interaccion', [AtencionInteraccionController::class, 'index']);
   Route::get('/procesos', [ProcesosController::class, 'index']);
+  Route::get('/sede', [SedeController::class, 'index']);
 
   Route::get('/interaccioncliente', [ClienteInteraccionController::class, 'index']);
   Route::get('/interaccioncliente/{id}', [ClienteInteraccionController::class, 'byid']);
@@ -766,11 +771,13 @@ Route::group([
   Route::get('/formularioingresofiltro/{cadena}', [formularioGestionIngresoController::class, 'filtro']);
   Route::post('/formularioingresopendientesborradomasivo', [formularioGestionIngresoController::class, 'borradomasivo']);
 
+  Route::get('/observacionestado', [ObservacionEstadoFormIngresoController::class, 'index']);
+
   Route::get('/estadosingresos', [estadosIngresoController::class, 'index']);
   Route::get('/actualizaestadoingreso/{item}/{estado}', [formularioGestionIngresoController::class, 'actualizaestadoingreso']);
   Route::get('/actualizaResponsableingreso/{item}/{responsable_id}/{nombre}', [formularioGestionIngresoController::class, 'actualizaResponsableingreso']);
   Route::get('/responsableingresos/{estado}', [formularioGestionIngresoController::class, 'responsableingresos']);
-  Route::get('/gestioningresospdf/{modulo}/{id}', [formularioGestionIngresoController::class, 'gestioningresospdf']);
+  Route::get('/gestioningresospdf/{modulo}/{id}/{id_btn}', [formularioGestionIngresoController::class, 'gestioningresospdf']);
 
   Route::get('/consulta_id_trump/{id}', [formularioGestionIngresoController::class, 'consulta_id_trump']);
 

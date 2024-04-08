@@ -35,6 +35,7 @@ class EnvioCorreoController extends Controller
 
         $archivos = $request->files->all();
 
+        $adjunto_candidato = $request->adjunto_candidato;
 
         //Adjuntar pdf desde algun componente en vuejs
         // $nombre_archivo = [];
@@ -91,7 +92,7 @@ class EnvioCorreoController extends Controller
         }
 
         if (file_exists($request->formulario_ingreso)) {
-            $email->attachFromPath($request->formulario_ingreso, 'Formulario de ingreso');
+            $email->attachFromPath($request->formulario_ingreso, $request->nom_membrete);
         }
 
         foreach ($destinatarios as $destinatario) {
@@ -114,6 +115,16 @@ class EnvioCorreoController extends Controller
             if ($archivo instanceof UploadedFile) {
                 array_push($adjuntos, $archivo->getClientOriginalName());
                 $email->attachFromPath($archivo->getPathname(), $archivo->getClientOriginalName(), $archivo->getClientMimeType());
+            }
+        }
+
+        if(isset($adjunto_candidato) && is_array($adjunto_candidato) && count($adjunto_candidato) > 0) {
+            foreach ($adjunto_candidato as $archivo) {
+                $partes = explode('*', $archivo);
+                $ruta_completa = public_path($partes[0]);
+                $nombre_archivo = $partes[1];
+                $email->attachFromPath($ruta_completa, $nombre_archivo);
+                array_push($adjuntos,$nombre_archivo);
             }
         }
 
