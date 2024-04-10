@@ -19,6 +19,7 @@ class PermisoController extends Controller
             'nombre',
             'descripcion',
         )
+            ->orderby('id', 'desc')
             ->paginate($cantidad);
         return response()->json($result);
     }
@@ -46,7 +47,7 @@ class PermisoController extends Controller
             'id',
             'nombre',
         )
-        ->orderby('id','DESC')
+            ->orderby('id', 'DESC')
             ->get();
         return response()->json($result);
     }

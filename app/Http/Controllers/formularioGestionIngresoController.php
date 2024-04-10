@@ -41,13 +41,13 @@ class formularioGestionIngresoController extends Controller
                 'usr_app_formulario_ingreso.fecha_examen',
                 DB::raw("FORMAT(CAST(usr_app_formulario_ingreso.fecha_ingreso AS DATE), 'dd/MM/yyyy') as fecha_ingreso"),
                 'usr_app_formulario_ingreso.estado_vacante',
+                'usr_app_formulario_ingreso.novedades',
+                'usr_app_formulario_ingreso.observacion_estado',
                 'est.nombre as estado_ingreso',
                 'usr_app_formulario_ingreso.responsable',
                 // 'usr_app_formulario_ingreso.responsable as responsable_ingreso',
                 'est.id as estado_ingreso_id',
                 'est.color as color_estado',
-                'usr_app_formulario_ingreso.novedades',
-                'usr_app_formulario_ingreso.observacion_estado',
             )
             ->orderby('usr_app_formulario_ingreso.id', 'DESC')
             ->paginate($cantidad);
@@ -117,7 +117,7 @@ class formularioGestionIngresoController extends Controller
 
         // Actualizar el registro de ingreso con el estado y el responsable
         $registro_ingreso->estado_ingreso_id = $estado_id;
-        $registro_ingreso->responsable = $responsable->nombres;
+        // $registro_ingreso->responsable = $responsable->nombres;
         if ($registro_ingreso->save()) {
             return response()->json(['status' => 'success', 'message' => 'Registro actualizado de manera exitosa.']);
         }
@@ -229,7 +229,9 @@ class formularioGestionIngresoController extends Controller
                 'ti.cod_tip as tipo_identificacion_id',
                 'usr_app_formulario_ingreso.afectacion_servicio',
                 'usr_app_formulario_ingreso.observacion_estado',
-                
+                'usr_app_formulario_ingreso.correo_laboratorio',
+                'usr_app_formulario_ingreso.contacto_empresa',
+
             )
             ->first();
 
@@ -281,6 +283,7 @@ class formularioGestionIngresoController extends Controller
 
         $formulario = $this->byid($registro_id)->getData();
 
+
         $pdf = new TCPDF();
         $pdf->SetTextColor(4, 66, 105);
         $pdf->setPrintHeader(false);
@@ -294,11 +297,13 @@ class formularioGestionIngresoController extends Controller
         $pdf->Image($img_file, -0.5, 0, $pdf->getPageWidth() + 0.5, $pdf->getPageHeight(), '', '', '', false, 300, '', false, false, 0);
 
         $combinacion_correos = '';
-        if ($formulario->correo_notificacion_usuario != null && $formulario->tipo_servicio_id == 2) {
-            $combinacion_correos .=   $formulario->correo_notificacion_empresa . ',' . $formulario->correo_notificacion_usuario;
+
+        if ($formulario->correo_laboratorio != null && $formulario->tipo_servicio_id == 2) {
+            $combinacion_correos .= $formulario->correo_notificacion_empresa != null ? $formulario->correo_notificacion_empresa . ',' . $formulario->correo_laboratorio : $formulario->correo_laboratorio;
         } else {
             $combinacion_correos = $formulario->correo_notificacion_empresa;
         }
+
 
         $fecha_ingreso = $formulario->fecha_ingreso;
         $numero_identificacion = $formulario->numero_identificacion;
@@ -541,72 +546,124 @@ class formularioGestionIngresoController extends Controller
 
             if (isset($formulario->laboratorios[0])) {
 
-                $pdf->SetFont('helvetica', 'B', 11);
-                $pdf->SetX(20);
-                $pdf->Cell(95, 10, 'Departamento ubicación laboratorio médico:', 0, 0, 'L');
+                if (!empty($formulario->laboratorios)) {
+                    if (strlen($direccion_laboratorio) < 30) {
 
-                $pdf->SetX(120);
-                $pdf->Cell(95, 10, 'Ciudad ubicación laboratorio médico:', 0, 1, 'L');
-                $pdf->SetFont('helvetica', '', 11);
+                        $pdf->SetFont('helvetica', 'B', 11);
+                        $pdf->SetX(20);
+                        $pdf->Cell(95, 10, 'Departamento ubicación laboratorio médico:', 0, 0, 'L');
 
-                $pdf->SetX(20);
-                $pdf->Cell(10, 1, $departamento_laboratorio != '' ? $departamento_laboratorio : 'Sin datos', 0, 0, 'L');
+                        $pdf->SetX(120);
+                        $pdf->Cell(95, 10, 'Ciudad ubicación laboratorio médico:', 0, 1, 'L');
+                        $pdf->SetFont('helvetica', '', 11);
 
-                $pdf->SetX(120);
-                $pdf->Cell(65, 1, $municipio_laboratorio != '' ? $municipio_laboratorio : 'Sin datos', 0, 1, 'L');
-                $pdf->Ln(2);
+                        $pdf->SetX(20);
+                        $pdf->Cell(10, 1, $departamento_laboratorio != '' ? $departamento_laboratorio : 'Sin datos', 0, 0, 'L');
 
-                $pdf->SetFont('helvetica', 'B', 11);
-                $pdf->SetX(20);
-                $pdf->Cell(95, 10, 'Laboratorio médico:', 0, 0, 'L');
-                $pdf->SetFont('helvetica', '', 11);
+                        $pdf->SetX(120);
+                        $pdf->Cell(65, 1, $municipio_laboratorio != '' ? $municipio_laboratorio : 'Sin datos', 0, 1, 'L');
+                        $pdf->Ln(2);
 
-                $pdf->Ln(10);
-                $pdf->SetX(20);
-                $ancho_texto = $pdf->GetStringWidth($laboratorio_medico);
-                $pdf->MultiCell($ancho_texto + 30, 7, $laboratorio_medico != '' ? $laboratorio_medico : 'Sin datos', 0, 'L');
+                        $pdf->SetFont('helvetica', 'B', 11);
+                        $pdf->SetX(20);
+                        $pdf->Cell(95, 10, 'Laboratorio médico:', 0, 0, 'L');
+
+                        $pdf->SetX(120);
+                        $pdf->Cell(95, 10, 'Dirección laboratorio:', 0, 1, 'L');
+                        $pdf->SetFont('helvetica', '', 11);
+
+                        $pdf->SetX(20);
+                        $pdf->Cell(10, 1, $laboratorio_medico != null ? $laboratorio_medico : 'Sin datos', 0, 0, 'L');
+
+                        $pdf->SetX(120);
+                        $pdf->Cell(65, 1, $direccion_laboratorio != null ? $direccion_laboratorio : 'Sin datos', 0, 1, 'L');
+                        $pdf->Ln(2);
+                    } else {
+
+                        $pdf->SetFont('helvetica', 'B', 11);
+                        $pdf->SetX(20);
+                        $pdf->Cell(95, 10, 'Departamento ubicación laboratorio médico:', 0, 0, 'L');
+
+                        $pdf->SetX(120);
+                        $pdf->Cell(95, 10, 'Ciudad ubicación laboratorio médico:', 0, 1, 'L');
+                        $pdf->SetFont('helvetica', '', 11);
+
+                        $pdf->SetX(20);
+                        $pdf->Cell(10, 1, $departamento_laboratorio != '' ? $departamento_laboratorio : 'Sin datos', 0, 0, 'L');
+
+                        $pdf->SetX(120);
+                        $pdf->Cell(65, 1, $municipio_laboratorio != '' ? $municipio_laboratorio : 'Sin datos', 0, 1, 'L');
+                        $pdf->Ln(2);
+
+                        $pdf->SetFont('helvetica', 'B', 11);
+                        $pdf->SetX(20);
+                        $pdf->Cell(95, 10, 'Laboratorio médico:', 0, 0, 'L');
+                        $pdf->SetFont('helvetica', '', 11);
+
+                        $pdf->Ln(10);
+                        $pdf->SetX(20);
+                        $ancho_texto = $pdf->GetStringWidth($laboratorio_medico);
+                        $pdf->MultiCell($ancho_texto + 30, 7, $laboratorio_medico != '' ? $laboratorio_medico : 'Sin datos', 0, 'L');
+
+                        $pdf->SetFont('helvetica', 'B', 11);
+                        $pdf->SetX(20);
+                        $pdf->Cell(95, 10, 'Dirección laboratorio:', 0, 0, 'L');
+                        $pdf->SetFont('helvetica', '', 11);
+                        $pdf->Ln(10);
+                        $pdf->SetX(20);
+                        $lineas = explode("\n", wordwrap($direccion_laboratorio != null ? $direccion_laboratorio : 'Sin datos', $ancho_maximo, "\n"));
+
+                        foreach ($lineas as $linea) {
+                            $ancho_texto = $pdf->GetStringWidth($linea);
+                            $pdf->SetX(20);
+                            $pdf->MultiCell($ancho_texto + 7, 7, $linea, 0, 'L');
+                        }
+                    }
+                }
             }
 
+            if ($otro_laboratorio != '') {
 
-            if (strlen($direccion_laboratorio) < 30) {
+                if (strlen($direccion_laboratorio) < 30) {
 
-                $pdf->SetFont('helvetica', 'B', 11);
-                $pdf->SetX(20);
-                $pdf->Cell(95, 10, 'Otro laboratorio:', 0, 0, 'L');
-
-                $pdf->SetX(120);
-                $pdf->Cell(95, 10, 'Dirección laboratorio:', 0, 1, 'L');
-                $pdf->SetFont('helvetica', '', 11);
-
-                $pdf->SetX(20);
-                $pdf->Cell(10, 1, $otro_laboratorio != null ? $otro_laboratorio : 'Sin datos', 0, 0, 'L');
-
-                $pdf->SetX(120);
-                $pdf->Cell(65, 1, $direccion_laboratorio != null ? $direccion_laboratorio : 'Sin datos', 0, 1, 'L');
-                $pdf->Ln(2);
-            } else {
-                $pdf->SetFont('helvetica', 'B', 11);
-                $pdf->SetX(20);
-                $pdf->Cell(95, 10, 'Otro laboratorio:', 0, 0, 'L');
-                $pdf->SetFont('helvetica', '', 11);
-
-                $pdf->Ln(10);
-                $pdf->SetX(20);
-                $ancho_texto = $pdf->GetStringWidth($otro_laboratorio);
-                $pdf->MultiCell($ancho_texto + 30, 7, $otro_laboratorio != '' ? $otro_laboratorio : 'Sin datos', 0, 'L');
-
-                $pdf->SetFont('helvetica', 'B', 11);
-                $pdf->SetX(20);
-                $pdf->Cell(95, 10, 'Dirección laboratorio:', 0, 0, 'L');
-                $pdf->SetFont('helvetica', '', 11);
-                $pdf->Ln(10);
-                $pdf->SetX(20);
-                $lineas = explode("\n", wordwrap($direccion_laboratorio != null ? $direccion_laboratorio : 'Sin datos', $ancho_maximo, "\n"));
-
-                foreach ($lineas as $linea) {
-                    $ancho_texto = $pdf->GetStringWidth($linea);
+                    $pdf->SetFont('helvetica', 'B', 11);
                     $pdf->SetX(20);
-                    $pdf->MultiCell($ancho_texto + 7, 7, $linea, 0, 'L');
+                    $pdf->Cell(95, 10, 'Laboratorio médico:', 0, 0, 'L');
+
+                    $pdf->SetX(120);
+                    $pdf->Cell(95, 10, 'Dirección laboratorio:', 0, 1, 'L');
+                    $pdf->SetFont('helvetica', '', 11);
+
+                    $pdf->SetX(20);
+                    $pdf->Cell(10, 1, $otro_laboratorio != null ? $otro_laboratorio : 'Sin datos', 0, 0, 'L');
+
+                    $pdf->SetX(120);
+                    $pdf->Cell(65, 1, $direccion_laboratorio != null ? $direccion_laboratorio : 'Sin datos', 0, 1, 'L');
+                    $pdf->Ln(2);
+                } else {
+                    $pdf->SetFont('helvetica', 'B', 11);
+                    $pdf->SetX(20);
+                    $pdf->Cell(95, 10, 'Laboratorio médico:', 0, 0, 'L');
+                    $pdf->SetFont('helvetica', '', 11);
+
+                    $pdf->Ln(10);
+                    $pdf->SetX(20);
+                    $ancho_texto = $pdf->GetStringWidth($otro_laboratorio);
+                    $pdf->MultiCell($ancho_texto + 30, 7, $otro_laboratorio != '' ? $otro_laboratorio : 'Sin datos', 0, 'L');
+
+                    $pdf->SetFont('helvetica', 'B', 11);
+                    $pdf->SetX(20);
+                    $pdf->Cell(95, 10, 'Dirección laboratorio:', 0, 0, 'L');
+                    $pdf->SetFont('helvetica', '', 11);
+                    $pdf->Ln(10);
+                    $pdf->SetX(20);
+                    $lineas = explode("\n", wordwrap($direccion_laboratorio != null ? $direccion_laboratorio : 'Sin datos', $ancho_maximo, "\n"));
+
+                    foreach ($lineas as $linea) {
+                        $ancho_texto = $pdf->GetStringWidth($linea);
+                        $pdf->SetX(20);
+                        $pdf->MultiCell($ancho_texto + 7, 7, $linea, 0, 'L');
+                    }
                 }
             }
 
@@ -1092,8 +1149,12 @@ class formularioGestionIngresoController extends Controller
     }
 
 
-    public function filtro($cadena)
+
+    public function filtro($cadena, $cantidad = null)
     {
+        if ($cantidad == null) {
+            $cantidad = 15;
+        }
         $cadenaJSON = base64_decode($cadena);
         $cadenaUTF8 = mb_convert_encoding($cadenaJSON, 'UTF-8', 'ISO-8859-1');
         $arrays = explode('/', $cadenaUTF8);
@@ -1122,13 +1183,13 @@ class formularioGestionIngresoController extends Controller
                 'usr_app_formulario_ingreso.fecha_examen',
                 DB::raw("FORMAT(CAST(usr_app_formulario_ingreso.fecha_ingreso AS DATE), 'dd/MM/yyyy') as fecha_ingreso"),
                 'usr_app_formulario_ingreso.estado_vacante',
+                'usr_app_formulario_ingreso.novedades',
+                'usr_app_formulario_ingreso.observacion_estado',
                 'est.nombre as estado_ingreso',
                 'usr_app_formulario_ingreso.responsable',
                 // 'usr_app_formulario_ingreso.responsable as responsable_ingreso',
                 'est.id as estado_ingreso_id',
                 'est.color as color_estado',
-                'usr_app_formulario_ingreso.novedades',
-                'usr_app_formulario_ingreso.observacion_estado',
 
             )
             ->orderBy('usr_app_formulario_ingreso.created_at', 'DESC');
@@ -1177,9 +1238,13 @@ class formularioGestionIngresoController extends Controller
                     $query->where($prefijoCampo . $campoActual, '=', $valorCompararActual);
                     break;
                 case 'Igual a fecha':
-                    $fechaHora = date('Y-m-d H:i:s', strtotime($valorCompararActual));
-                    $query->whereRaw("TRY_CONVERT(datetime, $prefijoCampo$campoActual) = ?", [$fechaHora]);
-                    break;
+                    // $fechaHora = date('Y-m-d H:i:s', strtotime($valorCompararActual));
+                    // $query->whereRaw("TRY_CONVERT(datetime, $prefijoCampo$campoActual) = ?", [$fechaHora]);
+                    // break;
+                    // if ($prefijoCampo == 'usr_app_formulario_ingreso.created_at') {
+                    //     $fechaComparar = trim($valorCompararActual, '"'); // Eliminar las comillas dobles
+                    //     $query->whereRaw("TRY_CONVERT(DATE, $prefijoCampo$campoActual, 126) = ?", [$fechaComparar]);
+                    // }
                     //    return $prefijoCampo .''. $campoActual. '='. $valorCompararActual;
                     $query->whereDate($prefijoCampo . $campoActual, '=', $valorCompararActual);
                     break;
@@ -1194,7 +1259,7 @@ class formularioGestionIngresoController extends Controller
         }
 
         // Al final, ejecutar la consulta y obtener los resultados
-        $resultados = $query->paginate(); // paginamos los resultados
+        $resultados = $query->paginate($cantidad); // paginamos los resultados
 
         foreach ($resultados as $item) {
             $item->fecha_examen = $item->fecha_examen ? date('d/m/Y H:i', strtotime($item->fecha_examen)) : null;
@@ -1202,6 +1267,149 @@ class formularioGestionIngresoController extends Controller
 
         return $resultados;
     }
+
+    public function buscardocumentoformularioi($cedula)
+    {
+        $result = formularioGestionIngreso::leftJoin('usr_app_clientes as cli', 'cli.id', 'usr_app_formulario_ingreso.cliente_id')
+            ->leftJoin('usr_app_municipios as mun', 'mun.id', 'usr_app_formulario_ingreso.municipio_id')
+            ->leftJoin('usr_app_departamentos as dep', 'dep.id', 'mun.departamento_id')
+            ->leftJoin('usr_app_paises as pais', 'pais.id', 'dep.pais_id')
+            ->leftJoin('usr_app_afp as afp', 'afp.id', 'usr_app_formulario_ingreso.afp_id')
+            ->leftJoin('usr_app_estados_ingreso as esti', 'esti.id', 'usr_app_formulario_ingreso.estado_ingreso_id')
+            ->leftJoin('usr_app_formulario_ingreso_tipo_servicio as tiser', 'tiser.id', 'usr_app_formulario_ingreso.tipo_servicio_id')
+            ->leftJoin('gen_tipide as ti', 'ti.cod_tip', '=', 'usr_app_formulario_ingreso.tipo_documento_id')
+            ->where('usr_app_formulario_ingreso.numero_identificacion', '=', $cedula)
+            ->select(
+                'usr_app_formulario_ingreso.id',
+                'esti.nombre as estado_ingreso',
+                'esti.id as estado_ingreso_id',
+                'usr_app_formulario_ingreso.responsable as responsable_ingreso',
+                'usr_app_formulario_ingreso.fecha_ingreso',
+                'usr_app_formulario_ingreso.numero_identificacion',
+                'usr_app_formulario_ingreso.nombre_completo',
+                'usr_app_formulario_ingreso.cliente_id',
+                'cli.razon_social',
+                'usr_app_formulario_ingreso.cargo',
+                'usr_app_formulario_ingreso.salario',
+                'usr_app_formulario_ingreso.municipio_id',
+                'mun.nombre as municipio',
+                'usr_app_formulario_ingreso.numero_contacto',
+                'usr_app_formulario_ingreso.eps',
+                'usr_app_formulario_ingreso.afp_id',
+                'afp.nombre as afp',
+                'usr_app_formulario_ingreso.estradata',
+                'usr_app_formulario_ingreso.novedades',
+                'usr_app_formulario_ingreso.laboratorio',
+                'usr_app_formulario_ingreso.examenes',
+                'usr_app_formulario_ingreso.fecha_examen',
+                'dep.id as departamento_id',
+                'dep.nombre as departamento',
+                'pais.id as pais_id',
+                'pais.nombre as pais',
+                'usr_app_formulario_ingreso.created_at as fecha_radicado',
+                'tiser.nombre_servicio',
+                'tiser.id as tipo_servicio_id',
+                'usr_app_formulario_ingreso.numero_vacantes',
+                'usr_app_formulario_ingreso.numero_contrataciones',
+                'usr_app_formulario_ingreso.citacion_entrevista',
+                'usr_app_formulario_ingreso.profesional',
+                'usr_app_formulario_ingreso.informe_seleccion',
+                'usr_app_formulario_ingreso.cambio_fecha',
+                'usr_app_formulario_ingreso.numero_radicado',
+                'usr_app_formulario_ingreso.direccion_empresa',
+                'usr_app_formulario_ingreso.direccion_laboratorio',
+                'usr_app_formulario_ingreso.recomendaciones_examen',
+                'usr_app_formulario_ingreso.novedad_stradata',
+                'usr_app_formulario_ingreso.correo_notificacion_empresa',
+                'usr_app_formulario_ingreso.correo_notificacion_usuario',
+                'usr_app_formulario_ingreso.novedades_examenes',
+                'ti.des_tip as tipo_identificacion',
+                'usr_app_formulario_ingreso.subsidio_transporte',
+                'usr_app_formulario_ingreso.estado_vacante',
+                'usr_app_formulario_ingreso.responsable_id',
+                'ti.cod_tip as tipo_identificacion_id',
+                'usr_app_formulario_ingreso.afectacion_servicio',
+                'usr_app_formulario_ingreso.observacion_estado',
+                'usr_app_formulario_ingreso.correo_laboratorio',
+                'usr_app_formulario_ingreso.contacto_empresa',
+
+            )
+            ->first();
+
+        $laboratorios = RegistroIngresoLaboratorio::join('usr_app_ciudad_laboraorio as ciulab', 'ciulab.id', '=', 'usr_app_registro_ingreso_laboraorio.laboratorio_medico_id')
+            ->join('usr_app_municipios as mun', 'mun.id', '=', 'ciulab.ciudad_id')
+            ->join('usr_app_departamentos as dep', 'dep.id', '=', 'mun.departamento_id')
+            ->where('usr_app_registro_ingreso_laboraorio.registro_ingreso_id', '=',  $result->id)
+            ->select(
+                'ciulab.id',
+                'ciulab.laboratorio as nombre',
+                'mun.id as municipio_id',
+                'mun.nombre as municipio',
+                'dep.id as departamento_id',
+                'dep.nombre as departamento',
+            )
+            ->get();
+        $result['laboratorios'] = $laboratorios;
+
+        $archivos = FormularioIngresoArchivos::join('usr_app_archivos_formulario_ingreso as fi', 'fi.id', '=', 'usr_app_formulario_ingreso_archivos.arhivo_id')
+            ->where('ingreso_id',  $result->id)
+            ->select(
+                'usr_app_formulario_ingreso_archivos.arhivo_id',
+                'usr_app_formulario_ingreso_archivos.ruta',
+                'usr_app_formulario_ingreso_archivos.observacion',
+                'fi.nombre',
+                'fi.tipo_archivo'
+            )
+            ->get();
+        $result['archivos'] = $archivos;
+
+
+        $seguimiento = FormularioIngresoSeguimiento::join('usr_app_estados_ingreso as ei', 'ei.id', '=', 'usr_app_formulario_ingreso_seguimiento.estado_ingreso_id')
+            ->where('usr_app_formulario_ingreso_seguimiento.formulario_ingreso_id', $result->id)
+            ->select(
+                'usr_app_formulario_ingreso_seguimiento.usuario',
+                'ei.nombre as estado',
+                'usr_app_formulario_ingreso_seguimiento.created_at',
+            )
+            ->orderby('usr_app_formulario_ingreso_seguimiento.id', 'desc')
+            ->get();
+        $result['seguimiento'] = $seguimiento;
+        return response()->json($result);
+    }
+
+    public function buscardocumentolistai($cedula)
+    {
+        $result = FormularioGestionIngreso::leftJoin('usr_app_clientes as cli', 'cli.id', 'usr_app_formulario_ingreso.cliente_id')
+            ->leftJoin('usr_app_municipios as mun', 'mun.id', 'usr_app_formulario_ingreso.municipio_id')
+            ->LeftJoin('usr_app_estados_ingreso as est', 'est.id', 'usr_app_formulario_ingreso.estado_ingreso_id')
+            ->where('usr_app_formulario_ingreso.numero_identificacion', 'like', '%' . $cedula . '%')
+            ->select(
+                'usr_app_formulario_ingreso.id',
+                'usr_app_formulario_ingreso.numero_radicado',
+                'usr_app_formulario_ingreso.created_at',
+                'usr_app_formulario_ingreso.numero_identificacion',
+                'usr_app_formulario_ingreso.nombre_completo',
+                'usr_app_formulario_ingreso.cargo',
+                'cli.razon_social',
+                'mun.nombre as ciudad',
+                'usr_app_formulario_ingreso.laboratorio',
+                'usr_app_formulario_ingreso.fecha_examen',
+                DB::raw("FORMAT(CAST(usr_app_formulario_ingreso.fecha_ingreso AS DATE), 'dd/MM/yyyy') as fecha_ingreso"),
+                'usr_app_formulario_ingreso.estado_vacante',
+                'usr_app_formulario_ingreso.novedades',
+                'usr_app_formulario_ingreso.observacion_estado',
+                'est.nombre as estado_ingreso',
+                'usr_app_formulario_ingreso.responsable',
+                // 'usr_app_formulario_ingreso.responsable as responsable_ingreso',
+                'est.id as estado_ingreso_id',
+                'est.color as color_estado',
+
+            )
+            ->orderBy('usr_app_formulario_ingreso.created_at', 'DESC')
+            ->paginate();
+        return response()->json($result);
+    }
+
 
     /**
      * Show the form for creating a new resource.
@@ -1261,10 +1469,10 @@ class formularioGestionIngresoController extends Controller
             $result->estado_vacante = $request->consulta_vacante;
             $result->tipo_documento_id = $request->tipo_identificacion;
             $result->observacion_estado = $request->consulta_observacion_estado;
-
+            $result->correo_laboratorio = $request->correo_laboratorio;
+            $result->contacto_empresa = $request->contacto_empresa;
 
             $result->save();
-
 
             $laboratorio = new RegistroIngresoLaboratorio;
             $laboratorio->registro_ingreso_id  = $result->id;
@@ -1286,7 +1494,7 @@ class formularioGestionIngresoController extends Controller
         $user = auth()->user();
         $lista = $request->all();
         foreach ($lista as $item) {
-            $existeIngreso = FormularioIngresoPendientes::where('registro_ingreso_id', $item)->first();
+            $existeIngreso = FormularioIngresoPendientes::where('registro_ingreso_id', $item)->where('usuario_id', $user->id)->first();
 
             if (!$existeIngreso) {
                 $result = new FormularioIngresoPendientes;
@@ -1479,6 +1687,9 @@ class formularioGestionIngresoController extends Controller
             $result->estado_vacante = $request->consulta_vacante;
             $result->afectacion_servicio = $request->afectacion_servicio;
             $result->observacion_estado = $request->consulta_observacion_estado;
+            $result->tipo_documento_id = $request->tipo_identificacion;
+            $result->correo_laboratorio = $request->correo_laboratorio;
+            $result->contacto_empresa = $request->contacto_empresa;
 
             $result->save();
 
