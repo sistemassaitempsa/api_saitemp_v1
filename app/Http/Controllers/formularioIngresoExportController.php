@@ -113,9 +113,9 @@ class formularioIngresoExportController extends Controller
                     $query->where($prefijoCampo . $campoActual, '=', $valorCompararActual);
                     break;
                 case 'Igual a fecha':
-                    $fechaHora = date('Y-m-d H:i:s', strtotime($valorCompararActual));
-                    $query->whereRaw("TRY_CONVERT(datetime, $prefijoCampo$campoActual) = ?", [$fechaHora]);
-                    break;
+                    // $fechaHora = date('Y-m-d H:i:s', strtotime($valorCompararActual));
+                    // $query->whereRaw("TRY_CONVERT(datetime, $prefijoCampo$campoActual) = ?", [$fechaHora]);
+                    // break;
                     //    return $prefijoCampo .''. $campoActual. '='. $valorCompararActual;
                     $query->whereDate($prefijoCampo . $campoActual, '=', $valorCompararActual);
                     break;

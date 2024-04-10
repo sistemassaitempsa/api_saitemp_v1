@@ -120,6 +120,7 @@ use App\Http\Controllers\FormularioIngresoTipoServicioController;
 use App\Http\Controllers\formularioIngresoExportController;
 use App\Http\Controllers\ObservacionEstadoFormIngresoController;
 use App\Http\Controllers\SedeController;
+use App\Http\Controllers\SolicitanteCrmController;
 
 
 
@@ -768,8 +769,10 @@ Route::group([
   Route::post('/formularioingreso/{id}', [formularioGestionIngresoController::class, 'update']);
   Route::post('/formularioingreso/doc/{id}', [formularioGestionIngresoController::class, 'store']);
   Route::delete('/formularioingreso/{id}', [formularioGestionIngresoController::class, 'destroy']);
-  Route::get('/formularioingresofiltro/{cadena}', [formularioGestionIngresoController::class, 'filtro']);
+  Route::get('/formularioingresofiltro/{cadena}/{cantidad}', [formularioGestionIngresoController::class, 'filtro']);
   Route::post('/formularioingresopendientesborradomasivo', [formularioGestionIngresoController::class, 'borradomasivo']);
+  Route::get('/buscardocumentoformularioi/{documento}', [formularioGestionIngresoController::class, 'buscardocumentoformularioi']);
+  Route::get('/buscardocumentolistai/{documento}', [formularioGestionIngresoController::class, 'buscardocumentolistai']);
 
   Route::get('/observacionestado', [ObservacionEstadoFormIngresoController::class, 'index']);
 
@@ -783,6 +786,8 @@ Route::group([
 
 
   Route::get('/tiposserviofi', [FormularioIngresoTipoServicioController::class, 'index']);
+
+  Route::get('/solicitantecrm', [SolicitanteCrmController::class, 'index']);
 
 
 
