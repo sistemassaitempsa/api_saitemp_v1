@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 // use App\Models\ClientesAlInstante;
 use Illuminate\Support\Facades\DB;
-use App\Events\EventoPrueba;
+// use App\Events\EventoPrueba;
 
 class ClientesAlInstanteController extends Controller
 {
@@ -16,7 +16,7 @@ class ClientesAlInstanteController extends Controller
      */
     public function index()
     {
-        event(new EventoPrueba('Listando empresas'));
+        // event(new EventoPrueba('Listando empresas'));
         $result = DB::connection('second_db')->table('cxc_cliente')->select(
             'cod_cli as codigo',
             'nom_cli as nombre'

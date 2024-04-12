@@ -7,6 +7,7 @@ use App\Models\formularioGestionIngreso;
 use App\Exports\FormularioIngresoExport;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use App\Models\RegistroIngresoLaboratorio;
 
 class formularioIngresoExportController extends Controller
 {
@@ -52,10 +53,6 @@ class formularioIngresoExportController extends Controller
                 'afp.nombre as afp',
                 'usr_app_formulario_ingreso.estradata',
                 'usr_app_formulario_ingreso.novedad_stradata',
-                // departamento laboratorio
-                // municipio laboratorio
-                // laboratorio
-                'usr_app_formulario_ingreso.laboratorio',
                 'usr_app_formulario_ingreso.direccion_laboratorio',
                 'usr_app_formulario_ingreso.examenes',
                 'usr_app_formulario_ingreso.fecha_examen',
@@ -65,6 +62,7 @@ class formularioIngresoExportController extends Controller
                 'usr_app_formulario_ingreso.correo_notificacion_empresa',
                 DB::raw("FORMAT(CAST(usr_app_formulario_ingreso.fecha_ingreso AS DATE), 'dd/MM/yyyy') as fecha_ingreso"),
                 'usr_app_formulario_ingreso.estado_vacante',
+                'usr_app_formulario_ingreso.laboratorio',
 
             )
             ->orderBy('usr_app_formulario_ingreso.created_at', 'DESC');
@@ -134,9 +132,28 @@ class formularioIngresoExportController extends Controller
 
         foreach ($resultados as $item) {
             $item->fecha_examen = $item->fecha_examen ? date('d/m/Y H:i', strtotime($item->fecha_examen)) : null;
+            $laboratorios = RegistroIngresoLaboratorio::join('usr_app_ciudad_laboraorio as ciulab', 'ciulab.id', '=', 'usr_app_registro_ingreso_laboraorio.laboratorio_medico_id')
+                ->join('usr_app_municipios as mun', 'mun.id', '=', 'ciulab.ciudad_id')
+                ->join('usr_app_departamentos as dep', 'dep.id', '=', 'mun.departamento_id')
+                ->where('usr_app_registro_ingreso_laboraorio.registro_ingreso_id', '=', $item->id)
+                ->select(
+                    'ciulab.id',
+                    'ciulab.laboratorio as nombre',
+                    'mun.id as municipio_id',
+                    'mun.nombre as municipio',
+                    'dep.id as departamento_id',
+                    'dep.nombre as departamento',
+                )
+                ->get();
+            unset($item->id);
+
+            foreach ($laboratorios as $laboratorio) {
+                $item->departamento_lab = $laboratorio->departamento;
+                $item->municipio_lab = $laboratorio->municipio;
+                $item->nombre_lab = $laboratorio->nombre;
+            }
         }
 
         return (new FormularioIngresoExport($resultados))->download('exportData.xlsx', \Maatwebsite\Excel\Excel::XLSX);
-        // return $resultados;
     }
 }

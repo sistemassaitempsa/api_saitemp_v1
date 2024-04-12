@@ -55,7 +55,6 @@ class FormularioIngresoExport implements FromCollection, WithStyles, ShouldAutoS
             'AFP',
             'Stradata verificado',
             'Novedades stradata',
-            'Laboratorio',
             'Dirección laboratorio',
             'Exámenes',
             'Fecha de exámen',
@@ -65,6 +64,10 @@ class FormularioIngresoExport implements FromCollection, WithStyles, ShouldAutoS
             'Correo notificación empresa',
             'Fecha de ingreso',
             'Estado de la vacante',
+            'Otro laboratorio',
+            'Departamento ubicación laboratorio médico',
+            'Ciudad ubicación laboratorio médico',
+            'Laboratorio médico',
 
         ];
     }
