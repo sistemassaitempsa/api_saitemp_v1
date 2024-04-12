@@ -33,6 +33,7 @@ use App\Models\ClienteTipoContrato;
 use App\Models\ClienteLaboratorio;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+// use App\Events\EventoPrueba2;
 
 
 
@@ -662,7 +663,7 @@ class formularioDebidaDiligenciaController extends Controller
 
     public function filtro($cadena)
     {
-
+        // event(new EventoPrueba2('Filtrando empresas'));
         try {
             $consulta = base64_decode($cadena);
             $valores = explode("/", $consulta);
@@ -1071,9 +1072,9 @@ class formularioDebidaDiligenciaController extends Controller
         try {
             $result = DocumentoCliente::where('cliente_id', '=', $id_cliente)
                 ->get();
-            foreach ($result as $item) {
-                $item->delete();
-            }
+            // foreach ($result as $item) {
+            //     $item->delete();
+            // }
             $documentos = $request->all();
             $value = '';
             $id = '';

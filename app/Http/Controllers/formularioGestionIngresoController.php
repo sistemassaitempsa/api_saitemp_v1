@@ -43,6 +43,7 @@ class formularioGestionIngresoController extends Controller
                 'usr_app_formulario_ingreso.estado_vacante',
                 'usr_app_formulario_ingreso.novedades',
                 'usr_app_formulario_ingreso.observacion_estado',
+                'usr_app_formulario_ingreso.profesional',
                 'est.nombre as estado_ingreso',
                 'usr_app_formulario_ingreso.responsable',
                 // 'usr_app_formulario_ingreso.responsable as responsable_ingreso',
@@ -117,7 +118,7 @@ class formularioGestionIngresoController extends Controller
 
         // Actualizar el registro de ingreso con el estado y el responsable
         $registro_ingreso->estado_ingreso_id = $estado_id;
-        // $registro_ingreso->responsable = $responsable->nombres;
+        $registro_ingreso->responsable = $responsable->nombres;
         if ($registro_ingreso->save()) {
             return response()->json(['status' => 'success', 'message' => 'Registro actualizado de manera exitosa.']);
         }
@@ -259,6 +260,7 @@ class formularioGestionIngresoController extends Controller
                 'fi.nombre',
                 'fi.tipo_archivo'
             )
+            ->orderby( 'usr_app_formulario_ingreso_archivos.arhivo_id','ASC')
             ->get();
         $result['archivos'] = $archivos;
 
@@ -298,12 +300,11 @@ class formularioGestionIngresoController extends Controller
 
         $combinacion_correos = '';
 
-        if ($formulario->correo_laboratorio != null && $formulario->tipo_servicio_id == 2) {
-            $combinacion_correos .= $formulario->correo_notificacion_empresa != null ? $formulario->correo_notificacion_empresa . ',' . $formulario->correo_laboratorio : $formulario->correo_laboratorio;
+        if ($formulario->correo_laboratorio != null && $id == 3) {
+            $combinacion_correos =  $formulario->correo_laboratorio;
         } else {
             $combinacion_correos = $formulario->correo_notificacion_empresa;
         }
-
 
         $fecha_ingreso = $formulario->fecha_ingreso;
         $numero_identificacion = $formulario->numero_identificacion;
@@ -353,7 +354,7 @@ class formularioGestionIngresoController extends Controller
         }
 
 
-        if ($id == 1) {
+        if ($id == 1  || $id == 3) {
 
             $pdf->Ln(20);
 
@@ -1120,15 +1121,23 @@ class formularioGestionIngresoController extends Controller
         $body = '';
         $subject = '';
         $nomb_membrete = '';
-        if ($id == 1) {
-            $body = 'Cordial saludo, hago envío de la orden de servicio.';
-            $subject = 'Orden de servicio.';
-            $nomb_membrete = 'Orden de servicio';
-        } else {
+        if ($id == 3 && $formulario->correo_laboratorio != null) {
+            $body = "Cordial saludo, esperamos se encuentren bien.\n\nAutorizamos exámenes médicos en solicitud de servicio adjunta, cualquier información adicional que se requiera, comunicarse a la línea Servisai de Saitemp S.A. marcando al (604) 4485744, donde con gusto uno de nuestros facilitadores atenderá su llamada.\n\nSimplificando conexiones, facilitando experiencias.";
+            $body = nl2br($body);
+            $subject = 'Autorización de exámenes.';
+            $nomb_membrete = 'Autorizacion';
+        } elseif ($id == 1 && $formulario->correo_notificacion_empresa != null) {
+            $body = "Cordial saludo, esperamos se encuentren muy bien.\n\n Informamos que su solicitud de servicio ha sido recibida satisfactoriamente, Cualquier información adicional podrá ser atendida en la línea Servisai de Saitemp S.A. marcando  al (604) 4485744, con gusto uno de nuestros facilitadores atenderá su llamada.\n\n simplificando conexiones, facilitando experiencias.";
+            $body = nl2br($body);
+            $subject = 'Confirmación de servicio recibido .';
+            $nomb_membrete = 'Confirmacion';
+        } elseif ($id == 2 && $formulario->correo_notificacion_empresa != null) {
             $body = 'Cordial saludo, hago envío del informe de seleccion.';
+            $body = nl2br($body);
             $subject = 'Informe de seleccion.';
             $nomb_membrete = 'Informe de seleccion';
         }
+
 
 
         $correo = null;
@@ -1185,6 +1194,7 @@ class formularioGestionIngresoController extends Controller
                 'usr_app_formulario_ingreso.estado_vacante',
                 'usr_app_formulario_ingreso.novedades',
                 'usr_app_formulario_ingreso.observacion_estado',
+                'usr_app_formulario_ingreso.profesional',
                 'est.nombre as estado_ingreso',
                 'usr_app_formulario_ingreso.responsable',
                 // 'usr_app_formulario_ingreso.responsable as responsable_ingreso',
@@ -1398,6 +1408,7 @@ class formularioGestionIngresoController extends Controller
                 'usr_app_formulario_ingreso.estado_vacante',
                 'usr_app_formulario_ingreso.novedades',
                 'usr_app_formulario_ingreso.observacion_estado',
+                'usr_app_formulario_ingreso.profesional',
                 'est.nombre as estado_ingreso',
                 'usr_app_formulario_ingreso.responsable',
                 // 'usr_app_formulario_ingreso.responsable as responsable_ingreso',
@@ -1438,7 +1449,8 @@ class formularioGestionIngresoController extends Controller
             $result->examenes = $request->examenes;
             $result->afectacion_servicio = $request->afectacion_servicio;
             if ($request->fecha_examen != null) {
-                $result->fecha_examen = Carbon::createFromFormat('Y-m-d\TH:i', $request->fecha_examen)->format('Y-m-d H:i:s');
+                // $result->fecha_examen = Carbon::createFromFormat('Y-m-d\TH:i', $request->fecha_examen)->format('Y-m-d H:i:s');
+                $result->fecha_examen = $request->fecha_examen;
             }
             if ($request->estado_id == '') {
                 $result->estado_ingreso_id = 1;
@@ -1455,7 +1467,7 @@ class formularioGestionIngresoController extends Controller
             $result->profesional = $request->profesional;
             $result->informe_seleccion = $request->informe_seleccion;
             if ($request->cambio_fecha != null) {
-                $result->cambio_fecha = Carbon::createFromFormat('Y-m-d\TH:i', $request->cambio_fecha)->format('Y-m-d H:i:s');
+                $result->cambio_fecha =$request->cambio_fecha;
             }
             $result->responsable = $request->consulta_encargado;
             $result->novedad_stradata = $request->novedades_stradata;
@@ -1642,6 +1654,7 @@ class formularioGestionIngresoController extends Controller
      */
     public function update(Request $request, $id)
     {
+        $estado_id = $request->estado_id;
         DB::beginTransaction();
         try {
             $user = auth()->user();
@@ -1719,6 +1732,10 @@ class formularioGestionIngresoController extends Controller
             }
 
             DB::commit();
+            if ($estado_id != $result->estado_ingreso_id ||  $result->responsable == null) {
+                $this->actualizaestadoingreso($id, $estado_id);
+            }
+
             return response()->json(['status' => '200', 'message' => 'ok', 'registro_ingreso_id' => $result->id]);
         } catch (\Exception $e) {
             // Revertir la transacción si se produce alguna excepción
