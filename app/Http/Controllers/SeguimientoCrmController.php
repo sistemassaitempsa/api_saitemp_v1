@@ -36,6 +36,7 @@ class SeguimientoCrmController extends Controller
                 'cierre.nombre as estado',
                 'usr_app_seguimiento_crm.observacion',
             )
+            ->orderby('usr_app_seguimiento_crm.id','DESC')
             ->paginate($cantidad);
         return response()->json($result);
     }
@@ -72,6 +73,9 @@ class SeguimientoCrmController extends Controller
                 'usr_app_seguimiento_crm.nit_documento',
                 'usr_app_seguimiento_crm.pqrsf_id',
                 'pqrsf.nombre as pqrsf',
+                'usr_app_seguimiento_crm.creacion_pqrsf',
+                'usr_app_seguimiento_crm.cierre_pqrsf',
+                'usr_app_seguimiento_crm.responsable',
             )
             ->first();
         return response()->json($result);
@@ -210,6 +214,7 @@ class SeguimientoCrmController extends Controller
      */
     public function create(Request $request)
     {
+        $user = auth()->user();
         $result = new SeguimientoCrm;
         $result->sede_id = $request->sede_id;
         $result->proceso_id = $request->proceso_id;
@@ -222,6 +227,9 @@ class SeguimientoCrmController extends Controller
         $result->observacion = $request->observacion;
         $result->nit_documento = $request->nit_documento;
         $result->pqrsf_id = $request->pqrsf_id;
+        $result->creacion_pqrsf = $user->nombres.' '.$user->apellidos;
+        $result->cierre_pqrsf = $request->cierre_pqrsf;
+        $result->responsable = $request->responsable;
         if ($request->estado_id == 2) {
             $fechaHoraActual = Carbon::now();
             $result->fecha_cerrado = $fechaHoraActual->format('d-m-Y H:i:s');
@@ -286,6 +294,8 @@ class SeguimientoCrmController extends Controller
         $result->estado_id = $request->estado_id;
         $result->observacion = $request->observacion;
         $result->nit_documento = $request->nit_documento;
+        $result->cierre_pqrsf = $request->cierre_pqrsf;
+        $result->responsable = $request->responsable;
         $result->pqrsf_id = $request->pqrsf_id;
         if ($request->estado_id == 2) {
             $fechaHoraActual = Carbon::now();
