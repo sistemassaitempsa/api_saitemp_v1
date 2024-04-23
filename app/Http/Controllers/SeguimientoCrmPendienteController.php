@@ -3,9 +3,8 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Models\ArchivosFormularioIngreso;
 
-class ArchivosFormularioIngresoController extends Controller
+class SeguimientoCrmPendienteController extends Controller
 {
     /**
      * Display a listing of the resource.
@@ -14,9 +13,7 @@ class ArchivosFormularioIngresoController extends Controller
      */
     public function index()
     {
-        $result = ArchivosFormularioIngreso::select()
-            ->get();
-        return response()->json($result);
+        //
     }
 
     /**
@@ -82,5 +79,6 @@ class ArchivosFormularioIngresoController extends Controller
      */
     public function destroy($id)
     {
+        //
     }
 }

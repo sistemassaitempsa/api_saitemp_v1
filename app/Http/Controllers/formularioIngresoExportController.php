@@ -33,6 +33,7 @@ class formularioIngresoExportController extends Controller
             ->LeftJoin('usr_app_afp as afp', 'afp.id', 'usr_app_formulario_ingreso.afp_id')
             ->leftJoin('usr_app_formulario_ingreso_tipo_servicio as tiser', 'tiser.id', 'usr_app_formulario_ingreso.tipo_servicio_id')
             ->select(
+                'usr_app_formulario_ingreso.id',
                 'usr_app_formulario_ingreso.numero_radicado',
                 'usr_app_formulario_ingreso.created_at',
                 'est.nombre as estado_ingreso',
@@ -59,10 +60,13 @@ class formularioIngresoExportController extends Controller
                 'usr_app_formulario_ingreso.recomendaciones_examen',
                 'usr_app_formulario_ingreso.novedades_examenes',
                 'usr_app_formulario_ingreso.novedades',
+                'usr_app_formulario_ingreso.observacion_estado',
                 'usr_app_formulario_ingreso.correo_notificacion_empresa',
                 DB::raw("FORMAT(CAST(usr_app_formulario_ingreso.fecha_ingreso AS DATE), 'dd/MM/yyyy') as fecha_ingreso"),
                 'usr_app_formulario_ingreso.estado_vacante',
                 'usr_app_formulario_ingreso.laboratorio',
+                'usr_app_formulario_ingreso.observacion_estado',
+
 
             )
             ->orderBy('usr_app_formulario_ingreso.created_at', 'DESC');

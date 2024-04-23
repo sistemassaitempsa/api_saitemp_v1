@@ -121,6 +121,9 @@ use App\Http\Controllers\formularioIngresoExportController;
 use App\Http\Controllers\ObservacionEstadoFormIngresoController;
 use App\Http\Controllers\SedeController;
 use App\Http\Controllers\SolicitanteCrmController;
+use App\Http\Controllers\EstadoCierreCrmController;
+use App\Http\Controllers\PqrsfCRMController;
+use App\Http\Controllers\SeguimientoCrmController;
 
 
 
@@ -773,6 +776,7 @@ Route::group([
   Route::post('/formularioingresopendientesborradomasivo', [formularioGestionIngresoController::class, 'borradomasivo']);
   Route::get('/buscardocumentoformularioi/{documento}', [formularioGestionIngresoController::class, 'buscardocumentoformularioi']);
   Route::get('/buscardocumentolistai/{documento}', [formularioGestionIngresoController::class, 'buscardocumentolistai']);
+  Route::delete('/eliminararchivosingreso/{item}/{id}', [formularioGestionIngresoController::class, 'eliminararchivo']);
 
   Route::get('/observacionestado', [ObservacionEstadoFormIngresoController::class, 'index']);
 
@@ -788,6 +792,18 @@ Route::group([
   Route::get('/tiposserviofi', [FormularioIngresoTipoServicioController::class, 'index']);
 
   Route::get('/solicitantecrm', [SolicitanteCrmController::class, 'index']);
+  Route::get('/estadocirrecrm', [EstadoCierreCrmController::class, 'index']);
+  Route::get('/pqrsf', [PqrsfCRMController::class, 'index']);
+
+  Route::get('/seguimientocrm/{cantidad}', [SeguimientoCrmController::class, 'index']);
+  Route::get('/seguimientocrmbyid/{id}', [SeguimientoCrmController::class, 'byid']);
+  Route::post('/seguimientocrm', [SeguimientoCrmController::class, 'create']);
+  Route::post('/seguimientocrm/{id}', [SeguimientoCrmController::class, 'update']);
+  Route::get('/seguimientocrmfiltro/{cadena}', [SeguimientoCrmController::class, 'filtro']);
+  Route::post('/seguimientocrmpendientes', [SeguimientoCrmController::class, 'pendientes']);
+  Route::get('/seguimientocrmpendientes/{cantidad}', [SeguimientoCrmController::class, 'pendientes2']);
+  Route::post('/seguimientocrmpendientesborradomasivo', [SeguimientoCrmController::class, 'borradomasivo']);
+  // Route::delete('/seguimientocrm', [SeguimientoCrmController::class, 'destroy']);
 
 
 

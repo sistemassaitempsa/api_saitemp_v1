@@ -37,6 +37,8 @@ use Illuminate\Support\Facades\DB;
 
 
 
+
+
 class formularioDebidaDiligenciaController extends Controller
 {
     /**
@@ -663,7 +665,11 @@ class formularioDebidaDiligenciaController extends Controller
 
     public function filtro($cadena)
     {
-        // event(new EventoPrueba2('Filtrando empresas'));
+        // $objeto = (object) [
+        //     'mensaje' => 'Filtrando empresas',
+        //     'componente' => 'navbar/debida-diligencia/clientes'
+        // ];
+        // event(new EventoPrueba2($objeto));
         try {
             $consulta = base64_decode($cadena);
             $valores = explode("/", $consulta);
