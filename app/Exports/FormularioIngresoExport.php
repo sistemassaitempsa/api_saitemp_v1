@@ -48,6 +48,8 @@ class FormularioIngresoExport implements FromCollection, WithStyles, ShouldAutoS
             'Correo candidato',
             'cargo',
             'Salario',
+            'Profesional',
+            'Informe de selección',
             'Subsidio de transporte',
             'Departamento',
             'Ciudad',
@@ -70,6 +72,7 @@ class FormularioIngresoExport implements FromCollection, WithStyles, ShouldAutoS
             'Departamento ubicación laboratorio médico',
             'Ciudad ubicación laboratorio médico',
             'Laboratorio médico',
+            'Informe selección',
 
         ];
     }

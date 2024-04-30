@@ -47,6 +47,8 @@ class formularioIngresoExportController extends Controller
                 'usr_app_formulario_ingreso.correo_notificacion_usuario',
                 'usr_app_formulario_ingreso.cargo',
                 'usr_app_formulario_ingreso.salario',
+                'usr_app_formulario_ingreso.profesional',
+                'usr_app_formulario_ingreso.informe_seleccion',
                 'usr_app_formulario_ingreso.subsidio_transporte',
                 'dep.nombre as departamento',
                 'mun.nombre as ciudad',
@@ -66,6 +68,7 @@ class formularioIngresoExportController extends Controller
                 'usr_app_formulario_ingreso.estado_vacante',
                 'usr_app_formulario_ingreso.laboratorio',
                 'usr_app_formulario_ingreso.observacion_estado',
+                
 
 
             )
@@ -86,6 +89,8 @@ class formularioIngresoExportController extends Controller
                 $campoActual = 'nombre';
             } elseif ($campoActual === 'razon_social') {
                 $prefijoCampo = 'cli.';
+            } elseif ($campoActual === 'nombre_servicio') {
+                $prefijoCampo = 'tiser.';
             } else {
                 $prefijoCampo = 'usr_app_formulario_ingreso.';
             }
