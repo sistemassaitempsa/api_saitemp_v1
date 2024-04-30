@@ -147,6 +147,7 @@ class ContratacionModalController extends Controller
             DB::commit();
             return response()->json(['status' => 'success', 'message' => 'Registro actualizado con exito.']);
         } catch (\Exception $e) {
+            DB::rollback();
             return $e;
             // return response()->json(['status' => 'error', 'message' => 'Error al actualizar registro por favor ingrese nuevamente.']);
         }

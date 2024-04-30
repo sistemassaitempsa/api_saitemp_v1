@@ -229,6 +229,7 @@ class SeleccionModalController extends Controller
             DB::commit();
             return response()->json(['status' => 'success', 'message' => 'Registro aguardado con exito.']);
         } catch (\Exception $e) {
+            DB::rollback();
             return $e;
             return response()->json(['status' => 'error', 'message' => 'Error al guardar registro por favor ingrese nuevamente.']);
         }
