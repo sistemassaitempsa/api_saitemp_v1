@@ -62,18 +62,18 @@ class FormularioIngresoExport implements FromCollection, WithStyles, ShouldAutoS
             'Fecha de exámen',
             'Recomendaciones exámen',
             'Novedades exámenes',
-            'Novedades',
-            'Observacion estado',
+            'Observacion al servicio',
+            'Novedad en servicio',
+            'Afectaciones al servicio',
+            'Corregir por',
             'Correo notificación empresa',
             'Fecha de ingreso',
             'Estado de la vacante',
-            'Novedad en servicio',
             'Otro laboratorio',
             'Departamento ubicación laboratorio médico',
             'Ciudad ubicación laboratorio médico',
             'Laboratorio médico',
-            'Informe selección',
-
+            'Seguimiento',
         ];
     }
     

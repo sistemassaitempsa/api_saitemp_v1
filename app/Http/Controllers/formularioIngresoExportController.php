@@ -8,6 +8,7 @@ use App\Exports\FormularioIngresoExport;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use App\Models\RegistroIngresoLaboratorio;
+use App\Models\FormularioIngresoSeguimiento;
 
 class formularioIngresoExportController extends Controller
 {
@@ -63,12 +64,14 @@ class formularioIngresoExportController extends Controller
                 'usr_app_formulario_ingreso.novedades_examenes',
                 'usr_app_formulario_ingreso.novedades',
                 'usr_app_formulario_ingreso.observacion_estado',
+                'usr_app_formulario_ingreso.afectacion_servicio',
+                'usr_app_formulario_ingreso.responsable_corregir',
                 'usr_app_formulario_ingreso.correo_notificacion_empresa',
                 DB::raw("FORMAT(CAST(usr_app_formulario_ingreso.fecha_ingreso AS DATE), 'dd/MM/yyyy') as fecha_ingreso"),
                 'usr_app_formulario_ingreso.estado_vacante',
                 'usr_app_formulario_ingreso.laboratorio',
                 'usr_app_formulario_ingreso.observacion_estado',
-                
+
 
 
             )
@@ -154,12 +157,57 @@ class formularioIngresoExportController extends Controller
                     'dep.nombre as departamento',
                 )
                 ->get();
-            unset($item->id);
 
             foreach ($laboratorios as $laboratorio) {
                 $item->departamento_lab = $laboratorio->departamento;
                 $item->municipio_lab = $laboratorio->municipio;
                 $item->nombre_lab = $laboratorio->nombre;
+            }
+
+            if ($item->nombre_lab == '') {
+                $item->departamento_lab = ' ';
+                $item->municipio_lab = ' ';
+                $item->nombre_lab = ' ';
+            }
+
+            $seguimiento = FormularioIngresoSeguimiento::join('usr_app_estados_ingreso as ei', 'ei.id', '=', 'usr_app_formulario_ingreso_seguimiento.estado_ingreso_id')
+                ->where('usr_app_formulario_ingreso_seguimiento.formulario_ingreso_id', $item->id)
+                ->select(
+                    'usr_app_formulario_ingreso_seguimiento.usuario',
+                    'ei.nombre as estado',
+                    'usr_app_formulario_ingreso_seguimiento.created_at',
+
+                )
+                ->orderby('usr_app_formulario_ingreso_seguimiento.id', 'asc')
+                // ->orderby('usr_app_formulario_ingreso_seguimiento.id', 'desc')
+                ->get();
+            unset($item->id);
+
+            $variablesGuardadas = [];
+            $tempString = '';
+
+            foreach ($seguimiento as $seguimientos) {
+                $nuevaVariable = $seguimientos->usuario . ' | ' . $seguimientos->estado . ' | ' . $seguimientos->created_at . "\n" . "\n" . "\n";
+
+                $pos = strpos($nuevaVariable, "\n" . "\n" . "\n");
+
+                if ($pos !== false) {
+                    $tempString .= substr($nuevaVariable, 0, $pos);
+                    $variablesGuardadas[] = $tempString;
+                    $tempString = '';
+                    $tempString .= substr($nuevaVariable, $pos + 3);
+                } else {
+                    $tempString .= $nuevaVariable;
+                }
+            }
+
+            if (!empty($tempString)) {
+                $variablesGuardadas[] = $tempString;
+            }
+
+            for ($i = 0; $i < count($variablesGuardadas); $i++) {
+                $propertyName = 'siguimiento' . ($i + 1);
+                $item->$propertyName = $variablesGuardadas[$i];
             }
         }
 
