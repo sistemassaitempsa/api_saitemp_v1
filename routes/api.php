@@ -124,6 +124,7 @@ use App\Http\Controllers\SolicitanteCrmController;
 use App\Http\Controllers\EstadoCierreCrmController;
 use App\Http\Controllers\PqrsfCRMController;
 use App\Http\Controllers\SeguimientoCrmController;
+use App\Http\Controllers\IndicadoresSeyaController;
 
 
 
@@ -806,6 +807,10 @@ Route::group([
   // Route::delete('/seguimientocrm', [SeguimientoCrmController::class, 'destroy']);
 
 
+  Route::get('/ordenserviciochar/{anio}', [IndicadoresSeyaController::class, 'ordenservicio']);
+
+  Route::post('/borrar_nc/{id}', [formularioGestionIngresoController::class, 'borrar_nc']);
+  Route::get('/hora/{id}', [formularioGestionIngresoController::class, 'hora']);
 
 
   // Route::get('/otrosi/{id}', [OtroSiController::class, 'byid']);

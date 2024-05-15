@@ -54,11 +54,14 @@ class formularioGestionIngresoController extends Controller
                 'usr_app_formulario_ingreso.profesional',
                 // 'usr_app_formulario_ingreso.citacion_entrevista',
                 'tiser.nombre_servicio',
+                'usr_app_formulario_ingreso.afectacion_servicio',
+                'usr_app_formulario_ingreso.responsable_corregir',
                 'est.nombre as estado_ingreso',
                 'usr_app_formulario_ingreso.responsable',
                 // 'usr_app_formulario_ingreso.responsable as responsable_ingreso',
                 'est.id as estado_ingreso_id',
                 'est.color as color_estado',
+
             )
             ->orderby('usr_app_formulario_ingreso.id', 'DESC')
             ->paginate($cantidad);
@@ -100,7 +103,7 @@ class formularioGestionIngresoController extends Controller
         }
     }
 
-    public function actualizaestadoingreso($item_id, $estado_id)
+    public function actualizaestadoingreso($item_id, $estado_id, $responsable_id = null)
     {
         $user = auth()->user();
         $usuarios = FormularioIngresoResponsable::where('usr_app_formulario_ingreso_responsable.estado_ingreso_id', '=', $estado_id)
@@ -119,9 +122,9 @@ class formularioGestionIngresoController extends Controller
         $registro_ingreso = formularioGestionIngreso::where('usr_app_formulario_ingreso.id', '=', $item_id)
             ->first();
 
-        // if ($registro_ingreso->responsable_id != null && $registro_ingreso->responsable_id != $user->id) {
-        //     return response()->json(['status' => 'error', 'message' => 'Solo el responsable puede realizar esta acción.']);
-        // }
+        if ($registro_ingreso->responsable_id != null && $registro_ingreso->responsable_id != $user->id) {
+            return response()->json(['status' => 'error', 'message' => 'Solo el responsable puede realizar esta acción.']);
+        }
 
         // Asignar a cada registro de ingreso un responsable
         $indiceResponsable = $registro_ingreso->id % $numeroResponsables; // Calcula el índice del responsable basado en el ID del registro
@@ -130,7 +133,8 @@ class formularioGestionIngresoController extends Controller
         // Actualizar el registro de ingreso con el estado y el responsable
         $registro_ingreso->estado_ingreso_id = $estado_id;
         $registro_ingreso->asignacion_manual = 0;
-        $registro_ingreso->responsable = $responsable->nombres.' '.$responsable->apellidos;
+        $registro_ingreso->responsable_id = $responsable_id;
+        $registro_ingreso->responsable = $responsable->nombres . ' ' . $responsable->apellidos;
         if ($registro_ingreso->save()) {
             return response()->json(['status' => 'success', 'message' => 'Registro actualizado de manera exitosa.']);
         }
@@ -147,9 +151,9 @@ class formularioGestionIngresoController extends Controller
                 ->first();
 
 
-            // if ($registro_ingreso->responsable_id != null && $registro_ingreso->responsable_id != $user->id) {
-            //     return response()->json(['status' => 'error', 'message' => 'Solo el responsable puede realizar esta acción.']);
-            // }
+            if ($registro_ingreso->responsable_id != null && $registro_ingreso->responsable_id != $user->id) {
+                return response()->json(['status' => 'error', 'message' => 'Solo el responsable puede realizar esta acción.']);
+            }
 
             $registro_ingreso->responsable_anterior = $registro_ingreso->responsable;
             $registro_ingreso->responsable = $nombre_responsable;
@@ -246,6 +250,7 @@ class formularioGestionIngresoController extends Controller
                 'usr_app_formulario_ingreso.correo_laboratorio',
                 'usr_app_formulario_ingreso.contacto_empresa',
                 'usr_app_formulario_ingreso.responsable_corregir',
+                'usr_app_formulario_ingreso.nc_hora_cierre',
 
             )
             ->first();
@@ -2112,6 +2117,8 @@ class formularioGestionIngresoController extends Controller
                 'usr_app_formulario_ingreso.profesional',
                 // 'usr_app_formulario_ingreso.citacion_entrevista',
                 'tiser.nombre_servicio',
+                'usr_app_formulario_ingreso.afectacion_servicio',
+                'usr_app_formulario_ingreso.responsable_corregir',
                 'est.nombre as estado_ingreso',
                 'usr_app_formulario_ingreso.responsable',
                 // 'usr_app_formulario_ingreso.responsable as responsable_ingreso',
@@ -2258,6 +2265,7 @@ class formularioGestionIngresoController extends Controller
                 'usr_app_formulario_ingreso.responsable_id',
                 'ti.cod_tip as tipo_identificacion_id',
                 'usr_app_formulario_ingreso.afectacion_servicio',
+                'usr_app_formulario_ingreso.responsable_corregir',
                 'usr_app_formulario_ingreso.observacion_estado',
                 'usr_app_formulario_ingreso.correo_laboratorio',
                 'usr_app_formulario_ingreso.contacto_empresa',
@@ -2330,6 +2338,8 @@ class formularioGestionIngresoController extends Controller
                 'usr_app_formulario_ingreso.observacion_estado',
                 'usr_app_formulario_ingreso.profesional',
                 'tiser.nombre_servicio',
+                'usr_app_formulario_ingreso.afectacion_servicio',
+                'usr_app_formulario_ingreso.responsable_corregir',
                 'est.nombre as estado_ingreso',
                 'usr_app_formulario_ingreso.responsable',
                 // 'usr_app_formulario_ingreso.responsable as responsable_ingreso',
@@ -2407,6 +2417,9 @@ class formularioGestionIngresoController extends Controller
             $result->contacto_empresa = $request->contacto_empresa;
             $result->responsable_id = $request->encargado_id;
             $result->responsable_corregir = $request->consulta_encargado_corregir;
+            if ($request->variableX == 1) {
+                $result->nc_hora_cierre = 'Servicio no conforme';
+            }
             $result->save();
 
             $laboratorio = new RegistroIngresoLaboratorio;
@@ -2422,7 +2435,7 @@ class formularioGestionIngresoController extends Controller
 
             // $id_ = $result->id;
             if ($result->responsable == null) {
-                $this->actualizaestadoingreso($result->id, $result->estado_ingreso_id);
+                $this->actualizaestadoingreso($result->id, $result->estado_ingreso_id, $result->responsable_id);
             }
             DB::commit();
             return response()->json(['status' => '200', 'message' => 'ok', 'registro_ingreso_id' => $result->id]);
@@ -2595,17 +2608,17 @@ class formularioGestionIngresoController extends Controller
             $estado_id = $request->estado_id;
             $result = formularioGestionIngreso::find($id);
 
-            // if ($result->responsable_id != null && $result->responsable_id != $user->id) {
+            if ($result->responsable_id != null && $result->responsable_id != $user->id) {
 
-            //     $seguimiento = new FormularioIngresoSeguimiento;
-            //     $seguimiento->estado_ingreso_id = $request->estado_id;
-            //     $seguimiento->usuario =  $user->nombres . ' ' . $user->apellidos;
-            //     $seguimiento->formulario_ingreso_id = $id;
-            //     $seguimiento->save();
+                $seguimiento = new FormularioIngresoSeguimiento;
+                $seguimiento->estado_ingreso_id = $request->estado_id;
+                $seguimiento->usuario =  $user->nombres . ' ' . $user->apellidos;
+                $seguimiento->formulario_ingreso_id = $id;
+                $seguimiento->save();
 
-            //     return response()->json(['status' => '200', 'message' => 'ok', 'registro_ingreso_id' => $id]);
-            //     // return response()->json(['status' => 'error', 'message' => 'Solo el responsable puede realizar esta acción.']);
-            // }
+                return response()->json(['status' => '200', 'message' => 'ok', 'registro_ingreso_id' => $id]);
+                // return response()->json(['status' => 'error', 'message' => 'Solo el responsable puede realizar esta acción.']);
+            }
 
             $result->fecha_ingreso = $request->fecha_ingreo;
             $result->numero_identificacion = $request->numero_identificacion;
@@ -2666,6 +2679,9 @@ class formularioGestionIngresoController extends Controller
                 $result->estado_vacante = $request->consulta_vacante;
             }
 
+            if ($request->variableX == 1) {
+                $result->nc_hora_cierre = 'Servicio no conforme';
+            }
 
             $result->save();
 
@@ -2697,7 +2713,7 @@ class formularioGestionIngresoController extends Controller
 
             DB::commit();
             if ($estado_id != $result->estado_ingreso_id ||  $result->responsable == null) {
-                $this->actualizaestadoingreso($id, $estado_id);
+                $this->actualizaestadoingreso($id, $estado_id, $result->responsable_id);
             }
 
             return response()->json(['status' => '200', 'message' => 'ok', 'registro_ingreso_id' => $result->id]);
@@ -2706,6 +2722,28 @@ class formularioGestionIngresoController extends Controller
             DB::rollback();
             return $e;
             // return response()->json(['status' => 'error', 'message' => 'Error al guardar formulario, por favor verifique el llenado de todos los campos e intente nuevamente']);
+        }
+    }
+
+    public function borrar_nc($id)
+    {
+        $result = formularioGestionIngreso::find($id);
+        $result->nc_hora_cierre = null;
+        if ($result->save()) {
+            return response()->json(['status' => 'success', 'message' => 'No conformidad borrada de manera exitosa.']);
+        } else {
+            return response()->json(['status' => 'error', 'message' => 'Error al borrar la no conformidad.']);
+        }
+    }
+    public function hora($id)
+    {
+        $hora_actual = date("H:i:s");
+        $hora_limite = strtotime('16:00:00');
+
+        if (strtotime($hora_actual) > $hora_limite) {
+            return 1;
+        } else {
+            return 2;
         }
     }
 
