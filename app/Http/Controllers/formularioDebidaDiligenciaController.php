@@ -750,9 +750,9 @@ class formularioDebidaDiligenciaController extends Controller
             $cliente = new cliente;
 
             // encabezado paraa el formato del contrato
-            $cliente->codigo_documento = 'FEGC-01-01';
-            $cliente->fecha_documento = '02/01/2024';
-            $cliente->version_documento = '20';
+            $cliente->codigo_documento = 'FEGC-01-02';
+            $cliente->fecha_documento = '21/05/2024';
+            $cliente->version_documento = '21';
             // fin encabezado paraa el formato del contrato
 
             $cliente->operacion_id = $request['operacion'] == '' ? 1 : $request['operacion'];

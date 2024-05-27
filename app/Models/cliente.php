@@ -70,15 +70,15 @@ class cliente extends Model
 
 
                 if (!$registro->codigo_documento) {
-                    $registro->codigo_documento = 'FEGC-01-01';
+                    $registro->codigo_documento = 'FEGC-01-02';
                 }
 
                 if (!$registro->fecha_documento) {
-                    $registro->fecha_documento = '02/01/2024';
+                    $registro->fecha_documento = '21/05/2024';
                 }
 
                 if (!$registro->version_documento) {
-                    $registro->version_documento = 20;
+                    $registro->version_documento = 21;
                 }
 
                 $registro->created_at = now()->format('Y-m-d H:i:s.u');

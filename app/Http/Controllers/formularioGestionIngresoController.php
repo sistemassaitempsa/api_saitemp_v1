@@ -10,6 +10,8 @@ use App\Models\FormularioIngresoPendientes;
 use App\Models\ListaTrump;
 use App\Models\RegistroIngresoLaboratorio;
 use App\Models\FormularioIngresoSeguimiento;
+use App\Models\UsuarioPermiso;
+use App\Models\FormularioIngresoSeguimientoEstado;
 use Carbon\Carbon;
 use TCPDF;
 use Illuminate\Support\Facades\DB;
@@ -103,7 +105,7 @@ class formularioGestionIngresoController extends Controller
         }
     }
 
-    public function actualizaestadoingreso($item_id, $estado_id, $responsable_id = null)
+    public function actualizaestadoingreso($item_id, $estado_id, $responsable_id = null,  $responsable_actual = null, $estado_inicial = null)
     {
         $user = auth()->user();
         $usuarios = FormularioIngresoResponsable::where('usr_app_formulario_ingreso_responsable.estado_ingreso_id', '=', $estado_id)
@@ -122,13 +124,26 @@ class formularioGestionIngresoController extends Controller
         $registro_ingreso = formularioGestionIngreso::where('usr_app_formulario_ingreso.id', '=', $item_id)
             ->first();
 
-        if ($registro_ingreso->responsable_id != null && $registro_ingreso->responsable_id != $user->id) {
+        $responsable = $this->validaPermiso();
+
+        if ($registro_ingreso->responsable_id != null && $registro_ingreso->responsable_id != $user->id && $responsable <= 0) {
             return response()->json(['status' => 'error', 'message' => 'Solo el responsable puede realizar esta acción.']);
         }
 
         // Asignar a cada registro de ingreso un responsable
         $indiceResponsable = $registro_ingreso->id % $numeroResponsables; // Calcula el índice del responsable basado en el ID del registro
         $responsable = $usuarios[$indiceResponsable];
+
+        $seguimiento_estado = new FormularioIngresoSeguimientoEstado;
+        $seguimiento_estado->responsable_inicial =  $registro_ingreso->responsable != null ?  $registro_ingreso->responsable : $responsable_actual;
+        $seguimiento_estado->responsable_final = $responsable->nombres . ' ' . $responsable->apellidos;
+        $seguimiento_estado->estado_ingreso_inicial = $estado_inicial != null ? $estado_inicial : $registro_ingreso->estado_ingreso_id;
+        $seguimiento_estado->estado_ingreso_final =   $estado_id;
+        $seguimiento_estado->formulario_ingreso_id =  $item_id;
+        $seguimiento_estado->actualiza_registro =   $user->nombres . ' ' .  $user->apellidos;
+
+
+        $seguimiento_estado->save();
 
         // Actualizar el registro de ingreso con el estado y el responsable
         $registro_ingreso->estado_ingreso_id = $estado_id;
@@ -150,10 +165,21 @@ class formularioGestionIngresoController extends Controller
             $registro_ingreso = formularioGestionIngreso::where('usr_app_formulario_ingreso.id', '=', $item_id)
                 ->first();
 
+            $responsable = $this->validaPermiso();
 
-            if ($registro_ingreso->responsable_id != null && $registro_ingreso->responsable_id != $user->id) {
+            if ($registro_ingreso->responsable_id != null && $registro_ingreso->responsable_id != $user->id && $responsable <= 0) {
                 return response()->json(['status' => 'error', 'message' => 'Solo el responsable puede realizar esta acción.']);
             }
+
+            $seguimiento_estado = new FormularioIngresoSeguimientoEstado;
+            $seguimiento_estado->responsable_inicial =  $registro_ingreso->responsable;
+            $seguimiento_estado->responsable_final = $nombre_responsable;
+            $seguimiento_estado->estado_ingreso_inicial =  $registro_ingreso->estado_ingreso_id;
+            $seguimiento_estado->estado_ingreso_final =  $registro_ingreso->estado_ingreso_id;
+            $seguimiento_estado->formulario_ingreso_id =  $item_id;
+            $seguimiento_estado->actualiza_registro =   $user->nombres . ' ' .  $user->apellidos;
+
+            $seguimiento_estado->save();
 
             $registro_ingreso->responsable_anterior = $registro_ingreso->responsable;
             $registro_ingreso->responsable = $nombre_responsable;
@@ -172,6 +198,19 @@ class formularioGestionIngresoController extends Controller
             return response()->json(['status' => 'error', 'message' => 'Error al actualizar registro.']);
         }
     }
+
+    public function validaPermiso()
+    {
+        $user = auth()->user();
+        $responsable = UsuarioPermiso::where('usr_app_permisos_usuarios.usuario_id', '=', $user->id)
+            ->where('usr_app_permisos_usuarios.permiso_id', '=', '31')
+            ->select(
+                'id'
+            )
+            ->get();
+        return count($responsable);
+    }
+
     public function responsableingresos($estado)
     {
         $usuarios = FormularioIngresoResponsable::join('usr_app_usuarios as usr', 'usr.id', '=', 'usr_app_formulario_ingreso_responsable.usuario_id')
@@ -231,7 +270,7 @@ class formularioGestionIngresoController extends Controller
                 'usr_app_formulario_ingreso.citacion_entrevista',
                 'usr_app_formulario_ingreso.profesional',
                 'usr_app_formulario_ingreso.informe_seleccion',
-                'usr_app_formulario_ingreso.cambio_fecha',
+                // 'usr_app_formulario_ingreso.cambio_fecha',
                 'usr_app_formulario_ingreso.numero_radicado',
                 'usr_app_formulario_ingreso.direccion_empresa',
                 'usr_app_formulario_ingreso.direccion_laboratorio',
@@ -295,7 +334,35 @@ class formularioGestionIngresoController extends Controller
             ->orderby('usr_app_formulario_ingreso_seguimiento.id', 'desc')
             ->get();
         $result['seguimiento'] = $seguimiento;
+        // return response()->json($result);
+
+
+        $seguimiento_estados = FormularioIngresoSeguimientoEstado::join('usr_app_estados_ingreso as ei', 'ei.id', '=', 'usr_app_formulario_ingreso_seguimiento_estado.estado_ingreso_inicial')
+            ->join('usr_app_estados_ingreso as ef', 'ef.id', '=', 'usr_app_formulario_ingreso_seguimiento_estado.estado_ingreso_final')
+            ->where('usr_app_formulario_ingreso_seguimiento_estado.formulario_ingreso_id', $id)
+            ->select(
+                'usr_app_formulario_ingreso_seguimiento_estado.responsable_inicial',
+                'usr_app_formulario_ingreso_seguimiento_estado.responsable_final',
+                'ei.nombre as estado_ingreso_inicial',
+                'ef.nombre as estado_ingreso_final',
+                'usr_app_formulario_ingreso_seguimiento_estado.actualiza_registro',
+                'usr_app_formulario_ingreso_seguimiento_estado.created_at',
+
+
+            )
+            ->orderby('usr_app_formulario_ingreso_seguimiento_estado.id', 'desc')
+            ->get();
+        $result['seguimiento_estados'] = $seguimiento_estados;
         return response()->json($result);
+
+
+        // $seguimiento_estado = new FormularioIngresoSeguimientoEstado;
+        // $seguimiento_estado->responsable_inicial =  $registro_ingreso->responsable;
+        // $seguimiento_estado->responsable_final = $nombre_responsable;
+        // $seguimiento_estado->estado_ingreso_inicial =  $registro_ingreso->estado_ingreso_id;
+        // $seguimiento_estado->estado_ingreso_final =  $registro_ingreso->estado_ingreso_id;
+        // $seguimiento_estado->formulario_ingreso_id =  $item_id;
+        // $seguimiento_estado->actuali
     }
 
 
@@ -2250,7 +2317,7 @@ class formularioGestionIngresoController extends Controller
                 // 'usr_app_formulario_ingreso.citacion_entrevista',
                 'usr_app_formulario_ingreso.profesional',
                 'usr_app_formulario_ingreso.informe_seleccion',
-                'usr_app_formulario_ingreso.cambio_fecha',
+                // 'usr_app_formulario_ingreso.cambio_fecha',
                 'usr_app_formulario_ingreso.numero_radicado',
                 'usr_app_formulario_ingreso.direccion_empresa',
                 'usr_app_formulario_ingreso.direccion_laboratorio',
@@ -2398,9 +2465,9 @@ class formularioGestionIngresoController extends Controller
             }
             $result->profesional = $request->profesional;
             $result->informe_seleccion = $request->informe_seleccion;
-            if ($request->cambio_fecha != null) {
-                $result->cambio_fecha = $request->cambio_fecha;
-            }
+            // if ($request->cambio_fecha != null) {
+            //     $result->cambio_fecha = $request->cambio_fecha;
+            // }
             $result->responsable = $request->consulta_encargado;
             $result->novedad_stradata = $request->novedades_stradata;
             $result->correo_notificacion_usuario = $request->correo_candidato;
@@ -2607,8 +2674,13 @@ class formularioGestionIngresoController extends Controller
             $user = auth()->user();
             $estado_id = $request->estado_id;
             $result = formularioGestionIngreso::find($id);
+            // return $result;
+            $responsable_inicial = $result->responsable;
+            $estado_inicial = $result->estado_ingreso_id;
 
-            if ($result->responsable_id != null && $result->responsable_id != $user->id) {
+            $responsable = $this->validaPermiso();
+
+            if ($result->responsable_id != null && $result->responsable_id != $user->id && $responsable <= 0) {
 
                 $seguimiento = new FormularioIngresoSeguimiento;
                 $seguimiento->estado_ingreso_id = $request->estado_id;
@@ -2635,14 +2707,14 @@ class formularioGestionIngresoController extends Controller
             $result->laboratorio = $request->laboratorio;
             $result->examenes = $request->examenes;
             $result->fecha_examen = $request->fecha_examen;
-            $result->estado_ingreso_id = 1;
+            // $result->estado_ingreso_id = 1;
             $result->tipo_servicio_id = $request->tipo_servicio_id;
             $result->numero_vacantes = $request->numero_vacantes;
             $result->numero_contrataciones = $request->numero_contrataciones;
             $result->citacion_entrevista = $request->citacion_entrevista;
             $result->profesional = $request->profesional;
             $result->informe_seleccion = $request->informe_seleccion;
-            $result->cambio_fecha = $request->cambio_fecha;
+            // $result->cambio_fecha = $request->cambio_fecha;
             $result->responsable = $request->consulta_encargado;
             $result->estado_ingreso_id = $request->estado_id;
             $result->novedad_stradata = $request->novedades_stradata;
@@ -2711,10 +2783,20 @@ class formularioGestionIngresoController extends Controller
             }
 
 
-            DB::commit();
             if ($estado_id != $result->estado_ingreso_id ||  $result->responsable == null) {
-                $this->actualizaestadoingreso($id, $estado_id, $result->responsable_id);
+                $this->actualizaestadoingreso($id, $estado_id, $result->responsable_id, $responsable_inicial, $estado_inicial);
+            }else if ($responsable_inicial != $request->consulta_encargado) {
+                $seguimiento_estado = new FormularioIngresoSeguimientoEstado;
+                $seguimiento_estado->responsable_inicial =  $responsable_inicial;
+                $seguimiento_estado->responsable_final = $request->consulta_encargado;
+                $seguimiento_estado->estado_ingreso_inicial = $estado_inicial;
+                $seguimiento_estado->estado_ingreso_final =   $request->estado_id;
+                $seguimiento_estado->formulario_ingreso_id =  $id;
+                $seguimiento_estado->actualiza_registro =   $user->nombres . ' ' .  $user->apellidos;
+                $seguimiento_estado->save();
             }
+
+            DB::commit();
 
             return response()->json(['status' => '200', 'message' => 'ok', 'registro_ingreso_id' => $result->id]);
         } catch (\Exception $e) {
