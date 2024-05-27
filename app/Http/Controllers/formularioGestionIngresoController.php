@@ -2103,7 +2103,7 @@ class formularioGestionIngresoController extends Controller
         if ($id == 3 && $formulario->correo_laboratorio != null) {
             $body = "Cordial saludo, esperamos se encuentren bien.\n\nAutorizamos exámenes médicos en solicitud de servicio adjunta, cualquier información adicional que se requiera, comunicarse a la línea Servisai de Saitemp S.A. marcando al (604) 4485744, donde con gusto uno de nuestros facilitadores atenderá su llamada.\n\nSimplificando conexiones, facilitando experiencias.";
             $body = nl2br($body);
-            $subject = 'Autorización de exámenes.';
+            $subject = 'AUTORIZACIÓN DE EXÁMENES MEDICOS DE ' . $nombre_completo . ' IDENTIFICADO/A CON NUMERO DE DOCUMENO ' . $numero_identificacion;
             $nomb_membrete = 'Autorizacion';
         } elseif ($id == 1 && $formulario->correo_notificacion_empresa != null) {
             $body = "Cordial saludo, esperamos se encuentren muy bien.\n\n Informamos que su solicitud de servicio ha sido recibida satisfactoriamente, Cualquier información adicional podrá ser atendida en la línea Servisai de Saitemp S.A. marcando  al (604) 4485744, con gusto uno de nuestros facilitadores atenderá su llamada.\n\n simplificando conexiones, facilitando experiencias.";
