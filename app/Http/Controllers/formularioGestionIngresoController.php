@@ -38,6 +38,8 @@ class formularioGestionIngresoController extends Controller
             ->leftJoin('usr_app_municipios as mun', 'mun.id', 'usr_app_formulario_ingreso.municipio_id')
             ->LeftJoin('usr_app_estados_ingreso as est', 'est.id', 'usr_app_formulario_ingreso.estado_ingreso_id')
             ->leftJoin('usr_app_formulario_ingreso_tipo_servicio as tiser', 'tiser.id', 'usr_app_formulario_ingreso.tipo_servicio_id')
+            ->leftJoin('usr_app_registro_ingreso_laboraorio as ilab', 'ilab.registro_ingreso_id', 'usr_app_formulario_ingreso.id')
+            ->leftJoin('usr_app_ciudad_laboraorio as ciulab', 'ciulab.id', 'ilab.laboratorio_medico_id')
             ->select(
                 'usr_app_formulario_ingreso.id',
                 'usr_app_formulario_ingreso.numero_radicado',
@@ -47,7 +49,8 @@ class formularioGestionIngresoController extends Controller
                 'usr_app_formulario_ingreso.cargo',
                 'cli.razon_social',
                 'mun.nombre as ciudad',
-                'usr_app_formulario_ingreso.laboratorio',
+                'ciulab.laboratorio',
+                'usr_app_formulario_ingreso.laboratorio as otro_laboratorio',
                 'usr_app_formulario_ingreso.fecha_examen',
                 DB::raw("FORMAT(CAST(usr_app_formulario_ingreso.fecha_ingreso AS DATE), 'dd/MM/yyyy') as fecha_ingreso"),
                 'usr_app_formulario_ingreso.estado_vacante',
@@ -60,7 +63,6 @@ class formularioGestionIngresoController extends Controller
                 'usr_app_formulario_ingreso.responsable_corregir',
                 'est.nombre as estado_ingreso',
                 'usr_app_formulario_ingreso.responsable',
-                // 'usr_app_formulario_ingreso.responsable as responsable_ingreso',
                 'est.id as estado_ingreso_id',
                 'est.color as color_estado',
 
@@ -87,23 +89,33 @@ class formularioGestionIngresoController extends Controller
 
         if ($result !== null) {
             if ($result->bloqueado == 1) {
-                $result->bloqueado = 'Si';
+                return response()->json(['status' => 'error', 'message' => 'Este candidato se encuentra en la lista trump', 'bloqueado' => 'Si']);
             } else {
                 $result->bloqueado = 'No';
             }
             return $result;
         } else {
             $result = formularioGestionIngreso::where('usr_app_formulario_ingreso.numero_identificacion', '=', $id)
-                ->whereRaw('created_at BETWEEN DATEADD(MONTH, -2, GETDATE()) AND GETDATE()')
+                ->leftJoin('usr_app_estados_ingreso as esti', 'esti.id', 'usr_app_formulario_ingreso.estado_ingreso_id')
                 ->select(
-                    'created_at as fecha_radicado',
+                    'usr_app_formulario_ingreso.responsable_id',
                     'numero_identificacion',
+                    'esti.id as estado_ingreso_id',
+                    'esti.nombre as estado_ingreso',
                     'usr_app_formulario_ingreso.responsable as responsable_ingreso'
                 )
                 ->first();
-            return $result;
+            // return [];
+            if ($result != null) {
+                if ($result->estado_ingreso_id == 31 || $result->estado_ingreso_id == 32 || $result->estado_ingreso_id == 44 || $result->estado_ingreso_id == 17 || $result->estado_ingreso_id == 12 && $result->responsable_id == 502) {
+                    return response()->json(['status' => 'success', 'message' => 'Este candidato es apto para activar o ingresar.', 'apto' => '1']);
+                } else if ($result->responsable_ingreso != null && $result->numero_identificacion != null) {
+                    return response()->json(['status' => 'error', 'message' => 'Este candidato ya se encuentra registrado', 'no_apto' => '2']);
+                }
+            }
         }
     }
+
 
     public function actualizaestadoingreso($item_id, $estado_id, $responsable_id = null,  $responsable_actual = null, $estado_inicial = null)
     {
@@ -124,9 +136,9 @@ class formularioGestionIngresoController extends Controller
         $registro_ingreso = formularioGestionIngreso::where('usr_app_formulario_ingreso.id', '=', $item_id)
             ->first();
 
-        $responsable = $this->validaPermiso();
+        $permisos = $this->validaPermiso();
 
-        if ($registro_ingreso->responsable_id != null && $registro_ingreso->responsable_id != $user->id && $responsable <= 0) {
+        if ($registro_ingreso->responsable_id != null && $registro_ingreso->responsable_id != $user->id && in_array('30', $permisos)) {
             return response()->json(['status' => 'error', 'message' => 'Solo el responsable puede realizar esta acción.']);
         }
 
@@ -203,12 +215,13 @@ class formularioGestionIngresoController extends Controller
     {
         $user = auth()->user();
         $responsable = UsuarioPermiso::where('usr_app_permisos_usuarios.usuario_id', '=', $user->id)
-            ->where('usr_app_permisos_usuarios.permiso_id', '=', '31')
             ->select(
-                'id'
+                'permiso_id'
             )
             ->get();
-        return count($responsable);
+        $array = $responsable->toArray();
+        $permisos = array_column($array, 'permiso_id');
+        return $permisos;
     }
 
     public function responsableingresos($estado)
@@ -2166,6 +2179,8 @@ class formularioGestionIngresoController extends Controller
             ->leftJoin('usr_app_municipios as mun', 'mun.id', 'usr_app_formulario_ingreso.municipio_id')
             ->LeftJoin('usr_app_estados_ingreso as est', 'est.id', 'usr_app_formulario_ingreso.estado_ingreso_id')
             ->leftJoin('usr_app_formulario_ingreso_tipo_servicio as tiser', 'tiser.id', 'usr_app_formulario_ingreso.tipo_servicio_id')
+            ->leftJoin('usr_app_registro_ingreso_laboraorio as ilab', 'ilab.registro_ingreso_id', 'usr_app_formulario_ingreso.id')
+            ->leftJoin('usr_app_ciudad_laboraorio as ciulab', 'ciulab.id', 'ilab.laboratorio_medico_id')
             ->select(
                 'usr_app_formulario_ingreso.id',
                 'usr_app_formulario_ingreso.numero_radicado',
@@ -2175,7 +2190,8 @@ class formularioGestionIngresoController extends Controller
                 'usr_app_formulario_ingreso.cargo',
                 'cli.razon_social',
                 'mun.nombre as ciudad',
-                'usr_app_formulario_ingreso.laboratorio',
+                'ciulab.laboratorio',
+                'usr_app_formulario_ingreso.laboratorio as otro_laboratorio',
                 'usr_app_formulario_ingreso.fecha_examen',
                 DB::raw("FORMAT(CAST(usr_app_formulario_ingreso.fecha_ingreso AS DATE), 'dd/MM/yyyy') as fecha_ingreso"),
                 'usr_app_formulario_ingreso.estado_vacante',
@@ -2212,7 +2228,16 @@ class formularioGestionIngresoController extends Controller
                 $prefijoCampo = 'cli.';
             } elseif ($campoActual === 'nombre_servicio') {
                 $prefijoCampo = 'tiser.';
-            } else {
+            } 
+            elseif ($campoActual === 'otro_laboratorio') {
+                $prefijoCampo = 'usr_app_formulario_ingreso.';
+                $campoActual = 'laboratorio';
+            }
+            elseif ($campoActual === 'laboratorio') {
+                $prefijoCampo = 'ciulab.';
+                $campoActual = 'laboratorio';
+            }
+             else {
                 $prefijoCampo = 'usr_app_formulario_ingreso.';
             }
 
@@ -2619,13 +2644,32 @@ class formularioGestionIngresoController extends Controller
                 $contador++;
             }
 
-            for ($i = 0; $i < count($ids); $i++) {
-                $documento = new FormularioIngresoArchivos;
-                $documento->arhivo_id = $ids[$i];
-                $documento->ruta = $rutas[$i];
-                $documento->observacion = $observaciones[$i];
-                $documento->ingreso_id = $ingreso_id;
-                $documento->save();
+            $permisos = $this->validaPermiso();
+
+            $result = formularioGestionIngreso::where('id', '=', $ingreso_id)
+                ->first();
+
+
+            if (in_array($result->estado_ingreso_id, [11, 12, 17]) && in_array('33', $permisos)) {
+                for ($i = 0; $i < count($ids); $i++) {
+                    $documento = new FormularioIngresoArchivos;
+                    $documento->arhivo_id = $ids[$i];
+                    $documento->ruta = $rutas[$i];
+                    $documento->observacion = $observaciones[$i];
+                    $documento->ingreso_id = $ingreso_id;
+                    $documento->save();
+                }
+            } else if (!in_array($result->estado_ingreso_id, [11, 12, 17])) {
+                for ($i = 0; $i < count($ids); $i++) {
+                    $documento = new FormularioIngresoArchivos;
+                    $documento->arhivo_id = $ids[$i];
+                    $documento->ruta = $rutas[$i];
+                    $documento->observacion = $observaciones[$i];
+                    $documento->ingreso_id = $ingreso_id;
+                    $documento->save();
+                }
+            } else {
+                return response()->json(['status' => 'error', 'message' => 'Solo el responsable puede realizar esta acción después de que el proceso esté cerrado.']);
             }
             // return response()->json(['status' => 'success', 'message' => 'Formulario guardado exitosamente']);
             return response()->json(['status' => 'success', 'message' => 'Los archivos adjuntos del formulario fueron actualizados de manera exitosa']);
@@ -2678,9 +2722,9 @@ class formularioGestionIngresoController extends Controller
             $responsable_inicial = $result->responsable;
             $estado_inicial = $result->estado_ingreso_id;
 
-            $responsable = $this->validaPermiso();
+            $permisos = $this->validaPermiso();
 
-            if ($result->responsable_id != null && $result->responsable_id != $user->id && $responsable <= 0) {
+            if ($result->responsable_id != null && $result->responsable_id != $user->id && in_array('30', $permisos)) {
 
                 $seguimiento = new FormularioIngresoSeguimiento;
                 $seguimiento->estado_ingreso_id = $request->estado_id;
@@ -2785,7 +2829,7 @@ class formularioGestionIngresoController extends Controller
 
             if ($estado_id != $result->estado_ingreso_id ||  $result->responsable == null) {
                 $this->actualizaestadoingreso($id, $estado_id, $result->responsable_id, $responsable_inicial, $estado_inicial);
-            }else if ($responsable_inicial != $request->consulta_encargado) {
+            } else if ($responsable_inicial != $request->consulta_encargado) {
                 $seguimiento_estado = new FormularioIngresoSeguimientoEstado;
                 $seguimiento_estado->responsable_inicial =  $responsable_inicial;
                 $seguimiento_estado->responsable_final = $request->consulta_encargado;
@@ -2817,10 +2861,10 @@ class formularioGestionIngresoController extends Controller
             return response()->json(['status' => 'error', 'message' => 'Error al borrar la no conformidad.']);
         }
     }
-    public function hora($id)
+    public function hora()
     {
         $hora_actual = date("H:i:s");
-        $hora_limite = strtotime('16:00:00');
+        $hora_limite = strtotime('15:00:00');
 
         if (strtotime($hora_actual) > $hora_limite) {
             return 1;

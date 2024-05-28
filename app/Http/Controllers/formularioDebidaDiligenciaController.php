@@ -1606,7 +1606,7 @@ class formularioDebidaDiligenciaController extends Controller
             $ReferenciaComercial = ReferenciaComercial::where('cliente_id', '=', $id)
                 ->select()
                 ->get();
-            if ($ReferenciaComercial) {
+            if ($ReferenciaComercial == null) {
                 foreach ($request['referencias_comerciales'] as $item) {
                     $ReferenciaComercial = new ReferenciaComercial;
                     $ReferenciaComercial->razon_social = $item['nombre'];
