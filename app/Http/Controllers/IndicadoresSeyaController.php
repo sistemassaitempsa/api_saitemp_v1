@@ -22,21 +22,48 @@ class IndicadoresSeyaController extends Controller
     }
     public function ordenservicio($anio)
     {
+
         $registrosPorMes = DB::table('usr_app_formulario_ingreso')
-            ->select(DB::raw('MONTH(FORMAT(created_at, \'yyyy-MM-dd\')) as mes'), DB::raw('COUNT(*) as total'))
-            ->whereYear('created_at', $anio)
-            ->groupBy(DB::raw('MONTH(FORMAT(created_at, \'yyyy-MM-dd\'))'))
+            ->select(
+                DB::raw('MONTH(usr_app_formulario_ingreso.created_at) as mes'),
+                DB::raw('COUNT(usr_app_formulario_ingreso.id) as total')
+            )
+            ->whereYear('usr_app_formulario_ingreso.created_at', $anio)
+            ->groupBy(DB::raw('MONTH(usr_app_formulario_ingreso.created_at)'))
+            ->orderBy(DB::raw('MONTH(usr_app_formulario_ingreso.created_at)'))
             ->pluck('total', 'mes')
             ->all();
 
-        // Inicializar un array con 12 posiciones, todas con valor 0
-        $registrosPorMesArray = array_fill(1, 12, 0);
+        // Construir array de nombres de los meses
+        $nombresMesesArray = [
+            1 => 'Enero', 2 => 'Febrero', 3 => 'Marzo', 4 => 'Abril',
+            5 => 'Mayo', 6 => 'Junio', 7 => 'Julio', 8 => 'Agosto',
+            9 => 'Septiembre', 10 => 'Octubre', 11 => 'Noviembre', 12 => 'Diciembre'
+        ];
 
-        // Actualizar las posiciones del array con los valores obtenidos de la consulta
-        foreach ($registrosPorMes as $mes => $cantidad) {
-            $registrosPorMesArray[$mes] = $cantidad;
+        // Inicializar el array resultado con los nombres de los meses activos
+        $nombresMesesActivos = [];
+
+        // Iterar sobre los registros y construir los nombres de meses activos
+        foreach ($registrosPorMes as $mes => $total) {
+            if ($total > 0) {
+                $nombresMesesActivos[$mes] = $nombresMesesArray[$mes];
+            }
         }
-        return response()->json($registrosPorMesArray);
+
+        // Inicializar el array resultado final
+        $resultadoFinal = [['nombres' => $nombresMesesActivos]];
+
+        // Iterar sobre los registros y construir los objetos correspondientes
+        foreach ($registrosPorMes as $mes => $total) {
+            if ($total > 0) {
+                $registro = array_fill(1, 12, 0);
+                $registro[$mes] = $total;
+                $resultadoFinal[] = $registro;
+            }
+        }
+
+        return response()->json($resultadoFinal);
     }
 
     public function cargosCantidadchar($anio)

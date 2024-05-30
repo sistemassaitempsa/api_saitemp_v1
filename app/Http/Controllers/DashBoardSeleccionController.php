@@ -84,6 +84,29 @@ class DashBoardSeleccionController extends Controller
 
     public function vacantesOcupadas($anio) //******************************************************/
     {
+        // $registrosPorMes = DB::table('usr_app_formulario_ingreso')
+        //     ->leftJoin('usr_app_formulario_ingreso_seguimiento as fs', 'fs.formulario_ingreso_id', '=', 'usr_app_formulario_ingreso.id')
+        //     ->leftJoin('usr_app_estados_ingreso as ei', 'ei.id', '=', 'fs.estado_ingreso_id')
+        //     ->select(
+        //         DB::raw('MONTH(usr_app_formulario_ingreso.created_at) as mes'),
+        //         DB::raw('COUNT(DISTINCT usr_app_formulario_ingreso.numero_identificacion) as total')
+        //     )
+        //     ->whereYear('usr_app_formulario_ingreso.created_at', $anio)
+        //     ->where('fs.estado_ingreso_id', 10)
+        //     ->groupBy(DB::raw('MONTH(usr_app_formulario_ingreso.created_at)'))
+        //     ->orderBy(DB::raw('MONTH(usr_app_formulario_ingreso.created_at)'))
+        //     ->pluck('total', 'mes')
+        //     ->all();
+
+        // // Inicializar un array con 12 posiciones, todas con valor 0
+        // $registrosPorMesArray = array_fill(1, 12, 0);
+
+        // // Actualizar las posiciones del array con los valores obtenidos de la consulta
+        // foreach ($registrosPorMes as $mes => $cantidad) {
+        //     $registrosPorMesArray[$mes] = $cantidad;
+        // }
+
+        // return response()->json($registrosPorMesArray);
         $registrosPorMes = DB::table('usr_app_formulario_ingreso')
             ->leftJoin('usr_app_formulario_ingreso_seguimiento as fs', 'fs.formulario_ingreso_id', '=', 'usr_app_formulario_ingreso.id')
             ->leftJoin('usr_app_estados_ingreso as ei', 'ei.id', '=', 'fs.estado_ingreso_id')
@@ -98,45 +121,72 @@ class DashBoardSeleccionController extends Controller
             ->pluck('total', 'mes')
             ->all();
 
-        // Inicializar un array con 12 posiciones, todas con valor 0
-        $registrosPorMesArray = array_fill(1, 12, 0);
+        // Construir array de nombres de los meses
+        $nombresMesesArray = [
+            1 => 'Enero', 2 => 'Febrero', 3 => 'Marzo', 4 => 'Abril',
+            5 => 'Mayo', 6 => 'Junio', 7 => 'Julio', 8 => 'Agosto',
+            9 => 'Septiembre', 10 => 'Octubre', 11 => 'Noviembre', 12 => 'Diciembre'
+        ];
 
-        // Actualizar las posiciones del array con los valores obtenidos de la consulta
-        foreach ($registrosPorMes as $mes => $cantidad) {
-            $registrosPorMesArray[$mes] = $cantidad;
+        // Inicializar el array resultado con los nombres de los meses activos
+        $nombresMesesActivos = [];
+
+        // Iterar sobre los registros y construir los nombres de meses activos
+        foreach ($registrosPorMes as $mes => $total) {
+            if ($total > 0) {
+                $nombresMesesActivos[$mes] = $nombresMesesArray[$mes];
+            }
         }
 
-        return response()->json($registrosPorMesArray);
+        // Inicializar el array resultado final
+        $resultadoFinal = [['nombres' => $nombresMesesActivos]];
+
+        // Iterar sobre los registros y construir los objetos correspondientes
+        foreach ($registrosPorMes as $mes => $total) {
+            if ($total > 0) {
+                $registro = array_fill(1, 12, 0);
+                $registro[$mes] = $total;
+                $resultadoFinal[] = $registro;
+            }
+        }
+
+        return response()->json($resultadoFinal);
     }
     public function estadosseya()
     {
-        // $result = estadosIngreso::select(
-        //     'id',
-        //     'nombre'
-        // )
-        //     ->orderby('posicion', 'asc')
-        //     ->get();
-        // return response()->json($result);
 
         $registrosPorEstado = DB::table('usr_app_formulario_ingreso')
-        ->leftJoin('usr_app_estados_ingreso as ei', 'ei.id', '=', 'usr_app_formulario_ingreso.estado_ingreso_id')
-        ->select(
-            'usr_app_formulario_ingreso.estado_ingreso_id',
-            'ei.nombre as estado_nombre',
-            'ei.posicion',
-            DB::raw('COUNT(usr_app_formulario_ingreso.id) as total')
-        )
-        ->groupBy('usr_app_formulario_ingreso.estado_ingreso_id', 'ei.nombre', 'ei.posicion')
-        ->orderBy('ei.posicion')  // Ordenar por el campo posición
-        ->get();
+            ->leftJoin('usr_app_estados_ingreso as ei', 'ei.id', '=', 'usr_app_formulario_ingreso.estado_ingreso_id')
+            ->select(
+                'usr_app_formulario_ingreso.estado_ingreso_id',
+                'ei.nombre as estado_nombre',
+                'ei.posicion',
+                DB::raw('COUNT(usr_app_formulario_ingreso.id) as total')
+            )
+            ->groupBy('usr_app_formulario_ingreso.estado_ingreso_id', 'ei.nombre', 'ei.posicion')
+            ->orderBy(DB::raw('CAST(ei.posicion AS INT)'))
+            ->pluck('total', 'estado_nombre')
+            ->all();
 
-    // Transformar los resultados a un array con el nombre del estado como clave
-    $registrosPorEstadoArray = [];
-    foreach ($registrosPorEstado as $registro) {
-        $registrosPorEstadoArray[$registro->estado_nombre] = $registro->total;
-    }
-
-    return response()->json($registrosPorEstadoArray);
+        // return $registrosPorEstado;
+        $totalElementos = count($registrosPorEstado);
+        // Transformar los resultados a un array con el nombre del estado como clave
+        $registrosPorEstadoArray = [];
+        $nombres = array();
+        $index = 0;
+        foreach ($registrosPorEstado as $estado => $total) {
+            array_push($nombres, $estado);
+            if ($total > 0) {
+                $registro = array_fill(1, $totalElementos, 0);
+                $registro[$index] = (int) $total;
+                $registrosPorEstadoArray[] = $registro;
+            }
+            $index++;
+        }
+        $nombres_estados = [];
+        $nombres_estados['nombres'] = $nombres;
+        array_unshift($registrosPorEstadoArray,$nombres_estados);
+        return response()->json($registrosPorEstadoArray);
     }
 
     /**
