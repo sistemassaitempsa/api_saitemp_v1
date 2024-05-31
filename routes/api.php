@@ -707,7 +707,7 @@ Route::group([
   Route::get('/cargosVacantesHojasVida/{anio}', [DashBoardSeleccionController::class, 'cargosVacantesHojasVida']);
   Route::get('/cantidadvacantestiposervicio/{anio}', [DashBoardSeleccionController::class, 'cantidadVacantesTipoServicio']);
   Route::get('/vacantesocupadas/{anio}', [DashBoardSeleccionController::class, 'vacantesocupadas']);
-  Route::get('/estadosseya', [DashBoardSeleccionController::class, 'estadosseya']);
+  // Route::get('/estadosseya', [DashBoardSeleccionController::class, 'estadosseya']);
 
   // Nivel de accidentalidad
   Route::get('/nivelaccidentalidad', [NivelAccidentalidadController::class, 'index']);
@@ -810,6 +810,10 @@ Route::group([
 
 
   Route::get('/ordenserviciochar/{anio}', [IndicadoresSeyaController::class, 'ordenservicio']);
+  Route::get('/resgistrosporestado', [IndicadoresSeyaController::class, 'resgistrosporestado']);
+  Route::get('/registrosporresponsable', [IndicadoresSeyaController::class, 'registrosporresponsable']);
+  Route::get('/estadosapilados', [IndicadoresSeyaController::class, 'estadosapilados']);
+
 
   Route::post('/borrar_nc/{id}', [formularioGestionIngresoController::class, 'borrar_nc']);
   Route::get('/hora', [formularioGestionIngresoController::class, 'hora']);

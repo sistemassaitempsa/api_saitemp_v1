@@ -115,6 +115,127 @@ class IndicadoresSeyaController extends Controller
         return response()->json($resultado);
     }
 
+    public function resgistrosporestado()
+    {
+        $registrosPorEstado = DB::table('usr_app_formulario_ingreso')
+            ->leftJoin('usr_app_estados_ingreso as ei', 'ei.id', '=', 'usr_app_formulario_ingreso.estado_ingreso_id')
+            ->select(
+                'usr_app_formulario_ingreso.estado_ingreso_id',
+                'ei.nombre as estado_nombre',
+                'ei.posicion',
+                DB::raw('COUNT(usr_app_formulario_ingreso.id) as total')
+            )
+            ->groupBy('usr_app_formulario_ingreso.estado_ingreso_id', 'ei.nombre', 'ei.posicion')
+            ->orderBy(DB::raw('CAST(ei.posicion AS INT)'))
+            ->pluck('total', 'estado_nombre')
+            ->all();
+
+        // Crear un array de nombres con valor y otro array con solo los valores
+        $nombresConValores = [];
+        $valores = [];
+
+        foreach ($registrosPorEstado as $estado => $total) {
+            $nombresConValores[] = [
+                $estado . ': ' . $total
+            ];
+            $valores[] = $total;
+        }
+
+        // Crear el array final con los dos arrays separados
+        $resultado = [
+            $nombresConValores,
+            $valores
+        ];
+
+        // Retornar la respuesta JSON
+        return response()->json($resultado);
+    }
+
+    public function registrosporresponsable()
+    {
+        $registrosPorEstado = DB::table('usr_app_formulario_ingreso')
+            // ->leftJoin('usr_app_estados_ingreso as ei', 'ei.id', '=', 'usr_app_formulario_ingreso.estado_ingreso_id')
+            ->select(
+                'usr_app_formulario_ingreso.responsable',
+                // 'ei.nombre as estado_nombre',
+                // 'ei.posicion',
+                DB::raw('COUNT(usr_app_formulario_ingreso.id) as total')
+            )
+            ->groupBy('usr_app_formulario_ingreso.responsable')
+            ->orderBy('usr_app_formulario_ingreso.responsable')
+            ->pluck('total', 'responsable')
+            ->all();
+
+        // Crear un array de nombres con valor y otro array con solo los valores
+        $nombresConValores = [];
+        $valores = [];
+
+        foreach ($registrosPorEstado as $responsable => $total) {
+            $nombresConValores[] = [
+                $responsable . ': ' . $total
+            ];
+            $valores[] = $total;
+        }
+
+        // Crear el array final con los dos arrays separados
+        $resultado = [
+            $nombresConValores,
+            $valores
+        ];
+
+        // Retornar la respuesta JSON
+        return response()->json($resultado);
+    }
+    public function estadosapilados()
+    {
+        $registrosPorEstado = DB::table('usr_app_formulario_ingreso')
+            ->leftJoin('usr_app_estados_ingreso as ei', 'ei.id', '=', 'usr_app_formulario_ingreso.estado_ingreso_id')
+            ->select(
+                'usr_app_formulario_ingreso.responsable',
+                'ei.nombre as estado_nombre',
+                DB::raw('COUNT(usr_app_formulario_ingreso.id) as total')
+            )
+            ->groupBy('usr_app_formulario_ingreso.responsable', 'ei.nombre')
+            ->orderBy('usr_app_formulario_ingreso.responsable')
+            ->orderBy('ei.nombre')
+            ->get();
+
+        // Crear un array asociativo para almacenar los datos por responsable y estado
+        $datosPorResponsable = [];
+
+        foreach ($registrosPorEstado as $registro) {
+            $responsable = $registro->responsable;
+            $estado = $registro->estado_nombre;
+            $total = (int)$registro->total;
+
+            // Si el responsable aún no está en el array, agregarlo
+            if (!array_key_exists($responsable, $datosPorResponsable)) {
+                $datosPorResponsable[$responsable] = [];
+            }
+
+            // Agregar el total al array de datos para el estado correspondiente
+            $datosPorResponsable[$responsable][$estado] = $total;
+        }
+
+        // Crear arrays para almacenar los estados de los registros que tiene cada responsable
+        $estadosPorResponsable = [];
+        foreach ($datosPorResponsable as $responsable => $estados) {
+            $estadosPorResponsable[$responsable] = array_keys($estados);
+        }
+
+        // Crear arrays para almacenar la cantidad de registros por cada estado que tiene cada responsable
+        $cantidadRegistrosPorEstado = [];
+        foreach ($datosPorResponsable as $responsable => $estados) {
+            $cantidadRegistrosPorEstado[$responsable] = array_values($estados);
+        }
+
+        // Retornar la respuesta JSON
+        return response()->json([
+            'estadosPorResponsable' => $estadosPorResponsable,
+            'cantidadRegistrosPorEstado' => $cantidadRegistrosPorEstado
+        ]);
+    }
+
     public function vacantesEfectivas($anio)
     {
         // Inicializar un array con ceros para cada mes

@@ -152,9 +152,8 @@ class DashBoardSeleccionController extends Controller
 
         return response()->json($resultadoFinal);
     }
-    public function estadosseya()
+    public function resgistrosporestado()
     {
-
         $registrosPorEstado = DB::table('usr_app_formulario_ingreso')
             ->leftJoin('usr_app_estados_ingreso as ei', 'ei.id', '=', 'usr_app_formulario_ingreso.estado_ingreso_id')
             ->select(
@@ -168,25 +167,61 @@ class DashBoardSeleccionController extends Controller
             ->pluck('total', 'estado_nombre')
             ->all();
 
-        // return $registrosPorEstado;
-        $totalElementos = count($registrosPorEstado);
-        // Transformar los resultados a un array con el nombre del estado como clave
-        $registrosPorEstadoArray = [];
-        $nombres = array();
-        $index = 0;
+        // Crear un array de nombres con valor y otro array con solo los valores
+        $nombresConValores = [];
+        $valores = [];
+
         foreach ($registrosPorEstado as $estado => $total) {
-            array_push($nombres, $estado);
-            if ($total > 0) {
-                $registro = array_fill(1, $totalElementos, 0);
-                $registro[$index] = (int) $total;
-                $registrosPorEstadoArray[] = $registro;
-            }
-            $index++;
+            $nombresConValores[] = [
+                $estado . ': ' . $total
+            ];
+            $valores[] = $total;
         }
-        $nombres_estados = [];
-        $nombres_estados['nombres'] = $nombres;
-        array_unshift($registrosPorEstadoArray,$nombres_estados);
-        return response()->json($registrosPorEstadoArray);
+
+        // Crear el array final con los dos arrays separados
+        $resultado = [
+            $nombresConValores,
+            $valores
+        ];
+
+        // Retornar la respuesta JSON
+        return response()->json($resultado);
+    }
+
+    public function registrosporresponsable()
+    {
+        $registrosPorEstado = DB::table('usr_app_formulario_ingreso')
+            // ->leftJoin('usr_app_estados_ingreso as ei', 'ei.id', '=', 'usr_app_formulario_ingreso.estado_ingreso_id')
+            ->select(
+                'usr_app_formulario_ingreso.responsable',
+                // 'ei.nombre as estado_nombre',
+                // 'ei.posicion',
+                DB::raw('COUNT(usr_app_formulario_ingreso.id) as total')
+            )
+            ->groupBy('usr_app_formulario_ingreso.responsable')
+            ->orderBy('usr_app_formulario_ingreso.responsable')
+            ->pluck('total', 'responsable')
+            ->all();
+
+        // Crear un array de nombres con valor y otro array con solo los valores
+        $nombresConValores = [];
+        $valores = [];
+
+        foreach ($registrosPorEstado as $responsable => $total) {
+            $nombresConValores[] = [
+                $responsable . ': ' . $total
+            ];
+            $valores[] = $total;
+        }
+
+        // Crear el array final con los dos arrays separados
+        $resultado = [
+            $nombresConValores,
+            $valores
+        ];
+
+        // Retornar la respuesta JSON
+        return response()->json($resultado);
     }
 
     /**
