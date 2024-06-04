@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
+use App\Models\estadosIngreso;
+
 class DashBoardSeleccionController extends Controller
 {
     /**
@@ -35,35 +37,35 @@ class DashBoardSeleccionController extends Controller
         return $resultado;
     }
 
-    public function cantidadVacantesPorEstado($anio)
+    public function cantidadVacantesTipoServicio($anio) //******************************************************/
     {
         try {
-            $registrosPorEstadoYMes = DB::table('usr_app_oservicio_cargos')
+            $registrosPorEstadoYMes = DB::table('usr_app_formulario_ingreso')
                 ->select(
                     DB::raw('MONTH(created_at) as mes'),
-                    'estado_cargo_id',
+                    'tipo_servicio_id',
                     DB::raw('COUNT(*) as total')
                 )
                 ->whereYear('created_at', $anio)
-                ->groupBy('estado_cargo_id', DB::raw('MONTH(created_at)'))
+                ->groupBy('tipo_servicio_id', DB::raw('MONTH(created_at)'))
                 ->get();
 
             // Inicializar arrays para cada estado
-            $estados = DB::table('usr_app_oservicio_estado_cargo')->pluck('nombre', 'id')->all();
+            $tipoServicio = DB::table('usr_app_formulario_ingreso_tipo_servicio')->pluck('nombre_servicio', 'id')->all();
             $registrosPorEstadoArray = [];
 
             // Inicializar array adicional con los nombres de los estados
-            $nombresEstadosArray = ['nombres' => $estados];
+            $nombresEstadosArray = ['nombres' => $tipoServicio];
 
             // Inicializar arrays para cada estado, incluso si no tienen registros
-            foreach ($estados as $estadoId => $estadoNombre) {
+            foreach ($tipoServicio as $estadoId => $estadoNombre) {
                 $registrosPorEstadoArray[$estadoId] = array_fill(1, 12, 0);
             }
 
             // Actualizar las posiciones del array con los valores obtenidos de la consulta
             foreach ($registrosPorEstadoYMes as $registro) {
                 $mes = $registro->mes;
-                $estadoCargoId = $registro->estado_cargo_id;
+                $estadoCargoId = $registro->tipo_servicio_id;
                 $cantidad = $registro->total;
 
                 // Actualizar la posición del array con el total de registros por mes
@@ -78,6 +80,148 @@ class DashBoardSeleccionController extends Controller
             //throw $th;
             return $e;
         }
+    }
+
+    public function vacantesOcupadas($anio) //******************************************************/
+    {
+        // $registrosPorMes = DB::table('usr_app_formulario_ingreso')
+        //     ->leftJoin('usr_app_formulario_ingreso_seguimiento as fs', 'fs.formulario_ingreso_id', '=', 'usr_app_formulario_ingreso.id')
+        //     ->leftJoin('usr_app_estados_ingreso as ei', 'ei.id', '=', 'fs.estado_ingreso_id')
+        //     ->select(
+        //         DB::raw('MONTH(usr_app_formulario_ingreso.created_at) as mes'),
+        //         DB::raw('COUNT(DISTINCT usr_app_formulario_ingreso.numero_identificacion) as total')
+        //     )
+        //     ->whereYear('usr_app_formulario_ingreso.created_at', $anio)
+        //     ->where('fs.estado_ingreso_id', 10)
+        //     ->groupBy(DB::raw('MONTH(usr_app_formulario_ingreso.created_at)'))
+        //     ->orderBy(DB::raw('MONTH(usr_app_formulario_ingreso.created_at)'))
+        //     ->pluck('total', 'mes')
+        //     ->all();
+
+        // // Inicializar un array con 12 posiciones, todas con valor 0
+        // $registrosPorMesArray = array_fill(1, 12, 0);
+
+        // // Actualizar las posiciones del array con los valores obtenidos de la consulta
+        // foreach ($registrosPorMes as $mes => $cantidad) {
+        //     $registrosPorMesArray[$mes] = $cantidad;
+        // }
+
+        // return response()->json($registrosPorMesArray);
+        $registrosPorMes = DB::table('usr_app_formulario_ingreso')
+            ->leftJoin('usr_app_formulario_ingreso_seguimiento as fs', 'fs.formulario_ingreso_id', '=', 'usr_app_formulario_ingreso.id')
+            ->leftJoin('usr_app_estados_ingreso as ei', 'ei.id', '=', 'fs.estado_ingreso_id')
+            ->select(
+                DB::raw('MONTH(usr_app_formulario_ingreso.created_at) as mes'),
+                DB::raw('COUNT(DISTINCT usr_app_formulario_ingreso.numero_identificacion) as total')
+            )
+            ->whereYear('usr_app_formulario_ingreso.created_at', $anio)
+            ->where('fs.estado_ingreso_id', 10)
+            ->groupBy(DB::raw('MONTH(usr_app_formulario_ingreso.created_at)'))
+            ->orderBy(DB::raw('MONTH(usr_app_formulario_ingreso.created_at)'))
+            ->pluck('total', 'mes')
+            ->all();
+
+        // Construir array de nombres de los meses
+        $nombresMesesArray = [
+            1 => 'Enero', 2 => 'Febrero', 3 => 'Marzo', 4 => 'Abril',
+            5 => 'Mayo', 6 => 'Junio', 7 => 'Julio', 8 => 'Agosto',
+            9 => 'Septiembre', 10 => 'Octubre', 11 => 'Noviembre', 12 => 'Diciembre'
+        ];
+
+        // Inicializar el array resultado con los nombres de los meses activos
+        $nombresMesesActivos = [];
+
+        // Iterar sobre los registros y construir los nombres de meses activos
+        foreach ($registrosPorMes as $mes => $total) {
+            if ($total > 0) {
+                $nombresMesesActivos[$mes] = $nombresMesesArray[$mes];
+            }
+        }
+
+        // Inicializar el array resultado final
+        $resultadoFinal = [['nombres' => $nombresMesesActivos]];
+
+        // Iterar sobre los registros y construir los objetos correspondientes
+        foreach ($registrosPorMes as $mes => $total) {
+            if ($total > 0) {
+                $registro = array_fill(1, 12, 0);
+                $registro[$mes] = $total;
+                $resultadoFinal[] = $registro;
+            }
+        }
+
+        return response()->json($resultadoFinal);
+    }
+    public function resgistrosporestado()
+    {
+        $registrosPorEstado = DB::table('usr_app_formulario_ingreso')
+            ->leftJoin('usr_app_estados_ingreso as ei', 'ei.id', '=', 'usr_app_formulario_ingreso.estado_ingreso_id')
+            ->select(
+                'usr_app_formulario_ingreso.estado_ingreso_id',
+                'ei.nombre as estado_nombre',
+                'ei.posicion',
+                DB::raw('COUNT(usr_app_formulario_ingreso.id) as total')
+            )
+            ->groupBy('usr_app_formulario_ingreso.estado_ingreso_id', 'ei.nombre', 'ei.posicion')
+            ->orderBy(DB::raw('CAST(ei.posicion AS INT)'))
+            ->pluck('total', 'estado_nombre')
+            ->all();
+
+        // Crear un array de nombres con valor y otro array con solo los valores
+        $nombresConValores = [];
+        $valores = [];
+
+        foreach ($registrosPorEstado as $estado => $total) {
+            $nombresConValores[] = [
+                $estado . ': ' . $total
+            ];
+            $valores[] = $total;
+        }
+
+        // Crear el array final con los dos arrays separados
+        $resultado = [
+            $nombresConValores,
+            $valores
+        ];
+
+        // Retornar la respuesta JSON
+        return response()->json($resultado);
+    }
+
+    public function registrosporresponsable()
+    {
+        $registrosPorEstado = DB::table('usr_app_formulario_ingreso')
+            // ->leftJoin('usr_app_estados_ingreso as ei', 'ei.id', '=', 'usr_app_formulario_ingreso.estado_ingreso_id')
+            ->select(
+                'usr_app_formulario_ingreso.responsable',
+                // 'ei.nombre as estado_nombre',
+                // 'ei.posicion',
+                DB::raw('COUNT(usr_app_formulario_ingreso.id) as total')
+            )
+            ->groupBy('usr_app_formulario_ingreso.responsable')
+            ->orderBy('usr_app_formulario_ingreso.responsable')
+            ->pluck('total', 'responsable')
+            ->all();
+
+        // Crear un array de nombres con valor y otro array con solo los valores
+        $nombresConValores = [];
+        $valores = [];
+
+        foreach ($registrosPorEstado as $responsable => $total) {
+            $nombresConValores[] = [
+                $responsable . ': ' . $total
+            ];
+            $valores[] = $total;
+        }
+
+        // Crear el array final con los dos arrays separados
+        $resultado = [
+            $nombresConValores,
+            $valores
+        ];
+
+        // Retornar la respuesta JSON
+        return response()->json($resultado);
     }
 
     /**
