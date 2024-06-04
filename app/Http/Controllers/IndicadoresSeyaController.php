@@ -186,6 +186,7 @@ class IndicadoresSeyaController extends Controller
         // Retornar la respuesta JSON
         return response()->json($resultado);
     }
+   
     public function estadosapilados()
     {
         $registrosPorEstado = DB::table('usr_app_formulario_ingreso')
@@ -200,8 +201,9 @@ class IndicadoresSeyaController extends Controller
             ->orderBy('ei.nombre')
             ->get();
 
-        // Crear un array asociativo para almacenar los datos por responsable y estado
-        $datosPorResponsable = [];
+        // Crear un array para almacenar los responsables y los estados
+        $responsables = [];
+        $datosPorEstado = [];
 
         foreach ($registrosPorEstado as $registro) {
             $responsable = $registro->responsable;
@@ -209,32 +211,46 @@ class IndicadoresSeyaController extends Controller
             $total = (int)$registro->total;
 
             // Si el responsable aún no está en el array, agregarlo
-            if (!array_key_exists($responsable, $datosPorResponsable)) {
-                $datosPorResponsable[$responsable] = [];
+            if (!in_array($responsable, $responsables)) {
+                $responsables[] = $responsable;
             }
 
-            // Agregar el total al array de datos para el estado correspondiente
-            $datosPorResponsable[$responsable][$estado] = $total;
+            // Inicializar el array para el estado si no existe
+            if (!isset($datosPorEstado[$estado])) {
+                $datosPorEstado[$estado] = array_fill(0, count($responsables), 0);
+            }
+
+            // Actualizar el array de todos los estados para cada nuevo responsable
+            foreach ($datosPorEstado as &$registros) {
+                if (count($registros) < count($responsables)) {
+                    $registros[] = 0;
+                }
+            }
+
+            // Encontrar el índice del responsable actual
+            $indiceResponsable = array_search($responsable, $responsables);
+
+            // Asignar el total al índice correspondiente del estado
+            $datosPorEstado[$estado][$indiceResponsable] = $total;
         }
 
-        // Crear arrays para almacenar los estados de los registros que tiene cada responsable
-        $estadosPorResponsable = [];
-        foreach ($datosPorResponsable as $responsable => $estados) {
-            $estadosPorResponsable[$responsable] = array_keys($estados);
-        }
-
-        // Crear arrays para almacenar la cantidad de registros por cada estado que tiene cada responsable
+        // Crear el array final para la cantidad de registros por estado incluyendo el nombre del estado
         $cantidadRegistrosPorEstado = [];
-        foreach ($datosPorResponsable as $responsable => $estados) {
-            $cantidadRegistrosPorEstado[$responsable] = array_values($estados);
+        foreach ($datosPorEstado as $estado => $registros) {
+            $cantidadRegistrosPorEstado[] = [
+                'label' => $estado,
+                'data' => $registros
+            ];
         }
 
         // Retornar la respuesta JSON
         return response()->json([
-            'estadosPorResponsable' => $estadosPorResponsable,
-            'cantidadRegistrosPorEstado' => $cantidadRegistrosPorEstado
+            'responsables' => $responsables,
+            'data' => $cantidadRegistrosPorEstado
         ]);
     }
+
+
 
     public function vacantesEfectivas($anio)
     {
