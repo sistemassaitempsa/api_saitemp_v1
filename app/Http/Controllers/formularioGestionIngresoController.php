@@ -15,6 +15,8 @@ use App\Models\FormularioIngresoSeguimientoEstado;
 use Carbon\Carbon;
 use TCPDF;
 use Illuminate\Support\Facades\DB;
+
+
 // use App\Events\EventoPrueba2;
 
 
@@ -147,7 +149,7 @@ class formularioGestionIngresoController extends Controller
         $responsable = $usuarios[$indiceResponsable];
 
         $seguimiento_estado = new FormularioIngresoSeguimientoEstado;
-        $seguimiento_estado->responsable_inicial =  $registro_ingreso->responsable != null ?  str_replace("null", "",$registro_ingreso->responsable) : str_replace("null", "",$responsable_actual);
+        $seguimiento_estado->responsable_inicial =  $registro_ingreso->responsable != null ?  str_replace("null", "", $registro_ingreso->responsable) : str_replace("null", "", $responsable_actual);
         $seguimiento_estado->responsable_final = $responsable->nombres . ' ' . str_replace("null", "", $responsable->apellidos);;
         $seguimiento_estado->estado_ingreso_inicial = $estado_inicial != null ? $estado_inicial : $registro_ingreso->estado_ingreso_id;
         $seguimiento_estado->estado_ingreso_final =   $estado_id;
@@ -381,7 +383,7 @@ class formularioGestionIngresoController extends Controller
 
 
 
-  
+
     public function gestioningresospdf($modulo = null, $registro_id, $id)
     {
 
@@ -1474,16 +1476,13 @@ class formularioGestionIngresoController extends Controller
                 $prefijoCampo = 'cli.';
             } elseif ($campoActual === 'nombre_servicio') {
                 $prefijoCampo = 'tiser.';
-            } 
-            elseif ($campoActual === 'otro_laboratorio') {
+            } elseif ($campoActual === 'otro_laboratorio') {
                 $prefijoCampo = 'usr_app_formulario_ingreso.';
                 $campoActual = 'laboratorio';
-            }
-            elseif ($campoActual === 'laboratorio') {
+            } elseif ($campoActual === 'laboratorio') {
                 $prefijoCampo = 'ciulab.';
                 $campoActual = 'laboratorio';
-            }
-             else {
+            } else {
                 $prefijoCampo = 'usr_app_formulario_ingreso.';
             }
 
@@ -1658,7 +1657,7 @@ class formularioGestionIngresoController extends Controller
             ->leftJoin('usr_app_municipios as mun', 'mun.id', 'usr_app_formulario_ingreso.municipio_id')
             ->LeftJoin('usr_app_estados_ingreso as est', 'est.id', 'usr_app_formulario_ingreso.estado_ingreso_id')
             ->leftJoin('usr_app_formulario_ingreso_tipo_servicio as tiser', 'tiser.id', 'usr_app_formulario_ingreso.tipo_servicio_id')
-			->leftJoin('usr_app_registro_ingreso_laboraorio as ilab', 'ilab.registro_ingreso_id', 'usr_app_formulario_ingreso.id')
+            ->leftJoin('usr_app_registro_ingreso_laboraorio as ilab', 'ilab.registro_ingreso_id', 'usr_app_formulario_ingreso.id')
             ->leftJoin('usr_app_ciudad_laboraorio as ciulab', 'ciulab.id', 'ilab.laboratorio_medico_id')
             ->where('usr_app_formulario_ingreso.numero_identificacion', 'like', '%' . $cedula . '%')
             ->select(
@@ -1701,91 +1700,94 @@ class formularioGestionIngresoController extends Controller
      */
     public function create(Request $request)
     {
-        DB::beginTransaction();
-        try {
-            // $estado_id = $request->estado_id;
-            $user = auth()->user();
-            $result = new formularioGestionIngreso;
-            $result->fecha_ingreso = $request->fecha_ingreo;
-            $result->numero_identificacion = $request->numero_identificacion;
-            $result->nombre_completo = $request->nombre_completo;
-            $result->cliente_id = $request->empresa_cliente_id;
-            $result->cargo = $request->cargo;
-            $result->salario = $request->salario;
-            $result->municipio_id = $request->municipio_id;
-            $result->numero_contacto = $request->numero_contacto;
-            $result->eps = $request->eps;
-            $result->afp_id = $request->afp_id;
-            $result->estradata = $request->consulta_stradata;
-            $result->novedades = $request->novedades;
-            $result->laboratorio = $request->laboratorio;
-            $result->examenes = $request->examenes;
-            $result->afectacion_servicio = $request->afectacion_servicio;
-            if ($request->fecha_examen != null) {
-                // $result->fecha_examen = Carbon::createFromFormat('Y-m-d\TH:i', $request->fecha_examen)->format('Y-m-d H:i:s');
-                $result->fecha_examen = $request->fecha_examen;
-            }
-            if ($request->estado_id == '') {
-                $result->estado_ingreso_id = 1;
-            } else {
-                $result->estado_ingreso_id = $request->estado_id;
-            }
-            $result->responsable = $user->nombres . ' ' . $user->apellidos;
-            $result->tipo_servicio_id = $request->tipo_servicio_id;
-            $result->numero_vacantes = $request->numero_vacantes;
-            $result->numero_contrataciones = $request->numero_contrataciones;
-            if ($request->citacion_entrevista != null) {
-                $result->citacion_entrevista = Carbon::createFromFormat('Y-m-d\TH:i', $request->citacion_entrevista)->format('Y-m-d H:i:s');
-            }
-            $result->profesional = $request->profesional;
-            $result->informe_seleccion = $request->informe_seleccion;
-            // if ($request->cambio_fecha != null) {
-            //     $result->cambio_fecha = $request->cambio_fecha;
-            // }
-            $result->responsable = $request->consulta_encargado;
-            $result->novedad_stradata = $request->novedades_stradata;
-            $result->correo_notificacion_usuario = $request->correo_candidato;
-            $result->correo_notificacion_empresa = $request->correo_empresa;
-            $result->direccion_empresa = $request->direccion_empresa;
-            $result->direccion_laboratorio = $request->direccion_laboratorio;
-            $result->recomendaciones_examen = $request->recomendaciones_examen;
-            $result->novedades_examenes = $request->novedades_examenes;
-            $result->subsidio_transporte = $request->consulta_subsidio;
-            $result->estado_vacante = $request->consulta_vacante;
-            $result->tipo_documento_id = $request->tipo_identificacion;
-            $result->observacion_estado = $request->consulta_observacion_estado;
-            $result->correo_laboratorio = $request->correo_laboratorio;
-            $result->contacto_empresa = $request->contacto_empresa;
-            $result->responsable_id = $request->encargado_id;
-            $result->responsable_corregir = $request->consulta_encargado_corregir;
-            if ($request->variableX == 1) {
-                $result->nc_hora_cierre = 'Servicio no conforme';
-            }
-            $result->save();
-
-            $laboratorio = new RegistroIngresoLaboratorio;
-            $laboratorio->registro_ingreso_id  = $result->id;
-            $laboratorio->laboratorio_medico_id = $request->laboratorio_medico_id;
-            $laboratorio->save();
-
-            $seguimiento = new FormularioIngresoSeguimiento;
-            $seguimiento->estado_ingreso_id = $request->estado_id;
-            $seguimiento->usuario = $user->nombres . ' ' . $user->apellidos;
-            $seguimiento->formulario_ingreso_id = $result->id;
-            $seguimiento->save();
-
-            // $id_ = $result->id;
-            if ($result->responsable == null) {
-                $this->actualizaestadoingreso($result->id, $result->estado_ingreso_id, $result->responsable_id);
-            }
-            DB::commit();
-            return response()->json(['status' => '200', 'message' => 'ok', 'registro_ingreso_id' => $result->id]);
-        } catch (\Exception $e) {
-            // Revertir la transacción si se produce alguna excepción
-            DB::rollback();
-            return $e;
-            return response()->json(['status' => 'error', 'message' => 'Error al guardar formulario, por favor verifique el llenado de todos los campos e intente nuevamente']);
+        $replica = $request->replica;
+        if ($replica == "") {
+            $replica = 1;
         }
+        DB::beginTransaction();
+        $user = auth()->user();
+        $ids = [];
+        for ($i = 0; $i < $replica; $i++) {
+            try {
+                $result = new formularioGestionIngreso;
+                $result->fecha_ingreso = $request->fecha_ingreo;
+                $result->numero_identificacion = $request->numero_identificacion;
+                $result->nombre_completo = $request->nombre_completo;
+                $result->cliente_id = $request->empresa_cliente_id;
+                $result->cargo = $request->cargo;
+                $result->salario = $request->salario;
+                $result->municipio_id = $request->municipio_id;
+                $result->numero_contacto = $request->numero_contacto;
+                $result->eps = $request->eps;
+                $result->afp_id = $request->afp_id;
+                $result->estradata = $request->consulta_stradata;
+                $result->novedades = $request->novedades;
+                $result->laboratorio = $request->laboratorio;
+                $result->examenes = $request->examenes;
+                $result->afectacion_servicio = $request->afectacion_servicio;
+                if ($request->fecha_examen != null) {
+                    $result->fecha_examen = $request->fecha_examen;
+                }
+                if ($request->estado_id == '') {
+                    $result->estado_ingreso_id = 1;
+                } else {
+                    $result->estado_ingreso_id = $request->estado_id;
+                }
+                $result->responsable = $user->nombres . ' ' . $user->apellidos;
+                $result->tipo_servicio_id = $request->tipo_servicio_id;
+                $result->numero_vacantes = $request->numero_vacantes;
+                $result->numero_contrataciones = $request->numero_contrataciones;
+                if ($request->citacion_entrevista != null) {
+                    $result->citacion_entrevista = Carbon::createFromFormat('Y-m-d\TH:i', $request->citacion_entrevista)->format('Y-m-d H:i:s');
+                }
+                $result->profesional = $request->profesional;
+                $result->informe_seleccion = $request->informe_seleccion;
+                $result->responsable = $request->consulta_encargado;
+                $result->novedad_stradata = $request->novedades_stradata;
+                $result->correo_notificacion_usuario = $request->correo_candidato;
+                $result->correo_notificacion_empresa = $request->correo_empresa;
+                $result->direccion_empresa = $request->direccion_empresa;
+                $result->direccion_laboratorio = $request->direccion_laboratorio;
+                $result->recomendaciones_examen = $request->recomendaciones_examen;
+                $result->novedades_examenes = $request->novedades_examenes;
+                $result->subsidio_transporte = $request->consulta_subsidio;
+                $result->estado_vacante = $request->consulta_vacante;
+                $result->tipo_documento_id = $request->tipo_identificacion;
+                $result->observacion_estado = $request->consulta_observacion_estado;
+                $result->correo_laboratorio = $request->correo_laboratorio;
+                $result->contacto_empresa = $request->contacto_empresa;
+                $result->responsable_id = $request->encargado_id;
+                $result->responsable_corregir = $request->consulta_encargado_corregir;
+                if ($request->variableX == 1) {
+                    $result->nc_hora_cierre = 'Servicio no conforme';
+                }
+                $result->save();
+
+                $laboratorio = new RegistroIngresoLaboratorio;
+                $laboratorio->registro_ingreso_id  = $result->id;
+                $laboratorio->laboratorio_medico_id = $request->laboratorio_medico_id;
+                $laboratorio->save();
+
+                $seguimiento = new FormularioIngresoSeguimiento;
+                $seguimiento->estado_ingreso_id = $request->estado_id;
+                $seguimiento->usuario = $user->nombres . ' ' . $user->apellidos;
+                $seguimiento->formulario_ingreso_id = $result->id;
+                $seguimiento->save();
+
+                array_push($ids, $result->id);
+
+                if ($result->responsable == null) {
+                    $this->actualizaestadoingreso($result->id, $result->estado_ingreso_id, $result->responsable_id);
+                }
+            } catch (\Exception $e) {
+                // Revertir la transacción si se produce alguna excepción
+                DB::rollback();
+                return $e;
+                return response()->json(['status' => 'error', 'message' => 'Error al guardar formulario, por favor verifique el llenado de todos los campos e intente nuevamente']);
+            }
+        }
+        DB::commit();
+        return response()->json(['status' => '200', 'message' => 'ok', 'registro_ingreso_id' => $ids]);
     }
 
     public function pendientes(Request $request)
@@ -1843,93 +1845,109 @@ class formularioGestionIngresoController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    public function store(Request $request, $ingreso_id)
-    {
 
+    public function store(Request $request)
+    {
         try {
             $documentos = $request->all();
-            $value = '';
-            $id = '';
-            $ids = [];
-            $observacion = '';
-            $observaciones = [];
-            $rutas = [];
+            $array = [];
+            if (empty($documentos)) {
+                return response()->json(['status' => 'success', 'message' => 'Registro actualizado exitosamente.']);
+            }
 
-            // $directorio = public_path('upload/');
-            // $archivos = glob($directorio . '*');
+            for ($i = 0;; $i++) {
+                $index = 'formulario' . $i;
+                if (isset($documentos[$index])) {
+                    $array = strpos($documentos[$index], ',') !== false ? explode(",", $documentos[$index]) : [$documentos[$index]];
+                    break;
+                }
+            }
 
-            // foreach ($archivos as $archivo) {
-            //     $nombreArchivo = basename($archivo);
-            //     if (strpos($nombreArchivo, '_' . $ingreso_id . '_') !== false) {
-            //         unlink($archivo);
-            //     }
-            // }
+            // Crear un array para almacenar archivos temporalmente
+            $tempFiles = [];
 
-            foreach ($documentos as $item) {
-                $contador = 0;
-                if (!is_numeric($item) && !is_string($item)) {
+            // Almacenar temporalmente los archivos
+            foreach ($documentos as $key => $item) {
+                if (strpos($key, 'documento') !== false && $item instanceof \Illuminate\Http\UploadedFile) {
+                    $tempFiles[$key] = $item;
+                }
+            }
 
-                    $microtime = microtime(true);
-                    $microtimeString = (string) $microtime;
-                    $microtimeWithoutDecimal = str_replace('.', '', $microtimeString);
+            foreach ($array as $ingreso_id) {
+                $value = '';
+                $id = '';
+                $ids = [];
+                $observacion = '';
+                $observaciones = [];
+                $rutas = [];
 
-                    $nombreArchivoOriginal = $item->getClientOriginalName();
-                    $nuevoNombre = '_' . $ingreso_id . '_' . $microtimeWithoutDecimal . "_" . $nombreArchivoOriginal;
+                foreach ($documentos as $key => $item) {
+                    if (strpos($key, 'documento') !== false && isset($tempFiles[$key])) {
+                        $item = $tempFiles[$key];
 
-                    $carpetaDestino = './upload/';
-                    $item->move($carpetaDestino, $nuevoNombre);
-                    $item = ltrim($carpetaDestino, '.') . $nuevoNombre;
-                    array_push($rutas, $item);
-                    $value .= $item . ' ';
-                } else {
-                    if (is_numeric($item)) {
-                        array_push($ids, $item);
-                        $id .= $item . ' ';
+                        try {
+                            $microtime = microtime(true);
+                            $microtimeString = (string) $microtime;
+                            $microtimeWithoutDecimal = str_replace('.', '', $microtimeString);
+
+                            $nombreArchivoOriginal = $item->getClientOriginalName();
+                            $nuevoNombre = '_' . $ingreso_id . '_' . $microtimeWithoutDecimal . "_" . $nombreArchivoOriginal;
+
+                            $carpetaDestino = public_path('upload/');
+                            // Leer el contenido del archivo original
+                            $contenido = file_get_contents($item->getRealPath());
+                            // Escribir el contenido en la nueva ubicación
+                            file_put_contents($carpetaDestino . $nuevoNombre, $contenido);
+
+                            $ruta = 'upload/' . $nuevoNombre; // Construye la ruta relativa
+                            $rutas[] = $ruta;
+                            $value .= $ruta . ' ';
+                        } catch (\Exception $e) {
+                            return response()->json(['status' => 'error', 'message' => 'Error al copiar el archivo: ' . $e->getMessage()]);
+                        }
                     } else {
-                        array_push($observaciones, $item);
-                        $observacion .= $item . ' ';
+                        if (strpos($key, 'id') !== false) {
+                            $ids[] = $item;
+                            $id .= $item . ' ';
+                        } else if (strpos($key, 'observacion') !== false) {
+                            $observaciones[] = $item;
+                            $observacion .= $item . ' ';
+                        }
                     }
                 }
-                $contador++;
+
+                $permisos = $this->validaPermiso();
+                $result = formularioGestionIngreso::where('id', '=', $ingreso_id)->first();
+
+                if (in_array($result->estado_ingreso_id, [11, 12, 17]) && in_array('33', $permisos)) {
+                    for ($i = 0; $i < count($ids); $i++) {
+                        $documento = new FormularioIngresoArchivos;
+                        $documento->arhivo_id = $ids[$i];
+                        $documento->ruta = $rutas[$i];
+                        $documento->observacion = $observaciones[$i];
+                        $documento->ingreso_id = $ingreso_id;
+                        $documento->save();
+                    }
+                } else if (!in_array($result->estado_ingreso_id, [11, 12, 17])) {
+                    for ($i = 0; $i < count($ids); $i++) {
+                        $documento = new FormularioIngresoArchivos;
+                        $documento->arhivo_id = $ids[$i];
+                        $documento->ruta = $rutas[$i];
+                        $documento->observacion = $observaciones[$i];
+                        $documento->ingreso_id = $ingreso_id;
+                        $documento->save();
+                    }
+                } else {
+                    return response()->json(['status' => 'error', 'message' => 'Solo el responsable puede realizar esta acción después de que el proceso esté cerrado.']);
+                }
             }
 
-            $permisos = $this->validaPermiso();
-
-            $result = formularioGestionIngreso::where('id', '=', $ingreso_id)
-                ->first();
-
-
-            if (in_array($result->estado_ingreso_id, [11, 12, 17]) && in_array('33', $permisos)) {
-                for ($i = 0; $i < count($ids); $i++) {
-                    $documento = new FormularioIngresoArchivos;
-                    $documento->arhivo_id = $ids[$i];
-                    $documento->ruta = $rutas[$i];
-                    $documento->observacion = $observaciones[$i];
-                    $documento->ingreso_id = $ingreso_id;
-                    $documento->save();
-                }
-            } else if (!in_array($result->estado_ingreso_id, [11, 12, 17])) {
-                for ($i = 0; $i < count($ids); $i++) {
-                    $documento = new FormularioIngresoArchivos;
-                    $documento->arhivo_id = $ids[$i];
-                    $documento->ruta = $rutas[$i];
-                    $documento->observacion = $observaciones[$i];
-                    $documento->ingreso_id = $ingreso_id;
-                    $documento->save();
-                }
-            } else {
-                return response()->json(['status' => 'error', 'message' => 'Solo el responsable puede realizar esta acción después de que el proceso esté cerrado.']);
-            }
-            // return response()->json(['status' => 'success', 'message' => 'Formulario guardado exitosamente']);
             return response()->json(['status' => 'success', 'message' => 'Los archivos adjuntos del formulario fueron actualizados de manera exitosa']);
         } catch (\Exception $e) {
-            //throw $th;
-            // $cliente = cliente::find($ingreso_id);
-            // $cliente->delete();
-            return $e;
-            return response()->json(['status' => 'error', 'message' => 'Error al guardar el formulario, por favor intente nuevamente, si el problema persiste por favor contacte al administrador del sitio']);
+            return response()->json(['status' => 'error', 'message' => 'Error al guardar el formulario, por favor intente nuevamente, si el problema persiste por favor contacte al administrador del sitio: ' . $e->getMessage()]);
         }
     }
+
 
     /**
      * Display the specified resource.
@@ -1965,10 +1983,11 @@ class formularioGestionIngresoController extends Controller
         DB::beginTransaction();
         try {
             $user = auth()->user();
+            $ids = [];
+            array_push($ids, $id);
             $estado_id = $request->estado_id;
             $result = formularioGestionIngreso::find($id);
-            // return $result;
-            $responsable_inicial = str_replace("null", "",$result->responsable);
+            $responsable_inicial = str_replace("null", "", $result->responsable);
             $estado_inicial = $result->estado_ingreso_id;
 
             $permisos = $this->validaPermiso();
@@ -1977,11 +1996,11 @@ class formularioGestionIngresoController extends Controller
 
                 $seguimiento = new FormularioIngresoSeguimiento;
                 $seguimiento->estado_ingreso_id = $request->estado_id;
-                $seguimiento->usuario =  $user->nombres . ' ' . str_replace("null", "",$user->apellidos);
+                $seguimiento->usuario =  $user->nombres . ' ' . str_replace("null", "", $user->apellidos);
                 $seguimiento->formulario_ingreso_id = $id;
                 $seguimiento->save();
 
-                return response()->json(['status' => '200', 'message' => 'ok', 'registro_ingreso_id' => $id]);
+                return response()->json(['status' => '200', 'message' => 'ok', 'registro_ingreso_id' => $ids]);
                 // return response()->json(['status' => 'error', 'message' => 'Solo el responsable puede realizar esta acción.']);
             }
 
@@ -2000,15 +2019,13 @@ class formularioGestionIngresoController extends Controller
             $result->laboratorio = $request->laboratorio;
             $result->examenes = $request->examenes;
             $result->fecha_examen = $request->fecha_examen;
-            // $result->estado_ingreso_id = 1;
             $result->tipo_servicio_id = $request->tipo_servicio_id;
             $result->numero_vacantes = $request->numero_vacantes;
             $result->numero_contrataciones = $request->numero_contrataciones;
             $result->citacion_entrevista = $request->citacion_entrevista;
             $result->profesional = $request->profesional;
             $result->informe_seleccion = $request->informe_seleccion;
-            // $result->cambio_fecha = $request->cambio_fecha;
-            $result->responsable = str_replace("null", "",$request->consulta_encargado);
+            $result->responsable = str_replace("null", "", $request->consulta_encargado);
             $result->estado_ingreso_id = $request->estado_id;
             $result->novedad_stradata = $request->novedades_stradata;
             $result->correo_notificacion_usuario = $request->correo_candidato;
@@ -2018,8 +2035,6 @@ class formularioGestionIngresoController extends Controller
             $result->recomendaciones_examen = $request->recomendaciones_examen;
             $result->novedades_examenes = $request->novedades_examenes;
             $result->subsidio_transporte = $request->consulta_subsidio;
-            // $result->estado_vacante = $request->consulta_vacante;
-            // $result->afectacion_servicio = $request->afectacion_servicio;
             $result->observacion_estado = $request->consulta_observacion_estado;
             $result->tipo_documento_id = $request->tipo_identificacion;
             $result->correo_laboratorio = $request->correo_laboratorio;
@@ -2052,7 +2067,7 @@ class formularioGestionIngresoController extends Controller
 
             $seguimiento = new FormularioIngresoSeguimiento;
             $seguimiento->estado_ingreso_id = $request->estado_id;
-            $seguimiento->usuario =  $user->nombres . ' ' . str_replace("null", "",$user->apellidos);
+            $seguimiento->usuario =  $user->nombres . ' ' . str_replace("null", "", $user->apellidos);
             $seguimiento->formulario_ingreso_id = $id;
             $seguimiento->save();
 
@@ -2081,22 +2096,22 @@ class formularioGestionIngresoController extends Controller
             } else if ($responsable_inicial != $request->consulta_encargado) {
                 $seguimiento_estado = new FormularioIngresoSeguimientoEstado;
                 $seguimiento_estado->responsable_inicial =  $responsable_inicial;
-                $seguimiento_estado->responsable_final = str_replace("null", "",$result->responsable);
+                $seguimiento_estado->responsable_final = str_replace("null", "", $result->responsable);
                 $seguimiento_estado->estado_ingreso_inicial = $estado_inicial;
                 $seguimiento_estado->estado_ingreso_final =   $request->estado_id;
                 $seguimiento_estado->formulario_ingreso_id =  $id;
-                $seguimiento_estado->actualiza_registro =   $user->nombres . ' ' . str_replace("null", "",$user->apellidos);
+                $seguimiento_estado->actualiza_registro =   $user->nombres . ' ' . str_replace("null", "", $user->apellidos);
                 $seguimiento_estado->save();
             }
 
             DB::commit();
 
-            return response()->json(['status' => '200', 'message' => 'ok', 'registro_ingreso_id' => $result->id]);
+            return response()->json(['status' => '200', 'message' => 'ok', 'registro_ingreso_id' => $ids]);
         } catch (\Exception $e) {
             // Revertir la transacción si se produce alguna excepción
             DB::rollback();
-            return $e;
-            // return response()->json(['status' => 'error', 'message' => 'Error al guardar formulario, por favor verifique el llenado de todos los campos e intente nuevamente']);
+            // return $e;
+            return response()->json(['status' => 'error', 'message' => 'Error al guardar formulario, por favor verifique el llenado de todos los campos e intente nuevamente']);
         }
     }
 
@@ -2112,14 +2127,37 @@ class formularioGestionIngresoController extends Controller
     }
     public function hora()
     {
+        $permisos = $this->validaPermiso();
+
         $hora_actual = date("H:i:s");
         $hora_limite = strtotime('15:00:00');
 
-        if (strtotime($hora_actual) > $hora_limite) {
+        if (strtotime($hora_actual) > $hora_limite && !in_array('31', $permisos)) {
             return 1;
         } else {
             return 2;
         }
+    }
+
+    public function buscarcedula(Request $request)
+    {
+        $array = $request->all();
+        $no_encontradas = [];
+        $encontradas = [];
+        $total = [];
+        foreach ($array as $item) {
+            $result = formularioGestionIngreso::where('numero_identificacion', $item)->first();
+            if (!$result) {
+                array_push($no_encontradas, $item);
+            } else {
+                array_push($encontradas, $item . '-' . $result['created_at']);
+            }
+        }
+        $total['encontradas total'] =  count($encontradas);
+        $total['encontradas'] =  $encontradas;
+        $total['no encontradas total'] =  count($no_encontradas);
+        $total['no encontradas'] =  $no_encontradas;
+        return $total;
     }
 
     /**

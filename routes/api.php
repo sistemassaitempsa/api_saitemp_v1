@@ -773,7 +773,7 @@ Route::group([
   Route::post('/formularioingresopendientes', [formularioGestionIngresoController::class, 'pendientes']);
   Route::get('/formularioingresopendientes/{cantidad}', [formularioGestionIngresoController::class, 'pendientes2']);
   Route::post('/formularioingreso/{id}', [formularioGestionIngresoController::class, 'update']);
-  Route::post('/formularioingreso/doc/{id}', [formularioGestionIngresoController::class, 'store']);
+  Route::post('/formularioingresodoc', [formularioGestionIngresoController::class, 'store']);
   Route::delete('/formularioingreso/{id}', [formularioGestionIngresoController::class, 'destroy']);
   Route::get('/formularioingresofiltro/{cadena}/{cantidad}', [formularioGestionIngresoController::class, 'filtro']);
   Route::post('/formularioingresopendientesborradomasivo', [formularioGestionIngresoController::class, 'borradomasivo']);
@@ -809,14 +809,19 @@ Route::group([
   // Route::delete('/seguimientocrm', [SeguimientoCrmController::class, 'destroy']);
 
 
+  //Indicadores SEIYA
   Route::get('/ordenserviciochar/{anio}', [IndicadoresSeyaController::class, 'ordenservicio']);
   Route::get('/resgistrosporestado', [IndicadoresSeyaController::class, 'resgistrosporestado']);
   Route::get('/registrosporresponsable', [IndicadoresSeyaController::class, 'registrosporresponsable']);
   Route::get('/estadosapilados', [IndicadoresSeyaController::class, 'estadosapilados']);
+  Route::get('/vacantesOcupadasTipoServicio', [IndicadoresSeyaController::class, 'vacantesOcupadasTipoServicio']);
 
 
   Route::post('/borrar_nc/{id}', [formularioGestionIngresoController::class, 'borrar_nc']);
   Route::get('/hora', [formularioGestionIngresoController::class, 'hora']);
+  
+  
+  Route::post('/buscarcedula', [formularioGestionIngresoController::class, 'buscarcedula']);
 
 
   // Route::get('/otrosi/{id}', [OtroSiController::class, 'byid']);

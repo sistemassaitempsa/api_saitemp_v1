@@ -66,6 +66,69 @@ class IndicadoresSeyaController extends Controller
         return response()->json($resultadoFinal);
     }
 
+    public function vacantesOcupadasTipoServicio() //******************************************************/
+    {
+        // Obtener los registros por estado y mes filtrados por el estado 10 en el seguimiento
+        $registrosPorEstadoYMes = DB::table('usr_app_formulario_ingreso')
+            ->leftJoin('usr_app_formulario_ingreso_seguimiento as fs', 'fs.formulario_ingreso_id', '=', 'usr_app_formulario_ingreso.id')
+            ->select(
+                DB::raw('MONTH(usr_app_formulario_ingreso.created_at) as mes'),
+                'usr_app_formulario_ingreso.tipo_servicio_id',
+                DB::raw('COUNT(DISTINCT usr_app_formulario_ingreso.id) as total') // Usar DISTINCT para evitar duplicados
+            )
+            ->where('fs.estado_ingreso_id', 10)
+            ->groupBy('usr_app_formulario_ingreso.tipo_servicio_id', DB::raw('MONTH(usr_app_formulario_ingreso.created_at)'))
+            ->get();
+
+        // Obtener los nombres de los tipos de servicios
+        $tipoServicio = DB::table('usr_app_formulario_ingreso_tipo_servicio')
+            ->pluck('nombre_servicio', 'id')
+            ->all();
+
+        // Inicializar arrays para cada estado
+        $registrosPorEstadoArray = [];
+
+        // Inicializar array adicional con los nombres de los estados
+        $nombresEstadosArray = array_values($tipoServicio);
+
+        // Inicializar arrays para cada estado, incluso si no tienen registros
+        foreach ($tipoServicio as $estadoId => $estadoNombre) {
+            $registrosPorEstadoArray[$estadoNombre] = array_fill(0, 12, 0);
+        }
+
+        // Actualizar las posiciones del array con los valores obtenidos de la consulta
+        foreach ($registrosPorEstadoYMes as $registro) {
+            $mes = $registro->mes;
+            $estadoCargoId = $registro->tipo_servicio_id;
+            $cantidad = $registro->total;
+
+            // Obtener el nombre del estado por su ID
+            $estadoNombre = $tipoServicio[$estadoCargoId];
+
+            // Actualizar la posición del array con el total de registros por mes
+            $registrosPorEstadoArray[$estadoNombre][$mes - 1] = $cantidad; // Restar 1 para ajustar el índice del array (0-11)
+        }
+
+        // Crear la estructura final para el gráfico
+        $datasets = [];
+        foreach ($registrosPorEstadoArray as $estadoNombre => $datosMensuales) {
+            $datasets[] = [
+                'label' => $estadoNombre,
+                'data' => $datosMensuales,
+                //  'backgroundColor' => $this->getRandomColor(), // Método para obtener un color aleatorio
+            ];
+        }
+
+        $resultadoFinal = [
+            'labels' => ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'],
+            'data' => $datasets
+        ];
+
+        return response()->json($resultadoFinal);
+    }
+
+    
+
     public function cargosCantidadchar($anio)
     {
         $registrosPorMes = DB::table('usr_app_oservicio_cargos')
