@@ -317,6 +317,7 @@ class IndicadoresSeyaController extends Controller
 
     public function vacantesEfectivas($anio)
     {
+        return 'prueba';
         // Inicializar un array con ceros para cada mes
         $resultado = array_fill(1, 12, 0);
 

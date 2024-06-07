@@ -1924,7 +1924,7 @@ class formularioGestionIngresoController extends Controller
                         $documento = new FormularioIngresoArchivos;
                         $documento->arhivo_id = $ids[$i];
                         $documento->ruta = $rutas[$i];
-                        $documento->observacion = $observaciones[$i];
+                        $documento->observacion = $observaciones[$i] != 'undefined' ? $observaciones[$i] : '';
                         $documento->ingreso_id = $ingreso_id;
                         $documento->save();
                     }
@@ -1933,7 +1933,7 @@ class formularioGestionIngresoController extends Controller
                         $documento = new FormularioIngresoArchivos;
                         $documento->arhivo_id = $ids[$i];
                         $documento->ruta = $rutas[$i];
-                        $documento->observacion = $observaciones[$i];
+                        $documento->observacion = $observaciones[$i] != 'undefined' ? $observaciones[$i] : '';
                         $documento->ingreso_id = $ingreso_id;
                         $documento->save();
                     }
@@ -2141,23 +2141,36 @@ class formularioGestionIngresoController extends Controller
 
     public function buscarcedula(Request $request)
     {
-        $array = $request->all();
-        $no_encontradas = [];
-        $encontradas = [];
-        $total = [];
-        foreach ($array as $item) {
-            $result = formularioGestionIngreso::where('numero_identificacion', $item)->first();
-            if (!$result) {
-                array_push($no_encontradas, $item);
-            } else {
-                array_push($encontradas, $item . '-' . $result['created_at']);
-            }
-        }
-        $total['encontradas total'] =  count($encontradas);
-        $total['encontradas'] =  $encontradas;
-        $total['no encontradas total'] =  count($no_encontradas);
-        $total['no encontradas'] =  $no_encontradas;
-        return $total;
+        // $array = $request->all();
+        // $no_encontradas = [];
+        // $encontradas = [];
+        // $total = [];
+        // foreach ($array as $item) {
+        //     $result = formularioGestionIngreso::
+        //         leftJoin('usr_app_formulario_ingreso_seguimiento as fs', 'fs.formulario_ingreso_id', '=', 'usr_app_formulario_ingreso.id')
+        //         ->leftJoin('usr_app_estados_ingreso as ei', 'ei.id', '=', 'fs.estado_ingreso_id')
+        //         ->where('fs.estado_ingreso_id','10')
+        //         ->where('numero_identificacion', $item)->first();
+        //     if (!$result) {
+        //         array_push($no_encontradas, $item);
+        //     } else {
+        //         array_push($encontradas, $item . '-' . $result['created_at']);
+        //     }
+        // }
+        // $total['encontradas total'] =  count($encontradas);
+        // $total['encontradas'] =  $encontradas;
+        // $total['no encontradas total'] =  count($no_encontradas);
+        // $total['no encontradas'] =  $no_encontradas;
+        // return $total;
+        $result = DB::table('usr_app_formulario_ingreso_seguimiento')
+            ->select('formulario_ingreso_id')
+            ->where('estado_ingreso_id', 10)
+            ->whereMonth('created_at', 6)
+            ->distinct()
+            ->orderBy('formulario_ingreso_id')
+            ->get();
+
+        return count($result);
     }
 
     /**
