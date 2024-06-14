@@ -73,7 +73,11 @@ class FormularioIngresoExport implements FromCollection, WithStyles, ShouldAutoS
             'Departamento ubicación laboratorio médico',
             'Ciudad ubicación laboratorio médico',
             'Laboratorio médico',
-            'Seguimiento',
+            'Seguimiento estados',
+            ' ',
+            'Seguimiento guardado',
+            ' ',
+            
         ];
     }
     

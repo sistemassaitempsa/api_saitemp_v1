@@ -82,76 +82,7 @@ class DashBoardSeleccionController extends Controller
         }
     }
 
-    public function vacantesOcupadas($anio) //******************************************************/
-    {
-        // $registrosPorMes = DB::table('usr_app_formulario_ingreso')
-        //     ->leftJoin('usr_app_formulario_ingreso_seguimiento as fs', 'fs.formulario_ingreso_id', '=', 'usr_app_formulario_ingreso.id')
-        //     ->leftJoin('usr_app_estados_ingreso as ei', 'ei.id', '=', 'fs.estado_ingreso_id')
-        //     ->select(
-        //         DB::raw('MONTH(usr_app_formulario_ingreso.created_at) as mes'),
-        //         DB::raw('COUNT(DISTINCT usr_app_formulario_ingreso.numero_identificacion) as total')
-        //     )
-        //     ->whereYear('usr_app_formulario_ingreso.created_at', $anio)
-        //     ->where('fs.estado_ingreso_id', 10)
-        //     ->groupBy(DB::raw('MONTH(usr_app_formulario_ingreso.created_at)'))
-        //     ->orderBy(DB::raw('MONTH(usr_app_formulario_ingreso.created_at)'))
-        //     ->pluck('total', 'mes')
-        //     ->all();
 
-        // // Inicializar un array con 12 posiciones, todas con valor 0
-        // $registrosPorMesArray = array_fill(1, 12, 0);
-
-        // // Actualizar las posiciones del array con los valores obtenidos de la consulta
-        // foreach ($registrosPorMes as $mes => $cantidad) {
-        //     $registrosPorMesArray[$mes] = $cantidad;
-        // }
-
-        // return response()->json($registrosPorMesArray);
-        $registrosPorMes = DB::table('usr_app_formulario_ingreso')
-            ->leftJoin('usr_app_formulario_ingreso_seguimiento as fs', 'fs.formulario_ingreso_id', '=', 'usr_app_formulario_ingreso.id')
-            ->leftJoin('usr_app_estados_ingreso as ei', 'ei.id', '=', 'fs.estado_ingreso_id')
-            ->select(
-                DB::raw('MONTH(usr_app_formulario_ingreso.created_at) as mes'),
-                DB::raw('COUNT(DISTINCT usr_app_formulario_ingreso.numero_identificacion) as total')
-            )
-            ->whereYear('usr_app_formulario_ingreso.created_at', $anio)
-            ->where('fs.estado_ingreso_id', 10)
-            ->groupBy(DB::raw('MONTH(usr_app_formulario_ingreso.created_at)'))
-            ->orderBy(DB::raw('MONTH(usr_app_formulario_ingreso.created_at)'))
-            ->pluck('total', 'mes')
-            ->all();
-
-        // Construir array de nombres de los meses
-        $nombresMesesArray = [
-            1 => 'Enero', 2 => 'Febrero', 3 => 'Marzo', 4 => 'Abril',
-            5 => 'Mayo', 6 => 'Junio', 7 => 'Julio', 8 => 'Agosto',
-            9 => 'Septiembre', 10 => 'Octubre', 11 => 'Noviembre', 12 => 'Diciembre'
-        ];
-
-        // Inicializar el array resultado con los nombres de los meses activos
-        $nombresMesesActivos = [];
-
-        // Iterar sobre los registros y construir los nombres de meses activos
-        foreach ($registrosPorMes as $mes => $total) {
-            if ($total > 0) {
-                $nombresMesesActivos[$mes] = $nombresMesesArray[$mes];
-            }
-        }
-
-        // Inicializar el array resultado final
-        $resultadoFinal = [['nombres' => $nombresMesesActivos]];
-
-        // Iterar sobre los registros y construir los objetos correspondientes
-        foreach ($registrosPorMes as $mes => $total) {
-            if ($total > 0) {
-                $registro = array_fill(1, 12, 0);
-                $registro[$mes] = $total;
-                $resultadoFinal[] = $registro;
-            }
-        }
-
-        return response()->json($resultadoFinal);
-    }
     public function resgistrosporestado()
     {
         $registrosPorEstado = DB::table('usr_app_formulario_ingreso')

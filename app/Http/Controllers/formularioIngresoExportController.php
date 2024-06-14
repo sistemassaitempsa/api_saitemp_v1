@@ -9,6 +9,8 @@ use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use App\Models\RegistroIngresoLaboratorio;
 use App\Models\FormularioIngresoSeguimiento;
+use App\Models\FormularioIngresoSeguimientoEstado;
+
 
 class formularioIngresoExportController extends Controller
 {
@@ -36,7 +38,7 @@ class formularioIngresoExportController extends Controller
             ->select(
                 'usr_app_formulario_ingreso.id',
                 'usr_app_formulario_ingreso.numero_radicado',
-                'usr_app_formulario_ingreso.created_at',
+                DB::raw("FORMAT(CAST(usr_app_formulario_ingreso.created_at AS DATE), 'dd/MM/yyyy') as fecha_radicado"),
                 'est.nombre as estado_ingreso',
                 'usr_app_formulario_ingreso.responsable',
                 'cli.razon_social',
@@ -144,6 +146,7 @@ class formularioIngresoExportController extends Controller
 
         foreach ($resultados as $item) {
             $item->fecha_examen = $item->fecha_examen ? date('d/m/Y H:i', strtotime($item->fecha_examen)) : null;
+
             $laboratorios = RegistroIngresoLaboratorio::join('usr_app_ciudad_laboraorio as ciulab', 'ciulab.id', '=', 'usr_app_registro_ingreso_laboraorio.laboratorio_medico_id')
                 ->join('usr_app_municipios as mun', 'mun.id', '=', 'ciulab.ciudad_id')
                 ->join('usr_app_departamentos as dep', 'dep.id', '=', 'mun.departamento_id')
@@ -170,6 +173,44 @@ class formularioIngresoExportController extends Controller
                 $item->nombre_lab = ' ';
             }
 
+            $seguimiento_estados = FormularioIngresoSeguimientoEstado::join('usr_app_estados_ingreso as ei', 'ei.id', '=', 'usr_app_formulario_ingreso_seguimiento_estado.estado_ingreso_inicial')
+                ->join('usr_app_estados_ingreso as ef', 'ef.id', '=', 'usr_app_formulario_ingreso_seguimiento_estado.estado_ingreso_final')
+                ->where('usr_app_formulario_ingreso_seguimiento_estado.formulario_ingreso_id',  $item->id)
+                ->select(
+                    'usr_app_formulario_ingreso_seguimiento_estado.responsable_inicial',
+                    'usr_app_formulario_ingreso_seguimiento_estado.responsable_final',
+                    'ei.nombre as estado_ingreso_inicial',
+                    'ef.nombre as estado_ingreso_final',
+                    'usr_app_formulario_ingreso_seguimiento_estado.actualiza_registro',
+                    'usr_app_formulario_ingreso_seguimiento_estado.created_at',
+
+
+                )
+                ->orderby('usr_app_formulario_ingreso_seguimiento_estado.id', 'desc')
+                ->get();
+            // unset($item->id);
+
+            // return $seguimiento_estados;
+
+            // $seguimientosGuardados = [];
+
+            $item->seguimiento_e = '';
+
+            foreach ($seguimiento_estados as $seguimientos_estado) {
+                $fecha_original = $seguimientos_estado->created_at;
+                $fecha = $fecha_original->format('d-m-Y, H:i:s');
+
+                $seguimiento_e = $seguimientos_estado->estado_ingreso_final . "\n" .
+                    $seguimientos_estado->responsable_final . "\n\n" .
+                    '↑ : Fecha: ' . $fecha . "\n\n" .
+                    $seguimientos_estado->estado_ingreso_inicial . "\n" .
+                    $seguimientos_estado->responsable_inicial . "\n\n" . '-----------------------------------------------' . "\n\n";
+
+                $item->seguimiento_e .= $seguimiento_e;
+            }
+
+            $item->espacio1 = ' ';
+
             $seguimiento = FormularioIngresoSeguimiento::join('usr_app_estados_ingreso as ei', 'ei.id', '=', 'usr_app_formulario_ingreso_seguimiento.estado_ingreso_id')
                 ->where('usr_app_formulario_ingreso_seguimiento.formulario_ingreso_id', $item->id)
                 ->select(
@@ -178,38 +219,24 @@ class formularioIngresoExportController extends Controller
                     'usr_app_formulario_ingreso_seguimiento.created_at',
 
                 )
-                ->orderby('usr_app_formulario_ingreso_seguimiento.id', 'asc')
-                // ->orderby('usr_app_formulario_ingreso_seguimiento.id', 'desc')
+                // ->orderby('usr_app_formulario_ingreso_seguimiento.id', 'asc')
+                ->orderby('usr_app_formulario_ingreso_seguimiento.id', 'desc')
                 ->get();
             unset($item->id);
 
-            $variablesGuardadas = [];
-            $tempString = '';
+            $item->nuevaVariable = '';
 
             foreach ($seguimiento as $seguimientos) {
                 $nuevaVariable = $seguimientos->usuario . ' | ' . $seguimientos->estado . ' | ' . $seguimientos->created_at . "\n" . "\n" . "\n";
 
-                $pos = strpos($nuevaVariable, "\n" . "\n" . "\n");
+                $item->nuevaVariable .= $nuevaVariable;
 
-                if ($pos !== false) {
-                    $tempString .= substr($nuevaVariable, 0, $pos);
-                    $variablesGuardadas[] = $tempString;
-                    $tempString = '';
-                    $tempString .= substr($nuevaVariable, $pos + 3);
-                } else {
-                    $tempString .= $nuevaVariable;
-                }
+                // return $item->seguimiento_e;
             }
 
-            if (!empty($tempString)) {
-                $variablesGuardadas[] = $tempString;
-            }
-
-            for ($i = 0; $i < count($variablesGuardadas); $i++) {
-                $propertyName = 'siguimiento' . ($i + 1);
-                $item->$propertyName = $variablesGuardadas[$i];
-            }
+            $item->espacio2 = ' ';
         }
+
 
         return (new FormularioIngresoExport($resultados))->download('exportData.xlsx', \Maatwebsite\Excel\Excel::XLSX);
     }
