@@ -127,7 +127,153 @@ class IndicadoresSeyaController extends Controller
         return response()->json($resultadoFinal);
     }
 
-    
+    public function vacantesocupadas()
+    {
+        // Array de nombres de los meses en español
+        $nombres_meses = [
+            1 => 'Enero',
+            2 => 'Febrero',
+            3 => 'Marzo',
+            4 => 'Abril',
+            5 => 'Mayo',
+            6 => 'Junio',
+            7 => 'Julio',
+            8 => 'Agosto',
+            9 => 'Septiembre',
+            10 => 'Octubre',
+            11 => 'Noviembre',
+            12 => 'Diciembre'
+        ];
+
+        // Subconsulta para obtener la primera aparición de cada formulario_ingreso_id con estado_ingreso_id = 10
+        $firstOccurrence = DB::table('usr_app_formulario_ingreso_seguimiento as u1')
+            ->select('u1.formulario_ingreso_id', DB::raw('MIN(u1.created_at) as first_created_at'))
+            ->where('u1.estado_ingreso_id', 10)
+            ->groupBy('u1.formulario_ingreso_id');
+
+        // Inicializar arrays para almacenar los meses con valores y los valores por mes
+        $meses_con_valores = [];
+        $valores_por_mes = [];
+
+        // Consulta principal para obtener los registros que coinciden con la primera aparición en cada mes del año
+        for ($mes = 1; $mes <= 12; $mes++) {
+            $result = DB::table('usr_app_formulario_ingreso_seguimiento as u2')
+                ->joinSub($firstOccurrence, 'first_occurrence', function ($join) {
+                    $join->on('u2.formulario_ingreso_id', '=', 'first_occurrence.formulario_ingreso_id')
+                        ->on('u2.created_at', '=', 'first_occurrence.first_created_at');
+                })
+                ->select('u2.formulario_ingreso_id', 'u2.created_at')
+                ->where('u2.estado_ingreso_id', 10)
+                ->whereMonth('u2.created_at', $mes) // Filtrar por el mes en la tabla principal
+                ->exists(); // Verificar si existen registros en este mes
+
+            // Si hay resultados para este mes, almacenar el nombre del mes y un array con 12 posiciones
+            if ($result) {
+                $total = DB::table('usr_app_formulario_ingreso_seguimiento as u2')
+                    ->joinSub($firstOccurrence, 'first_occurrence', function ($join) {
+                        $join->on('u2.formulario_ingreso_id', '=', 'first_occurrence.formulario_ingreso_id')
+                            ->on('u2.created_at', '=', 'first_created_at');
+                    })
+                    ->where('u2.estado_ingreso_id', 10)
+                    ->whereMonth('u2.created_at', $mes)
+                    ->count();
+
+                // Almacenar el nombre del mes en un array
+                $meses_con_valores[$mes] = $nombres_meses[$mes];
+
+                // Crear un array con 12 posiciones y colocar el total si es diferente de cero
+                $array_valores = array_fill(0, 12, 0);
+                if ($total !== 0) {
+                    $array_valores[$mes - 1] = $total;
+                }
+
+                // Almacenar los valores en el array correspondiente al mes
+                $valores_por_mes[] = $array_valores;
+            }
+        }
+
+        // Crear la estructura final
+        $resultado = $valores_por_mes;
+
+        array_unshift($resultado, ['nombres' => $meses_con_valores]);
+
+        return $resultado;
+    }
+
+    public function ingresoempledosmes()
+    {
+
+        // Array de nombres de los meses en español
+        $nombres_meses = [
+            1 => 'Enero',
+            2 => 'Febrero',
+            3 => 'Marzo',
+            4 => 'Abril',
+            5 => 'Mayo',
+            6 => 'Junio',
+            7 => 'Julio',
+            8 => 'Agosto',
+            9 => 'Septiembre',
+            10 => 'Octubre',
+            11 => 'Noviembre',
+            12 => 'Diciembre'
+        ];
+
+        // Subconsulta para obtener la primera aparición de cada formulario_ingreso_id con estado_ingreso_id = 10
+        $firstOccurrence = DB::table('usr_app_formulario_ingreso_seguimiento as u1')
+            ->select('u1.formulario_ingreso_id', DB::raw('MIN(u1.created_at) as first_created_at'))
+            ->where('u1.estado_ingreso_id', 10)
+            ->groupBy('u1.formulario_ingreso_id');
+
+        // Inicializar arrays para almacenar los meses con valores y los valores por mes
+        $meses_con_valores = [];
+        $valores_por_mes = [];
+
+        // Consulta principal para obtener los registros que coinciden con la primera aparición en cada mes del año
+        for ($mes = 1; $mes <= 12; $mes++) {
+            $result = DB::table('usr_app_formulario_ingreso_seguimiento as u2')
+                ->joinSub($firstOccurrence, 'first_occurrence', function ($join) {
+                    $join->on('u2.formulario_ingreso_id', '=', 'first_occurrence.formulario_ingreso_id')
+                        ->on('u2.created_at', '=', 'first_occurrence.first_created_at');
+                })
+                ->join('usr_app_formulario_ingreso as u3', 'u2.formulario_ingreso_id', '=', 'u3.id')
+                ->select('u2.formulario_ingreso_id', 'u3.fecha_ingreso')
+                ->where('u2.estado_ingreso_id', 10)
+                ->whereMonth('u3.fecha_ingreso', $mes) // Filtrar por el mes en la tabla usr_pp_formulario_ingreso
+                ->exists(); // Verificar si existen registros en este mes
+
+            // Si hay resultados para este mes, almacenar el nombre del mes y un array con 12 posiciones
+            if ($result) {
+                $total = DB::table('usr_app_formulario_ingreso_seguimiento as u2')
+                    ->joinSub($firstOccurrence, 'first_occurrence', function ($join) {
+                        $join->on('u2.formulario_ingreso_id', '=', 'first_occurrence.formulario_ingreso_id')
+                            ->on('u2.created_at', '=', 'first_created_at');
+                    })
+                    ->join('usr_app_formulario_ingreso as u3', 'u2.formulario_ingreso_id', '=', 'u3.id')
+                    ->where('u2.estado_ingreso_id', 10)
+                    ->whereMonth('u3.fecha_ingreso', $mes)
+                    ->count();
+
+                // Almacenar el nombre del mes en un array
+                $meses_con_valores[$mes] = $nombres_meses[$mes];
+
+                // Crear un array con 12 posiciones y colocar el total si es diferente de cero
+                $array_valores = array_fill(0, 12, 0);
+                if ($total !== 0) {
+                    $array_valores[$mes - 1] = $total;
+                }
+
+                // Almacenar los valores en el array correspondiente al mes
+                $valores_por_mes[] = $array_valores;
+            }
+        }
+
+        $resultado = [];
+        $resultado = $valores_por_mes;
+        array_unshift($resultado, ['nombres' => $meses_con_valores]);
+        return $resultado;
+    }
+
 
     public function cargosCantidadchar($anio)
     {
@@ -249,7 +395,7 @@ class IndicadoresSeyaController extends Controller
         // Retornar la respuesta JSON
         return response()->json($resultado);
     }
-   
+
     public function estadosapilados()
     {
         $registrosPorEstado = DB::table('usr_app_formulario_ingreso')

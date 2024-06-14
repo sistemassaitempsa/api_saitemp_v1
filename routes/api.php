@@ -125,6 +125,7 @@ use App\Http\Controllers\EstadoCierreCrmController;
 use App\Http\Controllers\PqrsfCRMController;
 use App\Http\Controllers\SeguimientoCrmController;
 use App\Http\Controllers\IndicadoresSeyaController;
+use App\Http\Controllers\CuentaRegresivaController;
 
 
 
@@ -706,8 +707,7 @@ Route::group([
 
   Route::get('/cargosVacantesHojasVida/{anio}', [DashBoardSeleccionController::class, 'cargosVacantesHojasVida']);
   Route::get('/cantidadvacantestiposervicio/{anio}', [DashBoardSeleccionController::class, 'cantidadVacantesTipoServicio']);
-  Route::get('/vacantesocupadas/{anio}', [DashBoardSeleccionController::class, 'vacantesocupadas']);
-  // Route::get('/estadosseya', [DashBoardSeleccionController::class, 'estadosseya']);
+  
 
   // Nivel de accidentalidad
   Route::get('/nivelaccidentalidad', [NivelAccidentalidadController::class, 'index']);
@@ -815,14 +815,19 @@ Route::group([
   Route::get('/registrosporresponsable', [IndicadoresSeyaController::class, 'registrosporresponsable']);
   Route::get('/estadosapilados', [IndicadoresSeyaController::class, 'estadosapilados']);
   Route::get('/vacantesOcupadasTipoServicio', [IndicadoresSeyaController::class, 'vacantesOcupadasTipoServicio']);
+  Route::get('/vacantesocupadas/{anio}', [IndicadoresSeyaController::class, 'vacantesocupadas']);
+  Route::get('/ingresoempledosmes/{anio}', [IndicadoresSeyaController::class, 'ingresoempledosmes']);
 
 
   Route::post('/borrar_nc/{id}', [formularioGestionIngresoController::class, 'borrar_nc']);
   Route::get('/hora', [formularioGestionIngresoController::class, 'hora']);
-  
-  
+
+
   Route::post('/buscarcedula', [formularioGestionIngresoController::class, 'buscarcedula']);
 
+  Route::get('/actualizacionprogramada', [CuentaRegresivaController::class, 'index']);
+  Route::post('/actualizacionprogramada', [CuentaRegresivaController::class, 'create']);
+  Route::post('/actualizacionprogramada/{id}', [CuentaRegresivaController::class, 'update']);
 
   // Route::get('/otrosi/{id}', [OtroSiController::class, 'byid']);
   // Route::post('/otrosi', [OtroSiController::class, 'create']);

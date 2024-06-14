@@ -1707,6 +1707,7 @@ class formularioGestionIngresoController extends Controller
         DB::beginTransaction();
         $user = auth()->user();
         $ids = [];
+        $responsable_actual =  $user->nombres . ' ' . str_replace("null", "", $user->apellidos);
         for ($i = 0; $i < $replica; $i++) {
             try {
                 $result = new formularioGestionIngreso;
@@ -1777,7 +1778,7 @@ class formularioGestionIngresoController extends Controller
                 array_push($ids, $result->id);
 
                 if ($result->responsable == null) {
-                    $this->actualizaestadoingreso($result->id, $result->estado_ingreso_id, $result->responsable_id);
+                    $this->actualizaestadoingreso($result->id, $result->estado_ingreso_id, $result->responsable_id, $responsable_actual );
                 }
             } catch (\Exception $e) {
                 // Revertir la transacción si se produce alguna excepción
@@ -1941,7 +1942,6 @@ class formularioGestionIngresoController extends Controller
                     return response()->json(['status' => 'error', 'message' => 'Solo el responsable puede realizar esta acción después de que el proceso esté cerrado.']);
                 }
             }
-
             return response()->json(['status' => 'success', 'message' => 'Los archivos adjuntos del formulario fueron actualizados de manera exitosa']);
         } catch (\Exception $e) {
             return response()->json(['status' => 'error', 'message' => 'Error al guardar el formulario, por favor intente nuevamente, si el problema persiste por favor contacte al administrador del sitio: ' . $e->getMessage()]);
@@ -2053,9 +2053,11 @@ class formularioGestionIngresoController extends Controller
                 $result->responsable_corregir = null;
             }
 
-            if ($request->estado_id == 10) {
+            if ($request->estado_id == 10 || $request->estado_id == 19 || $request->estado_id == 44) {
                 $result->estado_vacante = 'Cerrado';
-            } else {
+            }
+            
+            else {
                 $result->estado_vacante = $request->consulta_vacante;
             }
 
@@ -2093,7 +2095,7 @@ class formularioGestionIngresoController extends Controller
 
             if ($estado_id != $result->estado_ingreso_id ||  $result->responsable == null) {
                 $this->actualizaestadoingreso($id, $estado_id, $result->responsable_id, $responsable_inicial, $estado_inicial);
-            } else if ($responsable_inicial != $request->consulta_encargado) {
+            } else {
                 $seguimiento_estado = new FormularioIngresoSeguimientoEstado;
                 $seguimiento_estado->responsable_inicial =  $responsable_inicial;
                 $seguimiento_estado->responsable_final = str_replace("null", "", $result->responsable);
@@ -2162,15 +2164,114 @@ class formularioGestionIngresoController extends Controller
         // $total['no encontradas total'] =  count($no_encontradas);
         // $total['no encontradas'] =  $no_encontradas;
         // return $total;
-        $result = DB::table('usr_app_formulario_ingreso_seguimiento')
-            ->select('formulario_ingreso_id')
-            ->where('estado_ingreso_id', 10)
-            ->whereMonth('created_at', 6)
-            ->distinct()
-            ->orderBy('formulario_ingreso_id')
-            ->get();
 
-        return count($result);
+
+
+
+        // // Subconsulta para obtener la primera aparición de cada formulario_ingreso_id con estado_ingreso_id = 10
+        // $firstOccurrence = DB::table('usr_app_formulario_ingreso_seguimiento as u1')
+        //     ->select('u1.formulario_ingreso_id', DB::raw('MIN(u1.created_at) as first_created_at'))
+        //     ->where('u1.estado_ingreso_id', 10)
+        //     ->groupBy('u1.formulario_ingreso_id');
+
+        // // Consulta principal para obtener los registros que coinciden con la primera aparición en el mes especificado
+        // $result = DB::table('usr_app_formulario_ingreso_seguimiento as u2')
+        //     ->joinSub($firstOccurrence, 'first_occurrence', function ($join) {
+        //         $join->on('u2.formulario_ingreso_id', '=', 'first_occurrence.formulario_ingreso_id')
+        //              ->on('u2.created_at', '=', 'first_occurrence.first_created_at');
+        //     })
+        //     ->select('u2.formulario_ingreso_id', 'u2.created_at')
+        //     ->where('u2.estado_ingreso_id', 10)
+        //     ->whereMonth('u2.created_at', 5) // Filtrar por el mes en la tabla principal
+        //     ->orderBy('u2.formulario_ingreso_id')
+        //     ->get();
+
+        // // Crear un array con los ids de formulario_ingreso_id
+        // $ids = $result->pluck('formulario_ingreso_id')->toArray();
+
+        // $total = [
+        //     'total' => $result->count(),
+        //     'registros' => $result,
+        //     'ids' => $ids
+        // ];
+
+        // return $total;
+
+
+
+
+
+        // $array = $request->all();
+        // $no_encontradas = [];
+        // $encontradas = [];
+        // $total = [];
+        // foreach ($array as $item) {
+        //     $result = formularioGestionIngreso:: //leftJoin('usr_app_formulario_ingreso_seguimiento as fs', 'fs.formulario_ingreso_id', '=', 'usr_app_formulario_ingreso.id')
+        //         // ->leftJoin('usr_app_estados_ingreso as ei', 'ei.id', '=', 'fs.estado_ingreso_id')
+        //         // where('fs.estado_ingreso_id', '10')
+        //         where('id', $item)->first();
+        //     if (!$result) {
+        //         array_push($no_encontradas, $item);
+        //     } else {
+        //         array_push($encontradas, $result['numero_identificacion']);
+        //     }
+        // }
+        // $total['encontradas total'] =  count($encontradas);
+        // $total['encontradas'] =  $encontradas;
+        // $total['no encontradas total'] =  count($no_encontradas);
+        // $total['no encontradas'] =  $no_encontradas;
+        // return $total;
+
+        // Subconsulta para obtener la primera aparición de cada formulario_ingreso_id con estado_ingreso_id = 10
+        $firstOccurrence = DB::table('usr_app_formulario_ingreso_seguimiento as u1')
+            ->select('u1.formulario_ingreso_id', DB::raw('MIN(u1.created_at) as first_created_at'))
+            ->where('u1.estado_ingreso_id', 10)
+            ->groupBy('u1.formulario_ingreso_id');
+
+        // Inicializar un array vacío para almacenar los meses con valores
+        $meses_con_valores = [];
+        $valores_por_mes = [];
+
+        // Consulta principal para obtener los registros que coinciden con la primera aparición en cada mes del año
+        for ($mes = 1; $mes <= 12; $mes++) {
+            $result = DB::table('usr_app_formulario_ingreso_seguimiento as u2')
+                ->joinSub($firstOccurrence, 'first_occurrence', function ($join) {
+                    $join->on('u2.formulario_ingreso_id', '=', 'first_occurrence.formulario_ingreso_id')
+                        ->on('u2.created_at', '=', 'first_occurrence.first_created_at');
+                })
+                ->select('u2.formulario_ingreso_id', 'u2.created_at')
+                ->where('u2.estado_ingreso_id', 10)
+                ->whereMonth('u2.created_at', $mes) // Filtrar por el mes en la tabla principal
+                ->exists(); // Verificar si existen registros en este mes
+
+            // Si hay resultados para este mes, almacenar el nombre del mes y un array con 12 posiciones
+            if ($result) {
+                $mes_nombre = date('F', mktime(0, 0, 0, $mes, 1));
+                $total = DB::table('usr_app_formulario_ingreso_seguimiento as u2')
+                    ->joinSub($firstOccurrence, 'first_occurrence', function ($join) {
+                        $join->on('u2.formulario_ingreso_id', '=', 'first_occurrence.formulario_ingreso_id')
+                            ->on('u2.created_at', '=', 'first_occurrence.first_created_at');
+                    })
+                    ->where('u2.estado_ingreso_id', 10)
+                    ->whereMonth('u2.created_at', $mes)
+                    ->count();
+
+                // Almacenar el nombre del mes en un array
+                $meses_con_valores[] = $mes_nombre;
+
+                // Crear un array con 12 posiciones y colocar el total si es diferente de cero
+                $array_valores = array_fill(0, 12, 0);
+                if ($total !== 0) {
+                    $array_valores[$mes - 1] = $total;
+                }
+
+                // Almacenar los valores en el array correspondiente al mes
+                $valores_por_mes[] = $array_valores;
+            }
+        }
+
+        array_unshift($valores_por_mes, ["nombres" => $meses_con_valores]);
+        return $valores_por_mes;
     }
 
     /**
