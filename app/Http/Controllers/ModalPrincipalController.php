@@ -3,11 +3,11 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use App\Models\ModalPrincipal;
+use App\Events\VentanaModalPrincipal;
 use App\Models\ActualizacionProgramada;
-use App\Events\TiempoActualizacion;
 
-
-class CuentaRegresivaController extends Controller
+class ModalPrincipalController extends Controller
 {
     /**
      * Display a listing of the resource.
@@ -16,7 +16,7 @@ class CuentaRegresivaController extends Controller
      */
     public function index()
     {
-        $result = ActualizacionProgramada::first();
+        $result = ModalPrincipal::first();
         return response()->json($result);
     }
 
@@ -27,14 +27,10 @@ class CuentaRegresivaController extends Controller
      */
     public function create(Request $request)
     {
-        $result = new ActualizacionProgramada;
+        $result = new ModalPrincipal;
         $result->visible = $request->visible;
-        $result->fecha_hora = $request->fecha_hora;
-        $result->mensaje_navbar = $request->mensaje_navbar;
-        $result->estilo_span = $request->estilo_span;
-        $result->estilo_contador = $request->estilo_contador;
-        $result->tamano_contador = $request->tamano_contador;
-        $result->tamano_texto_contador = $request->tamano_texto_contador;
+        $result->titulo = $request->titulo;
+        $result->contenido = $request->contenido;
         if ($result->save()) {
             return response()->json(["status" => "success", "message" => "Registro insertado de manera exitosa."]);
         }
@@ -82,32 +78,31 @@ class CuentaRegresivaController extends Controller
      */
     public function update(Request $request, $id)
     {
-
         $data = [
             'visible' => $request->visible,
-            'fecha_hora' => $request->fecha_hora,
-            'mensaje_navbar' => $request->mensaje_navbar,
-            'mensaje_navbar2' => $request->mensaje_navbar2,
-            'mensaje_popup' => $request->mensaje_popup,
-            'icono_popup' => $request->icono_popup,
-            'estilo_span' => $request->estilo_span,
-            'estilo_contador' => $request->estilo_contador,
-            'tamano_contador' => $request->tamano_contador,
-            'tamano_texto_contador' => $request->tamano_texto_contador,
-            'tiempo_espera' => $request->tiempo_espera,
+            'titulo' => $request->titulo,
+            'contenido' => $request->contenido,
         ];
-
-        event(new TiempoActualizacion($data));
-        $result = ActualizacionProgramada::find($id);
+        event(new VentanaModalPrincipal($data));
+        $result = ModalPrincipal::find($id);
         $result->visible = $request->visible;
-        $result->fecha_hora = $request->fecha_hora;
-        $result->mensaje_navbar = $request->mensaje_navbar;
-        $result->estilo_span = $request->estilo_span;
-        $result->estilo_contador = $request->estilo_contador;
-        $result->tamano_contador = $request->tamano_contador;
-        $result->tamano_texto_contador = $request->tamano_texto_contador;
+        $result->titulo = $request->titulo;
+        $result->contenido = $request->contenido;
+        $result2 = ActualizacionProgramada::find($id);
+        $result2->visible = 0;
+        $result2->save();
         if ($result->save()) {
             return response()->json(["status" => "success", "message" => "Registro actualizado de manera exitosa."]);
+        }
+    }
+
+
+    public function updatevisibility($id)
+    {
+        $result = ModalPrincipal::find($id);
+        $result->visible = 1;
+        if ($result->save()) {
+            return response()->json($result);
         }
     }
 

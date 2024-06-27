@@ -2053,8 +2053,12 @@ class formularioGestionIngresoController extends Controller
                 $result->responsable_corregir = null;
             }
 
-            if ($request->estado_id == 10 || $request->estado_id == 19 || $request->estado_id == 44) {
+            if ($request->estado_id == 10) {
                 $result->estado_vacante = 'Cerrado';
+            }
+            
+            if ($request->estado_id == 19 || $request->estado_id == 44 || $request->estado_id == 47) {
+                $result->estado_vacante = 'Cancelado';
             }
             
             else {

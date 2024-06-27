@@ -126,6 +126,7 @@ use App\Http\Controllers\PqrsfCRMController;
 use App\Http\Controllers\SeguimientoCrmController;
 use App\Http\Controllers\IndicadoresSeyaController;
 use App\Http\Controllers\CuentaRegresivaController;
+use App\Http\Controllers\ModalPrincipalController;
 
 
 
@@ -828,6 +829,11 @@ Route::group([
   Route::get('/actualizacionprogramada', [CuentaRegresivaController::class, 'index']);
   Route::post('/actualizacionprogramada', [CuentaRegresivaController::class, 'create']);
   Route::post('/actualizacionprogramada/{id}', [CuentaRegresivaController::class, 'update']);
+  
+  Route::get('/modalprincipal', [ModalPrincipalController::class, 'index']);
+  Route::post('/modalprincipal', [ModalPrincipalController::class, 'create']);
+  Route::post('/modalprincipal/{id}', [ModalPrincipalController::class, 'update']);
+  Route::post('/showmodalprincipal/{id}', [ModalPrincipalController::class, 'updatevisibility']);
 
   // Route::get('/otrosi/{id}', [OtroSiController::class, 'byid']);
   // Route::post('/otrosi', [OtroSiController::class, 'create']);
