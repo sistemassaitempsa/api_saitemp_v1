@@ -29,7 +29,7 @@ class formularioGestionIngreso extends Model
 
                 // Obtener el último registro creado en el año actual
                 $ultimo_registro_ano_actual = self::where('numero_radicado', 'like', '%' . $ano_actual . '%')
-                    ->orderBy('numero_radicado', 'desc')
+                    ->orderBy('id', 'desc')
                     ->first();
 
                 // Generar el nuevo número de registro
@@ -37,7 +37,8 @@ class formularioGestionIngreso extends Model
                     $ultimo_numero = explode('-', $ultimo_registro_ano_actual->numero_radicado)[0];
                     $nuevo_numero = str_pad((int)$ultimo_numero + 1, 4, '0', STR_PAD_LEFT);
                 } else {
-                    $nuevo_numero = '0001';
+                    // $nuevo_numero = '0001';
+                    $nuevo_numero = str_pad(1, 8, '0', STR_PAD_LEFT);
                 }
 
                 // Establecer el nuevo número de registro

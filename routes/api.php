@@ -823,7 +823,6 @@ Route::group([
   Route::post('/borrar_nc/{id}', [formularioGestionIngresoController::class, 'borrar_nc']);
   Route::get('/hora', [formularioGestionIngresoController::class, 'hora']);
 
-
   Route::post('/buscarcedula', [formularioGestionIngresoController::class, 'buscarcedula']);
 
   Route::get('/actualizacionprogramada', [CuentaRegresivaController::class, 'index']);
