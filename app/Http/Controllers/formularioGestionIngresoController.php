@@ -13,6 +13,7 @@ use App\Models\FormularioIngresoSeguimiento;
 use App\Models\UsuarioPermiso;
 use App\Models\FormularioIngresoSeguimientoEstado;
 use Carbon\Carbon;
+use App\Events\NotificacionesPush;
 use TCPDF;
 use Illuminate\Support\Facades\DB;
 
@@ -29,12 +30,6 @@ class formularioGestionIngresoController extends Controller
      */
     public function index($cantidad)
     {
-
-        // $objeto = (object) [
-        //     'mensaje' => 'Filtrando empresas',
-        //     'componente' => 'navbar/gestion-ingresosl'
-        // ];
-        // event(new EventoPrueba2($objeto));
 
         $result = formularioGestionIngreso::leftJoin('usr_app_clientes as cli', 'cli.id', 'usr_app_formulario_ingreso.cliente_id')
             ->leftJoin('usr_app_municipios as mun', 'mun.id', 'usr_app_formulario_ingreso.municipio_id')
@@ -144,7 +139,7 @@ class formularioGestionIngresoController extends Controller
             return response()->json(['status' => 'error', 'message' => 'Solo el responsable puede realizar esta acción.']);
         }
 
-        // Asignar a cada registro de ingreso un responsable
+        // Asignar a cada registro d e ingreso un responsable
         $indiceResponsable = $registro_ingreso->id % $numeroResponsables; // Calcula el índice del responsable basado en el ID del registro
         $responsable = $usuarios[$indiceResponsable];
 
@@ -155,8 +150,6 @@ class formularioGestionIngresoController extends Controller
         $seguimiento_estado->estado_ingreso_final =   $estado_id;
         $seguimiento_estado->formulario_ingreso_id =  $item_id;
         $seguimiento_estado->actualiza_registro =   $user->nombres . ' ' .  $user->apellidos;
-
-
         $seguimiento_estado->save();
 
         // Actualizar el registro de ingreso con el estado y el responsable
@@ -171,6 +164,47 @@ class formularioGestionIngresoController extends Controller
         return response()->json(['status' => 'error', 'message' => 'Error al actualizar registro.']);
     }
 
+    // public function actualizaResponsableingreso($item_id, $responsable_id, $nombre_responsable)
+    // {
+    //     DB::beginTransaction();
+    //     try {
+    //         $user = auth()->user();
+    //         $registro_ingreso = formularioGestionIngreso::where('usr_app_formulario_ingreso.id', '=', $item_id)
+    //             ->first();
+
+    //         $responsable = $this->validaPermiso();
+
+    //         if ($registro_ingreso->responsable_id != null && $registro_ingreso->responsable_id != $user->id && !in_array('31', $permisos)) {
+    //             return response()->json(['status' => 'error', 'message' => 'Solo el responsable puede realizar esta acción.']);
+    //         }
+
+    //         $seguimiento_estado = new FormularioIngresoSeguimientoEstado;
+    //         $seguimiento_estado->responsable_inicial =  str_replace("null", "", $registro_ingreso->responsable);
+    //         $seguimiento_estado->responsable_final = $nombre_responsable;
+    //         $seguimiento_estado->estado_ingreso_inicial =  $registro_ingreso->estado_ingreso_id;
+    //         $seguimiento_estado->estado_ingreso_final =  $registro_ingreso->estado_ingreso_id;
+    //         $seguimiento_estado->formulario_ingreso_id =  $item_id;
+    //         $seguimiento_estado->actualiza_registro =   $user->nombres . ' ' . str_replace("null", "", $user->apellidos);
+
+    //         $seguimiento_estado->save();
+
+    //         $registro_ingreso->responsable_anterior =  str_replace("null", "", $registro_ingreso->responsable);
+    //         $registro_ingreso->responsable =  str_replace("null", "", $nombre_responsable);
+    //         $registro_ingreso->asignacion_manual = 1;
+    //         $registro_ingreso->responsable_id = $responsable_id;
+    //         $registro_ingreso->save();
+    //         $seguimiento = new FormularioIngresoSeguimiento;
+    //         $seguimiento->estado_ingreso_id = $registro_ingreso->estado_ingreso_id;
+    //         $seguimiento->usuario = str_replace("null", "", $registro_ingreso->responsable);
+    //         $seguimiento->formulario_ingreso_id = $item_id;
+    //         $seguimiento->save();
+    //         DB::commit();
+    //         return response()->json(['status' => 'success', 'message' => 'Registro actualizado de manera exitosa.']);
+    //     } catch (\Exception $e) {
+    //         DB::rollback();
+    //         return response()->json(['status' => 'error', 'message' => 'Error al actualizar registro.']);
+    //     }
+    // }
     public function actualizaResponsableingreso($item_id, $responsable_id, $nombre_responsable)
     {
         DB::beginTransaction();
@@ -179,30 +213,31 @@ class formularioGestionIngresoController extends Controller
             $registro_ingreso = formularioGestionIngreso::where('usr_app_formulario_ingreso.id', '=', $item_id)
                 ->first();
 
-            $responsable = $this->validaPermiso();
+            $permisos = $this->validaPermiso();
+
 
             if ($registro_ingreso->responsable_id != null && $registro_ingreso->responsable_id != $user->id && !in_array('31', $permisos)) {
                 return response()->json(['status' => 'error', 'message' => 'Solo el responsable puede realizar esta acción.']);
             }
 
             $seguimiento_estado = new FormularioIngresoSeguimientoEstado;
-            $seguimiento_estado->responsable_inicial =  str_replace("null", "", $registro_ingreso->responsable);
+            $seguimiento_estado->responsable_inicial =  $registro_ingreso->responsable;
             $seguimiento_estado->responsable_final = $nombre_responsable;
             $seguimiento_estado->estado_ingreso_inicial =  $registro_ingreso->estado_ingreso_id;
             $seguimiento_estado->estado_ingreso_final =  $registro_ingreso->estado_ingreso_id;
             $seguimiento_estado->formulario_ingreso_id =  $item_id;
-            $seguimiento_estado->actualiza_registro =   $user->nombres . ' ' . str_replace("null", "", $user->apellidos);
+            $seguimiento_estado->actualiza_registro =   $user->nombres . ' ' .  $user->apellidos;
 
             $seguimiento_estado->save();
 
-            $registro_ingreso->responsable_anterior =  str_replace("null", "", $registro_ingreso->responsable);
-            $registro_ingreso->responsable =  str_replace("null", "", $nombre_responsable);
+            $registro_ingreso->responsable_anterior = $registro_ingreso->responsable;
+            $registro_ingreso->responsable = $nombre_responsable;
             $registro_ingreso->asignacion_manual = 1;
             $registro_ingreso->responsable_id = $responsable_id;
             $registro_ingreso->save();
             $seguimiento = new FormularioIngresoSeguimiento;
             $seguimiento->estado_ingreso_id = $registro_ingreso->estado_ingreso_id;
-            $seguimiento->usuario = str_replace("null", "", $registro_ingreso->responsable);
+            $seguimiento->usuario = $registro_ingreso->responsable;
             $seguimiento->formulario_ingreso_id = $item_id;
             $seguimiento->save();
             DB::commit();
@@ -212,6 +247,7 @@ class formularioGestionIngresoController extends Controller
             return response()->json(['status' => 'error', 'message' => 'Error al actualizar registro.']);
         }
     }
+
 
     public function validaPermiso()
     {
@@ -1778,17 +1814,27 @@ class formularioGestionIngresoController extends Controller
                 array_push($ids, $result->id);
 
                 if ($result->responsable == null) {
-                    $this->actualizaestadoingreso($result->id, $result->estado_ingreso_id, $result->responsable_id, $responsable_actual );
+                    $this->actualizaestadoingreso($result->id, $result->estado_ingreso_id, $result->responsable_id, $responsable_actual);
                 }
             } catch (\Exception $e) {
                 // Revertir la transacción si se produce alguna excepción
                 DB::rollback();
-                return $e;
+                // return $e;
                 return response()->json(['status' => 'error', 'message' => 'Error al guardar formulario, por favor verifique el llenado de todos los campos e intente nuevamente']);
             }
         }
+
         DB::commit();
         return response()->json(['status' => '200', 'message' => 'ok', 'registro_ingreso_id' => $ids]);
+    }
+
+    public function eventoSocket()
+    {
+        $data = [
+            'marca_temporal' => $user->marca_temporal,
+            'mensaje' => 'Te han asignado un nuevo radicado en SEIYA',
+        ];
+        event(new NotificacionesPush($data));
     }
 
     public function pendientes(Request $request)
@@ -2055,14 +2101,12 @@ class formularioGestionIngresoController extends Controller
 
             if ($request->estado_id == 10) {
                 $result->estado_vacante = 'Cerrado';
-            }
-            
-            if ($request->estado_id == 19 || $request->estado_id == 44 || $request->estado_id == 47) {
-                $result->estado_vacante = 'Cancelado';
-            }
-            
-            else {
-                $result->estado_vacante = $request->consulta_vacante;
+            } else {
+                if ($request->estado_id == 19 || $request->estado_id == 44 || $request->estado_id == 47) {
+                    $result->estado_vacante = 'Cancelado';
+                } else {
+                    $result->estado_vacante = $request->consulta_vacante;
+                }
             }
 
             if ($request->variableX == 1) {
