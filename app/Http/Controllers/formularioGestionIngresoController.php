@@ -13,7 +13,7 @@ use App\Models\FormularioIngresoSeguimiento;
 use App\Models\UsuarioPermiso;
 use App\Models\FormularioIngresoSeguimientoEstado;
 use Carbon\Carbon;
-use App\Events\NotificacionesPush;
+// use App\Events\NotificacionesPush;
 use TCPDF;
 use Illuminate\Support\Facades\DB;
 
@@ -1834,7 +1834,7 @@ class formularioGestionIngresoController extends Controller
             'marca_temporal' => $user->marca_temporal,
             'mensaje' => 'Te han asignado un nuevo radicado en SEIYA',
         ];
-        event(new NotificacionesPush($data));
+        // event(new NotificacionesPush($data));
     }
 
     public function pendientes(Request $request)
@@ -2100,12 +2100,10 @@ class formularioGestionIngresoController extends Controller
 
             if ($request->estado_id == 10) {
                 $result->estado_vacante = 'Cerrado';
+            } else if (in_array($request->estado_id, [19, 44, 47, 12, 31, 32, 45])) {
+                $result->estado_vacante = 'Cancelado';
             } else {
-                if ($request->estado_id == 19 || $request->estado_id == 44 || $request->estado_id == 47) {
-                    $result->estado_vacante = 'Cancelado';
-                } else {
-                    $result->estado_vacante = $request->consulta_vacante;
-                }
+                $result->estado_vacante = $request->consulta_vacante;
             }
 
             if ($request->variableX == 1) {
