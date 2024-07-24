@@ -872,6 +872,10 @@ Route::group([
   Route::get('/matrizriesgo/{cantidad}', [MatrizRiesgoController::class, 'index']);
   Route::get('/matrizriesgobyid/{id}', [MatrizRiesgoController::class, 'byid']);
   Route::post('/matrizriesgo', [MatrizRiesgoController::class, 'create']);
+  Route::post('/matrizriesgo/{id}', [MatrizRiesgoController::class, 'update']);
+  Route::post('/matrizriesgo/doc/{id}', [MatrizRiesgoController::class, 'store']);
+  Route::get('/matrizriesgofiltro/{cadena}', [MatrizRiesgoController::class, 'riesgosfiltro']);
+  Route::get('/buscarradicado/{radicado}', [MatrizRiesgoController::class, 'buscarradicado']);
   Route::get('/lideres', [MatrizRiesgoController::class, 'lideres']);
 
 
