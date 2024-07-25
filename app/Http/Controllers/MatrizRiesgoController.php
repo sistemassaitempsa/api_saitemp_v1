@@ -7,6 +7,7 @@ use App\Models\MatrizRiesgo;
 use App\Models\User;
 use App\Models\UsuarioPermiso;
 use Illuminate\Support\Facades\DB;
+use App\Exports\FormularioRiesgosExport;
 
 class MatrizRiesgoController extends Controller
 {
@@ -47,6 +48,7 @@ class MatrizRiesgoController extends Controller
                 DB::raw("CONCAT(usr_app_matriz_riesgo.a_resultado_control_descripcion, ' - ', usr_app_matriz_riesgo.a_resultado_control_peso,' %' ) AS a_resultado_control"),
                 DB::raw("CONCAT(usr_app_matriz_riesgo.o_resultado_control_descripcion, ' - ', usr_app_matriz_riesgo.o_resultado_control_peso,' %' ) AS o_resultado_control"),
                 'usr_app_matriz_riesgo.nombre_responsable',
+                'usr_app_matriz_riesgo.created_at',
             )
             ->paginate($cantidad);
         return response()->json($result);
@@ -340,6 +342,7 @@ class MatrizRiesgoController extends Controller
                     DB::raw("CONCAT(usr_app_matriz_riesgo.a_resultado_control_descripcion, ' - ', usr_app_matriz_riesgo.a_resultado_control_peso,' %' ) AS a_resultado_control"),
                     DB::raw("CONCAT(usr_app_matriz_riesgo.o_resultado_control_descripcion, ' - ', usr_app_matriz_riesgo.o_resultado_control_peso,' %' ) AS o_resultado_control"),
                     'usr_app_matriz_riesgo.nombre_responsable',
+                    'usr_app_matriz_riesgo.created_at',
                 )
                 ->orderby('usr_app_matriz_riesgo.id', 'DESC');
 
@@ -376,15 +379,15 @@ class MatrizRiesgoController extends Controller
                     } else if ($campo == "o_resultado_control" && !is_numeric($valor)) {
                         $query->where('usr_app_matriz_riesgo.o_resultado_control_descripcion', 'like', '%' . $valor . '%');
                     } else {
-                        $query->where($campo, '=', $valor);
+                        $query->where('usr_app_matriz_riesgo.'.$campo, '=', $valor);
                     }
                     break;
                 case 'Igual a fecha':
-                    $query->whereDate($campo, '=', $valor);
+                    $query->whereDate('usr_app_matriz_riesgo.'.$campo, '=', $valor);
                     break;
                 case 'Entre':
-                    $query->whereDate($campo, '>=', $valor)
-                        ->whereDate($campo, '<=', $valor2);
+                    $query->whereDate('usr_app_matriz_riesgo.'.$campo, '>=', $valor)
+                        ->whereDate('usr_app_matriz_riesgo.'.$campo, '<=', $valor2);
                     break;
             }
 
@@ -428,9 +431,188 @@ class MatrizRiesgoController extends Controller
                 DB::raw("CONCAT(usr_app_matriz_riesgo.a_resultado_control_descripcion, ' - ', usr_app_matriz_riesgo.a_resultado_control_peso,' %' ) AS a_resultado_control"),
                 DB::raw("CONCAT(usr_app_matriz_riesgo.o_resultado_control_descripcion, ' - ', usr_app_matriz_riesgo.o_resultado_control_peso,' %' ) AS o_resultado_control"),
                 'usr_app_matriz_riesgo.nombre_responsable',
+                'usr_app_matriz_riesgo.created_at',
             )
             ->paginate();
         return response()->json($result);
+    }
+
+
+    public function exportamatrizriesgo($cadena)
+    {
+        try {
+
+            // $permisos = $this->validaPermiso();
+            // $user = auth()->user();
+
+            // return 'prueba';
+            $cadenaJSON = base64_decode($cadena);
+            $cadenaUTF8 = mb_convert_encoding($cadenaJSON, 'UTF-8', 'ISO-8859-1');
+            $valores = explode("/", $cadenaUTF8);
+            $campo = $valores[0];
+            $operador = $valores[1];
+            $valor = $valores[2];
+            $valor2 = isset($valores[3]) ? $valores[3] : null;
+
+            // return $valores;
+
+            $query = MatrizRiesgo::join('usr_app_riesgos_tipos_proceso as tp', 'tp.id', 'usr_app_matriz_riesgo.tipo_proceso_id')
+                ->join('usr_app_riesgos_nombres_proceso as np', 'np.id', 'usr_app_matriz_riesgo.nombre_proceso_id')
+                ->join('usr_app_riesgos_nivel_probabilidad as a_nip', 'a_nip.id', 'usr_app_matriz_riesgo.a_probabilidad_id')
+                ->join('usr_app_riesgos_nivel_impacto as a_niip', 'a_niip.id', 'usr_app_matriz_riesgo.a_impacto_id')
+                ->join('usr_app_riesgos_metodos_identificacion as a_meti', 'a_meti.id', 'usr_app_matriz_riesgo.a_metodo_identificacion_id')
+                ->join('usr_app_riesgos_factores as a_fac', 'a_fac.id', 'usr_app_matriz_riesgo.a_factor_id')
+                ->join('usr_app_riesgos_seguimientos as a_seg', 'a_seg.id', 'usr_app_matriz_riesgo.a_seguimiento_id')
+                ->join('usr_app_riesgos_documentos_registrados as a_docr', 'a_docr.id', 'usr_app_matriz_riesgo.a_documento_registrado_id')
+                ->join('usr_app_riesgos_clases_control as a_clac', 'a_clac.id', 'usr_app_matriz_riesgo.a_clase_control_id')
+                ->join('usr_app_riesgos_frecuencias_control as a_fc', 'a_fc.id', 'usr_app_matriz_riesgo.a_frecuencia_control_id')
+                ->join('usr_app_riesgos_tipos_control as a_tc', 'a_tc.id', 'usr_app_matriz_riesgo.a_tipo_control_id')
+                ->join('usr_app_riesgos_existe_evidencias as a_eev', 'a_eev.id', 'usr_app_matriz_riesgo.a_existe_evidencia_id')
+                ->join('usr_app_riesgos_ejecuciones_eficaces as a_ee', 'a_ee.id', 'usr_app_matriz_riesgo.a_ejecucion_eficaz_id')
+
+                ->join('usr_app_riesgos_nivel_probabilidad as o_nip', 'o_nip.id', 'usr_app_matriz_riesgo.o_probabilidad_id')
+                ->join('usr_app_riesgos_nivel_impacto as o_niip', 'o_niip.id', 'usr_app_matriz_riesgo.o_impacto_id')
+                ->join('usr_app_riesgos_metodos_identificacion as o_meti', 'o_meti.id', 'usr_app_matriz_riesgo.o_metodo_identificacion_id')
+                ->join('usr_app_riesgos_factores as o_fac', 'o_fac.id', 'usr_app_matriz_riesgo.o_factor_id')
+                ->join('usr_app_riesgos_seguimientos as o_seg', 'o_seg.id', 'usr_app_matriz_riesgo.o_seguimiento_id')
+                ->join('usr_app_riesgos_documentos_registrados as o_docr', 'o_docr.id', 'usr_app_matriz_riesgo.o_documento_registrado_id')
+                ->join('usr_app_riesgos_clases_control as o_clac', 'o_clac.id', 'usr_app_matriz_riesgo.o_clase_control_id')
+                ->join('usr_app_riesgos_frecuencias_control as o_fc', 'o_fc.id', 'usr_app_matriz_riesgo.o_frecuencia_control_id')
+                ->join('usr_app_riesgos_tipos_control as o_tc', 'o_tc.id', 'usr_app_matriz_riesgo.o_tipo_control_id')
+                ->join('usr_app_riesgos_existe_evidencias as o_eev', 'o_eev.id', 'usr_app_matriz_riesgo.o_existe_evidencia_id')
+                ->join('usr_app_riesgos_ejecuciones_eficaces as o_ee', 'o_ee.id', 'usr_app_matriz_riesgo.o_ejecucion_eficaz_id')
+                // ->when(!in_array('34', $permisos), function ($query) use ($user) {
+                //     return $query->where('usr_app_matriz_riesgo.responsable_id', $user->id);
+                // })
+                ->select(
+                    'usr_app_matriz_riesgo.numero_radicado',
+                    'tp.nombre as a_tipo_proceso',
+                    'np.nombre as a_nombre_proceso',
+                    'usr_app_matriz_riesgo.nombre_riesgo',
+                    'usr_app_matriz_riesgo.oportunidad',
+                    'usr_app_matriz_riesgo.causa',
+                    'usr_app_matriz_riesgo.plan_accion',
+                    'usr_app_matriz_riesgo.consecuencia',
+                    'usr_app_matriz_riesgo.efecto',
+                    'usr_app_matriz_riesgo.amenaza',
+                    'usr_app_matriz_riesgo.oportunidad_2',
+
+                    'a_nip.nivel as a_nivel_probabilidad',
+                    'a_nip.probabilidad as a_probabilidad',
+                    'a_niip.nivel as a_nivel_impacto',
+                    'a_niip.impacto as a_impacto',
+                    'usr_app_matriz_riesgo.a_total',
+                    'usr_app_matriz_riesgo.a_nivel_riesgo',
+                    'usr_app_matriz_riesgo.a_tratamiento',
+                    'a_meti.nombre as a_metodo_identificacion',
+                    'a_fac.nombre as a_factor',
+                    'usr_app_matriz_riesgo.a_nombre_control',
+                    'usr_app_matriz_riesgo.a_soporte',
+                    'a_seg.nombre as a_seguimiento',
+                    'a_docr.nombre as a_documento_registrado',
+                    'a_docr.peso as a_documento_registrado_peso',
+                    'a_clac.nombre as a_clase_control',
+                    'a_clac.peso as a_clase_control_peso',
+                    'a_fc.nombre as a_frecuencia_control',
+                    'a_fc.peso as a_frecuencia_control_peso',
+                    'a_tc.nombre as a_tipo_control',
+                    'a_tc.peso as a_tipo_control_peso',
+                    'a_eev.nombre as a_existe_evidencia',
+                    'a_eev.peso as a_existe_evidencia_peso',
+                    'a_ee.nombre as a_ejecucion_eficaz',
+                    'a_ee.peso as a_ejecucion_eficaz_peso',
+                    'usr_app_matriz_riesgo.a_resultado_control_descripcion',
+                    'usr_app_matriz_riesgo.a_resultado_control_peso',
+
+                    'o_nip.nivel as o_nivel_probabilidad',
+                    'o_nip.probabilidad as o_probabilidad',
+                    'o_niip.nivel as o_nivel_impacto',
+                    'o_niip.impacto as o_impacto',
+                    'usr_app_matriz_riesgo.o_total',
+                    'usr_app_matriz_riesgo.o_nivel_riesgo',
+                    'usr_app_matriz_riesgo.o_tratamiento',
+                    'o_meti.nombre as o_metodo_identificacion',
+                    'o_fac.nombre as o_factor',
+                    'usr_app_matriz_riesgo.o_nombre_control',
+                    'usr_app_matriz_riesgo.o_soporte',
+                    'o_seg.nombre as o_seguimiento',
+                    'o_docr.nombre as o_documento_registrado',
+                    'o_docr.peso as o_documento_registrado_peso',
+                    'o_clac.nombre as o_clase_control',
+                    'o_clac.peso as o_clase_control_peso',
+                    'o_fc.nombre as o_frecuencia_control',
+                    'o_fc.peso as o_frecuencia_control_peso',
+                    'o_tc.nombre as o_tipo_control',
+                    'o_tc.peso as o_tipo_control_peso',
+                    'o_eev.nombre as o_existe_evidencia',
+                    'o_eev.peso as o_existe_evidencia_peso',
+                    'o_ee.nombre as o_ejecucion_eficaz',
+                    'o_ee.peso as o_ejecucion_eficaz_peso',
+                    'usr_app_matriz_riesgo.o_resultado_control_descripcion',
+                    'usr_app_matriz_riesgo.o_resultado_control_peso',
+
+                    'usr_app_matriz_riesgo.a_total',
+                    'usr_app_matriz_riesgo.a_nivel_riesgo',
+                    'usr_app_matriz_riesgo.a_tratamiento',
+                    'usr_app_matriz_riesgo.o_total',
+                    'usr_app_matriz_riesgo.o_nivel_riesgo',
+                    'usr_app_matriz_riesgo.o_tratamiento',
+                    'usr_app_matriz_riesgo.nombre_responsable',
+                    'usr_app_matriz_riesgo.ultima_revision',
+                )
+                ->orderby('usr_app_matriz_riesgo.id', 'DESC');
+
+
+            switch ($operador) {
+                case 'Contiene':
+                    if ($campo == "a_tipo_proceso") {
+                        $query->where('tp.nombre', 'like', '%' . $valor . '%');
+                    } else if ($campo == "a_nombre_proceso") {
+                        $query->where('np.nombre', 'like', '%' . $valor . '%');
+                    } else if ($campo == "a_resultado_control" && is_numeric($valor)) {
+                        $query->where('usr_app_matriz_riesgo.a_resultado_control_peso', 'like', '%' . $valor . '%');
+                    } else if ($campo == "a_resultado_control" && !is_numeric($valor)) {
+                        $query->where('usr_app_matriz_riesgo.a_resultado_control_descripcion', 'like', '%' . $valor . '%');
+                    } else if ($campo == "o_resultado_control" && is_numeric($valor)) {
+                        $query->where('usr_app_matriz_riesgo.o_resultado_control_peso', 'like', '%' . $valor . '%');
+                    } else if ($campo == "o_resultado_control" && !is_numeric($valor)) {
+                        $query->where('usr_app_matriz_riesgo.o_resultado_control_descripcion', 'like', '%' . $valor . '%');
+                    } else {
+                        $query->where('usr_app_matriz_riesgo.'.$campo, 'like', '%' . $valor . '%');
+                    }
+                    break;
+                case 'Igual a':
+                    if ($campo == "a_tipo_proceso") {
+                        $query->where('tp.nombre', '=', $valor);
+                    } else if ($campo == "a_nombre_proceso") {
+                        $query->where('np.nombre', '=', $valor);
+                    } else if ($campo == "a_resultado_control" && is_numeric($valor)) {
+                        $query->where('usr_app_matriz_riesgo.a_resultado_control_peso', 'like', '%' . $valor . '%');
+                    } else if ($campo == "a_resultado_control" && !is_numeric($valor)) {
+                        $query->where('usr_app_matriz_riesgo.a_resultado_control_descripcion', 'like', '%' . $valor . '%');
+                    } else if ($campo == "o_resultado_control" && is_numeric($valor)) {
+                        $query->where('usr_app_matriz_riesgo.o_resultado_control_peso', 'like', '%' . $valor . '%');
+                    } else if ($campo == "o_resultado_control" && !is_numeric($valor)) {
+                        $query->where('usr_app_matriz_riesgo.o_resultado_control_descripcion', 'like', '%' . $valor . '%');
+                    } else {
+                        $query->where($campo, '=', $valor);
+                    }
+                    break;
+                case 'Igual a fecha':
+                    $query->whereDate('usr_app_matriz_riesgo.'.$campo, '=', $valor);
+                    break;
+                case 'Entre':
+                    $query->whereDate('usr_app_matriz_riesgo.'.$campo, '>=', $valor)
+                        ->whereDate('usr_app_matriz_riesgo.'.$campo, '<=', $valor2);
+                    break;
+            }
+
+            $result = $query->get();
+            return (new FormularioRiesgosExport($result))->download('exportData.xlsx', \Maatwebsite\Excel\Excel::XLSX);
+        } catch (\Exception $e) {
+            return $e;
+            return response()->json(['status' => 'Error', 'message' => 'El registro que desea descargar no fue encontrado']);
+        }
     }
 
 
@@ -461,12 +643,12 @@ class MatrizRiesgoController extends Controller
                 $carpetaDestino = './upload/';
                 $request->file('evidencia')->move($carpetaDestino, $nuevoNombre);
                 $result->evidencia = ltrim($carpetaDestino, '.') . $nuevoNombre;
-                if($result->save()){
-                    return response()->json(['status'=>'success','message'=>'Evidencia insertada exitosamente.']);
+                if ($result->save()) {
+                    return response()->json(['status' => 'success', 'message' => 'Evidencia insertada exitosamente.']);
                 }
             }
         } catch (\Exception $e) {
-           return $e;
+            return $e;
         }
     }
 
