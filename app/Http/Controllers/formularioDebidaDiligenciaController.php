@@ -31,6 +31,7 @@ use App\Models\ClienteOtroSi;
 use App\Models\ClienteConvenioBanco;
 use App\Models\ClienteTipoContrato;
 use App\Models\ClienteLaboratorio;
+use App\Models\VersionFormularioDD;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 // use App\Events\EventoPrueba2;
@@ -701,11 +702,9 @@ class formularioDebidaDiligenciaController extends Controller
                 case 'Contiene':
                     if ($campo == "vendedor") {
                         $query->where('ven.nom_ven', 'like', '%' . $valor . '%');
-                    }
-                    else if ($campo == "nombre_estado_firma") {
+                    } else if ($campo == "nombre_estado_firma") {
                         $query->where('estf.nombre', 'like', '%' . $valor . '%');
-                    } 
-                    else {
+                    } else {
                         $query->where($campo, 'like', '%' . $valor . '%');
                     }
                     break;
@@ -1780,6 +1779,21 @@ class formularioDebidaDiligenciaController extends Controller
         return response()->json(['status' => 'error', 'message' => 'Error al actualizar registro.']);
     }
 
+
+    public function versionformulario()
+    {
+        $currentDate = now(); // Obtener la fecha actual
+
+        // Establecer la versión del formulario basada en la fecha actual
+        $version = $currentDate->isAfter('2024-08-04') ? 2 : 1;
+
+        // Realizar la consulta con la versión seleccionada
+        $result = VersionFormularioDD::where('version_formulario', $version)
+            ->select()
+            ->get();
+
+        return response()->json($result);
+    }
     /**
      * Remove the specified resource from storage.
      *

@@ -592,6 +592,7 @@ Route::group([
   Route::post('/formulariocliente/{id}', [formularioDebidaDiligenciaController::class, 'update']);
   Route::delete('/formulariocliente/{id}', [formularioDebidaDiligenciaController::class, 'destroy']);
   Route::post('/actualizaestadofirma/{item_id}/{estado_id}', [formularioDebidaDiligenciaController::class, 'actualizaestadofirma']);
+  Route::get('/versiondebidadiligencia', [formularioDebidaDiligenciaController::class, 'versionformulario']);
 
   Route::get('/consultaformulariocliente/{cantidad}', [formularioDebidaDiligenciaController::class, 'consultacliente']);
   Route::get('/clientesactivos', [formularioDebidaDiligenciaController::class, 'clientesactivos']);
@@ -878,6 +879,9 @@ Route::group([
   Route::get('/exportamatrizriesgo/{cadena}', [MatrizRiesgoController::class, 'exportamatrizriesgo']);
   Route::get('/buscarradicado/{radicado}', [MatrizRiesgoController::class, 'buscarradicado']);
   Route::get('/lideres', [MatrizRiesgoController::class, 'lideres']);
+  
+
+
 
 
   // Route::get('/otrosi/{id}', [OtroSiController::class, 'byid']);

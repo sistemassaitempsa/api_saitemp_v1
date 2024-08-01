@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\MatrizRiesgo;
 use App\Models\User;
 use App\Models\UsuarioPermiso;
+use App\Models\FormularioRiesgoSeguimiento;
 use Illuminate\Support\Facades\DB;
 use App\Exports\FormularioRiesgosExport;
 
@@ -39,19 +40,78 @@ class MatrizRiesgoController extends Controller
                 'usr_app_matriz_riesgo.efecto',
                 'usr_app_matriz_riesgo.amenaza',
                 'usr_app_matriz_riesgo.oportunidad_2',
-                'usr_app_matriz_riesgo.a_total',
                 'usr_app_matriz_riesgo.a_nivel_riesgo',
                 'usr_app_matriz_riesgo.a_tratamiento',
-                'usr_app_matriz_riesgo.o_total',
+                'usr_app_matriz_riesgo.a_total',
                 'usr_app_matriz_riesgo.o_nivel_riesgo',
                 'usr_app_matriz_riesgo.o_tratamiento',
+                'usr_app_matriz_riesgo.o_total',
                 DB::raw("CONCAT(usr_app_matriz_riesgo.a_resultado_control_descripcion, ' - ', usr_app_matriz_riesgo.a_resultado_control_peso,' %' ) AS a_resultado_control"),
                 DB::raw("CONCAT(usr_app_matriz_riesgo.o_resultado_control_descripcion, ' - ', usr_app_matriz_riesgo.o_resultado_control_peso,' %' ) AS o_resultado_control"),
                 'usr_app_matriz_riesgo.nombre_responsable',
                 'usr_app_matriz_riesgo.created_at',
             )
             ->paginate($cantidad);
+
+        // Añadir datos adicionales a cada elemento paginado
+        $result->getCollection()->transform(function ($item) {
+            $color_a = $this->getColoresMatriz($item->a_total, 'usr_app_matriz_amenazas', 'peso_celda');
+            $color_o = $this->getColoresMatriz($item->o_total, 'usr_app_matriz_oportunidades', 'peso_celda');
+            $color_a_resultado = $this->getColoresMatrizControl(explode("-", $item->a_resultado_control)[1], 'usr_app_riesgos_control');
+            $color_o_resultado = $this->getColoresMatrizControl(explode("-", $item->o_resultado_control)[1], 'usr_app_riesgos_control');
+
+            $item->a_total_color = $color_a->color;
+            $item->o_total_color = $color_o->color;
+            $item->a_color_resultado = $color_a_resultado->color;
+            $item->o_color_resultado = $color_o_resultado->color;
+
+            return $item;
+        });
+
         return response()->json($result);
+    }
+
+
+    public function getColoresMatriz($porcentaje, $tabla, $campo)
+    {
+        $porcentaje = str_replace("%", "", $porcentaje);
+        $query = DB::table($tabla)
+            ->where($campo, $porcentaje)
+            ->select(
+                'color'
+            )
+            ->first();
+        return $query;
+    }
+
+    public function getColoresMatrizControl($valorPeso, $tabla)
+    {
+        // Obtener todos los registros de la tabla
+        $registros = DB::table($tabla)->get();
+
+        // Variable para almacenar el resultado
+        $resultado = null;
+        foreach ($registros as $registro) {
+            $peso = $registro->peso;
+
+            // Si el peso es un rango (por ejemplo, '1-59')
+            if (strpos($peso, '-') !== false) {
+                $min = explode('-', $peso)[0];
+                $max = explode('-', $peso)[1];
+
+                if (intval($valorPeso) >= intval($min) && intval($valorPeso) <= intval($max)) {
+                    $resultado = $registro;
+                    break;
+                }
+            } else {
+                // Si el peso es un valor único (por ejemplo, '0')
+                if ($valorPeso == $peso) {
+                    $resultado = $registro;
+                    break;
+                }
+            }
+        }
+        return $resultado;
     }
 
     public function validaPermiso()
@@ -193,6 +253,27 @@ class MatrizRiesgoController extends Controller
             )
             ->where('usr_app_matriz_riesgo.id', $id)
             ->first();
+
+
+        $seguimiento = FormularioRiesgoSeguimiento::where('usr_app_formulario_riesgo_seguimiento.formulario_riesgo_id', $id)
+            ->select(
+                'usr_app_formulario_riesgo_seguimiento.usuario',
+                'usr_app_formulario_riesgo_seguimiento.created_at',
+
+            )
+            ->orderby('usr_app_formulario_riesgo_seguimiento.id', 'desc')
+            ->get();
+        $result['seguimiento'] = $seguimiento;
+
+        $color_a = $this->getColoresMatriz($result->a_total, 'usr_app_matriz_amenazas', 'peso_celda');
+        $color_o = $this->getColoresMatriz($result->o_total, 'usr_app_matriz_oportunidades', 'peso_celda');
+        $color_a_resultado = $this->getColoresMatrizControl($result->a_resultado_control_peso, 'usr_app_riesgos_control');
+        $color_o_resultado = $this->getColoresMatrizControl($result->o_resultado_control_peso, 'usr_app_riesgos_control');
+
+        $result->a_total_color = $color_a->color;
+        $result->o_total_color = $color_o->color;
+        $result->a_color_resultado = $color_a_resultado->color;
+        $result->o_color_resultado = $color_o_resultado->color;
         return response()->json($result);
     }
 
@@ -214,62 +295,73 @@ class MatrizRiesgoController extends Controller
      */
     public function create(Request $request)
     {
-        $result = new MatrizRiesgo();
-        $result->tipo_proceso_id = $request->tipo_proceso['id'];
-        $result->nombre_proceso_id = $request->nombre_proceso['id'];
-        $result->nombre_riesgo = $request->nombre_riesgo;
-        $result->oportunidad = $request->oportunidad;
-        $result->causa = $request->causa;
-        $result->plan_accion = $request->plan_accion;
-        $result->consecuencia = $request->consecuencia;
-        $result->efecto = $request->efecto;
-        $result->amenaza = $request->amenaza;
-        $result->oportunidad_2 = $request->oportunidad2;
+        try {
+            DB::beginTransaction();
+            $user = auth()->user();
+            $result = new MatrizRiesgo();
+            $result->tipo_proceso_id = $request->tipo_proceso['id'];
+            $result->nombre_proceso_id = $request->nombre_proceso['id'];
+            $result->nombre_riesgo = $request->nombre_riesgo;
+            $result->oportunidad = $request->oportunidad;
+            $result->causa = $request->causa;
+            $result->plan_accion = $request->plan_accion;
+            $result->consecuencia = $request->consecuencia;
+            $result->efecto = $request->efecto;
+            $result->amenaza = $request->amenaza;
+            $result->oportunidad_2 = $request->oportunidad2;
 
-        $result->a_probabilidad_id = $request->a_probabilidad['id'];
-        $result->a_impacto_id = $request->a_impacto['id'];
-        $result->a_total = $request->a_total;
-        $result->a_nivel_riesgo = $request->a_nivel_riesgo;
-        $result->a_tratamiento = $request->a_tratamiento;
-        $result->a_metodo_identificacion_id = $request->a_metodo_indentificacion['id'];
-        $result->a_factor_id = $request->a_factor['id'];
-        $result->a_nombre_control = $request->a_nombre_control;
-        $result->a_soporte = $request->a_soporte;
-        $result->a_seguimiento_id = $request->a_seguimiento['id'];
-        $result->a_documento_registrado_id = $request->a_documento_registrado['id'];
-        $result->a_clase_control_id = $request->a_clase_control['id'];
-        $result->a_frecuencia_control_id = $request->a_frecuencia_control['id'];
-        $result->a_tipo_control_id = $request->a_tipo_control['id'];
-        $result->a_existe_evidencia_id = $request->a_existe_evidencia['id'];
-        $result->a_ejecucion_eficaz_id = $request->a_ejecucion_eficas['id'];
-        $result->a_resultado_control_descripcion = $request->a_resultado_control['descripcion'];
-        $result->a_resultado_control_peso = $request->a_resultado_control['peso'];
+            $result->a_probabilidad_id = $request->a_probabilidad['id'];
+            $result->a_impacto_id = $request->a_impacto['id'];
+            $result->a_total = $request->a_total;
+            $result->a_nivel_riesgo = $request->a_nivel_riesgo;
+            $result->a_tratamiento = $request->a_tratamiento;
+            $result->a_metodo_identificacion_id = $request->a_metodo_indentificacion['id'];
+            $result->a_factor_id = $request->a_factor['id'];
+            $result->a_nombre_control = $request->a_nombre_control;
+            $result->a_soporte = $request->a_soporte;
+            $result->a_seguimiento_id = $request->a_seguimiento['id'];
+            $result->a_documento_registrado_id = $request->a_documento_registrado['id'];
+            $result->a_clase_control_id = $request->a_clase_control['id'];
+            $result->a_frecuencia_control_id = $request->a_frecuencia_control['id'];
+            $result->a_tipo_control_id = $request->a_tipo_control['id'];
+            $result->a_existe_evidencia_id = $request->a_existe_evidencia['id'];
+            $result->a_ejecucion_eficaz_id = $request->a_ejecucion_eficas['id'];
+            $result->a_resultado_control_descripcion = $request->a_resultado_control['descripcion'];
+            $result->a_resultado_control_peso = $request->a_resultado_control['peso'];
 
-        $result->o_probabilidad_id = $request->a_probabilidad['id'];
-        $result->o_impacto_id = $request->a_impacto['id'];
-        $result->o_total = $request->o_total;
-        $result->o_nivel_riesgo = $request->o_nivel_riesgo;
-        $result->o_tratamiento = $request->o_tratamiento;
-        $result->o_metodo_identificacion_id = $request->o_metodo_indentificacion['id'];
-        $result->o_factor_id = $request->o_factor['id'];
-        $result->o_nombre_control = $request->o_nombre_control;
-        $result->o_soporte = $request->o_soporte;
-        $result->o_seguimiento_id = $request->o_seguimiento['id'];
-        $result->o_documento_registrado_id = $request->o_documento_registrado['id'];
-        $result->o_clase_control_id = $request->o_clase_control['id'];
-        $result->o_frecuencia_control_id = $request->o_frecuencia_control['id'];
-        $result->o_tipo_control_id = $request->o_tipo_control['id'];
-        $result->o_existe_evidencia_id = $request->o_existe_evidencia['id'];
-        $result->o_ejecucion_eficaz_id = $request->o_ejecucion_eficas['id'];
-        $result->o_resultado_control_descripcion = $request->o_resultado_control['descripcion'];
-        $result->o_resultado_control_peso = $request->o_resultado_control['peso'];
+            $result->o_probabilidad_id = $request->a_probabilidad['id'];
+            $result->o_impacto_id = $request->a_impacto['id'];
+            $result->o_total = $request->o_total;
+            $result->o_nivel_riesgo = $request->o_nivel_riesgo;
+            $result->o_tratamiento = $request->o_tratamiento;
+            $result->o_metodo_identificacion_id = $request->o_metodo_indentificacion['id'];
+            $result->o_factor_id = $request->o_factor['id'];
+            $result->o_nombre_control = $request->o_nombre_control;
+            $result->o_soporte = $request->o_soporte;
+            $result->o_seguimiento_id = $request->o_seguimiento['id'];
+            $result->o_documento_registrado_id = $request->o_documento_registrado['id'];
+            $result->o_clase_control_id = $request->o_clase_control['id'];
+            $result->o_frecuencia_control_id = $request->o_frecuencia_control['id'];
+            $result->o_tipo_control_id = $request->o_tipo_control['id'];
+            $result->o_existe_evidencia_id = $request->o_existe_evidencia['id'];
+            $result->o_ejecucion_eficaz_id = $request->o_ejecucion_eficas['id'];
+            $result->o_resultado_control_descripcion = $request->o_resultado_control['descripcion'];
+            $result->o_resultado_control_peso = $request->o_resultado_control['peso'];
+            $result->responsable_id = $request->responsable_id;
+            $result->nombre_responsable = $request->responsable_nombre;
+            $result->ultima_revision = $request->ultima_revision;
+            $result->save();
 
-        $result->responsable_id = $request->responsable_id;
-        $result->nombre_responsable = $request->responsable_nombre;
-        $result->ultima_revision = $request->ultima_revision;
-        if ($result->save()) {
+
+            $seguimiento = new FormularioRiesgoSeguimiento;
+            $seguimiento->usuario = $user->nombres . ' ' . $user->apellidos;
+            $seguimiento->formulario_riesgo_id = $result->id;
+            $seguimiento->save();
+
+            DB::commit();
             return response()->json(['status' => 'success', 'message' => 'Registro guardado de manera exitosa']);
-        } else {
+        } catch (\Exception $e) {
+            DB::rollback();
             return response()->json(['status' => 'error', 'message' => 'Rerror al guardar registro, por favor verifique que el formulario esté completamente diligenciado.']);
         }
     }
@@ -379,15 +471,15 @@ class MatrizRiesgoController extends Controller
                     } else if ($campo == "o_resultado_control" && !is_numeric($valor)) {
                         $query->where('usr_app_matriz_riesgo.o_resultado_control_descripcion', 'like', '%' . $valor . '%');
                     } else {
-                        $query->where('usr_app_matriz_riesgo.'.$campo, '=', $valor);
+                        $query->where('usr_app_matriz_riesgo.' . $campo, '=', $valor);
                     }
                     break;
                 case 'Igual a fecha':
-                    $query->whereDate('usr_app_matriz_riesgo.'.$campo, '=', $valor);
+                    $query->whereDate('usr_app_matriz_riesgo.' . $campo, '=', $valor);
                     break;
                 case 'Entre':
-                    $query->whereDate('usr_app_matriz_riesgo.'.$campo, '>=', $valor)
-                        ->whereDate('usr_app_matriz_riesgo.'.$campo, '<=', $valor2);
+                    $query->whereDate('usr_app_matriz_riesgo.' . $campo, '>=', $valor)
+                        ->whereDate('usr_app_matriz_riesgo.' . $campo, '<=', $valor2);
                     break;
             }
 
@@ -578,7 +670,7 @@ class MatrizRiesgoController extends Controller
                     } else if ($campo == "o_resultado_control" && !is_numeric($valor)) {
                         $query->where('usr_app_matriz_riesgo.o_resultado_control_descripcion', 'like', '%' . $valor . '%');
                     } else {
-                        $query->where('usr_app_matriz_riesgo.'.$campo, 'like', '%' . $valor . '%');
+                        $query->where('usr_app_matriz_riesgo.' . $campo, 'like', '%' . $valor . '%');
                     }
                     break;
                 case 'Igual a':
@@ -599,11 +691,11 @@ class MatrizRiesgoController extends Controller
                     }
                     break;
                 case 'Igual a fecha':
-                    $query->whereDate('usr_app_matriz_riesgo.'.$campo, '=', $valor);
+                    $query->whereDate('usr_app_matriz_riesgo.' . $campo, '=', $valor);
                     break;
                 case 'Entre':
-                    $query->whereDate('usr_app_matriz_riesgo.'.$campo, '>=', $valor)
-                        ->whereDate('usr_app_matriz_riesgo.'.$campo, '<=', $valor2);
+                    $query->whereDate('usr_app_matriz_riesgo.' . $campo, '>=', $valor)
+                        ->whereDate('usr_app_matriz_riesgo.' . $campo, '<=', $valor2);
                     break;
             }
 
@@ -683,63 +775,75 @@ class MatrizRiesgoController extends Controller
      */
     public function update(Request $request, $id)
     {
-        $result = MatrizRiesgo::find($id);
-        $result->tipo_proceso_id = $request->tipo_proceso['id'];
-        $result->nombre_proceso_id = $request->nombre_proceso['id'];
-        $result->nombre_riesgo = $request->nombre_riesgo;
-        $result->oportunidad = $request->oportunidad;
-        $result->causa = $request->causa;
-        $result->plan_accion = $request->plan_accion;
-        $result->consecuencia = $request->consecuencia;
-        $result->efecto = $request->efecto;
-        $result->amenaza = $request->amenaza;
-        $result->oportunidad_2 = $request->oportunidad2;
+        try {
+            DB::beginTransaction();
+            $user = auth()->user();
+            $result = MatrizRiesgo::find($id);
+            $result->tipo_proceso_id = $request->tipo_proceso['id'];
+            $result->nombre_proceso_id = $request->nombre_proceso['id'];
+            $result->nombre_riesgo = $request->nombre_riesgo;
+            $result->oportunidad = $request->oportunidad;
+            $result->causa = $request->causa;
+            $result->plan_accion = $request->plan_accion;
+            $result->consecuencia = $request->consecuencia;
+            $result->efecto = $request->efecto;
+            $result->amenaza = $request->amenaza;
+            $result->oportunidad_2 = $request->oportunidad2;
 
-        $result->a_probabilidad_id = $request->a_probabilidad['id'];
-        $result->a_impacto_id = $request->a_impacto['id'];
-        $result->a_total = $request->a_total;
-        $result->a_nivel_riesgo = $request->a_nivel_riesgo;
-        $result->a_tratamiento = $request->a_tratamiento;
-        $result->a_metodo_identificacion_id = $request->a_metodo_indentificacion['id'];
-        $result->a_factor_id = $request->a_factor['id'];
-        $result->a_nombre_control = $request->a_nombre_control;
-        $result->a_soporte = $request->a_soporte;
-        $result->a_seguimiento_id = $request->a_seguimiento['id'];
-        $result->a_documento_registrado_id = $request->a_documento_registrado['id'];
-        $result->a_clase_control_id = $request->a_clase_control['id'];
-        $result->a_frecuencia_control_id = $request->a_frecuencia_control['id'];
-        $result->a_tipo_control_id = $request->a_tipo_control['id'];
-        $result->a_existe_evidencia_id = $request->a_existe_evidencia['id'];
-        $result->a_ejecucion_eficaz_id = $request->a_ejecucion_eficas['id'];
-        $result->a_resultado_control_descripcion = $request->a_resultado_control['descripcion'];
-        $result->a_resultado_control_peso = $request->a_resultado_control['peso'];
+            $result->a_probabilidad_id = $request->a_probabilidad['id'];
+            $result->a_impacto_id = $request->a_impacto['id'];
+            $result->a_total = $request->a_total;
+            $result->a_nivel_riesgo = $request->a_nivel_riesgo;
+            $result->a_tratamiento = $request->a_tratamiento;
+            $result->a_metodo_identificacion_id = $request->a_metodo_indentificacion['id'];
+            $result->a_factor_id = $request->a_factor['id'];
+            $result->a_nombre_control = $request->a_nombre_control;
+            $result->a_soporte = $request->a_soporte;
+            $result->a_seguimiento_id = $request->a_seguimiento['id'];
+            $result->a_documento_registrado_id = $request->a_documento_registrado['id'];
+            $result->a_clase_control_id = $request->a_clase_control['id'];
+            $result->a_frecuencia_control_id = $request->a_frecuencia_control['id'];
+            $result->a_tipo_control_id = $request->a_tipo_control['id'];
+            $result->a_existe_evidencia_id = $request->a_existe_evidencia['id'];
+            $result->a_ejecucion_eficaz_id = $request->a_ejecucion_eficas['id'];
+            $result->a_resultado_control_descripcion = $request->a_resultado_control['descripcion'];
+            $result->a_resultado_control_peso = $request->a_resultado_control['peso'];
 
-        $result->o_probabilidad_id = $request->o_probabilidad['id'];
-        $result->o_impacto_id = $request->o_impacto['id'];
-        $result->o_total = $request->o_total;
-        $result->o_nivel_riesgo = $request->o_nivel_riesgo;
-        $result->o_tratamiento = $request->o_tratamiento;
-        $result->o_metodo_identificacion_id = $request->o_metodo_indentificacion['id'];
-        $result->o_factor_id = $request->o_factor['id'];
-        $result->o_nombre_control = $request->o_nombre_control;
-        $result->o_soporte = $request->o_soporte;
-        $result->o_seguimiento_id = $request->o_seguimiento['id'];
-        $result->o_documento_registrado_id = $request->o_documento_registrado['id'];
-        $result->o_clase_control_id = $request->o_clase_control['id'];
-        $result->o_frecuencia_control_id = $request->o_frecuencia_control['id'];
-        $result->o_tipo_control_id = $request->o_tipo_control['id'];
-        $result->o_existe_evidencia_id = $request->o_existe_evidencia['id'];
-        $result->o_ejecucion_eficaz_id = $request->o_ejecucion_eficas['id'];
-        $result->o_resultado_control_descripcion = $request->o_resultado_control['descripcion'];
-        $result->o_resultado_control_peso = $request->o_resultado_control['peso'];
+            $result->o_probabilidad_id = $request->o_probabilidad['id'];
+            $result->o_impacto_id = $request->o_impacto['id'];
+            $result->o_total = $request->o_total;
+            $result->o_nivel_riesgo = $request->o_nivel_riesgo;
+            $result->o_tratamiento = $request->o_tratamiento;
+            $result->o_metodo_identificacion_id = $request->o_metodo_indentificacion['id'];
+            $result->o_factor_id = $request->o_factor['id'];
+            $result->o_nombre_control = $request->o_nombre_control;
+            $result->o_soporte = $request->o_soporte;
+            $result->o_seguimiento_id = $request->o_seguimiento['id'];
+            $result->o_documento_registrado_id = $request->o_documento_registrado['id'];
+            $result->o_clase_control_id = $request->o_clase_control['id'];
+            $result->o_frecuencia_control_id = $request->o_frecuencia_control['id'];
+            $result->o_tipo_control_id = $request->o_tipo_control['id'];
+            $result->o_existe_evidencia_id = $request->o_existe_evidencia['id'];
+            $result->o_ejecucion_eficaz_id = $request->o_ejecucion_eficas['id'];
+            $result->o_resultado_control_descripcion = $request->o_resultado_control['descripcion'];
+            $result->o_resultado_control_peso = $request->o_resultado_control['peso'];
 
-        $result->responsable_id = $request->responsable_id;
-        $result->nombre_responsable = $request->responsable_nombre;
-        $result->ultima_revision = $request->ultima_revision;
-        if ($result->save()) {
-            return response()->json(['status' => 'success', 'message' => 'Registro actualizado de manera exitosa']);
-        } else {
-            return response()->json(['status' => 'error', 'message' => 'Rerror al guardar registro']);
+            $result->responsable_id = $request->responsable_id;
+            $result->nombre_responsable = $request->responsable_nombre;
+            $result->ultima_revision = $request->ultima_revision;
+            $result->save();
+
+            $seguimiento = new FormularioRiesgoSeguimiento;
+            $seguimiento->usuario = $user->nombres . ' ' . $user->apellidos;
+            $seguimiento->formulario_riesgo_id = $result->id;
+            $seguimiento->save();
+
+            DB::commit();
+            return response()->json(['status' => 'success', 'message' => 'Registro guardado de manera exitosa']);
+        } catch (\Exception $e) {
+            DB::rollback();
+            // return $e;
+            return response()->json(['status' => 'error', 'message' => 'Rerror al guardar registro, por favor verifique que el formulario esté completamente diligenciado.']);
         }
     }
 
