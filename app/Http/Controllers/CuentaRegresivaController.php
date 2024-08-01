@@ -87,14 +87,10 @@ class CuentaRegresivaController extends Controller
             'visible' => $request->visible,
             'fecha_hora' => $request->fecha_hora,
             'mensaje_navbar' => $request->mensaje_navbar,
-            'mensaje_navbar2' => $request->mensaje_navbar2,
-            'mensaje_popup' => $request->mensaje_popup,
-            'icono_popup' => $request->icono_popup,
             'estilo_span' => $request->estilo_span,
             'estilo_contador' => $request->estilo_contador,
             'tamano_contador' => $request->tamano_contador,
-            'tamano_texto_contador' => $request->tamano_texto_contador,
-            'tiempo_espera' => $request->tiempo_espera,
+            'tamano_texto_contador' => $request->tamano_texto_contador
         ];
 
         event(new TiempoActualizacion($data));

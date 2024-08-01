@@ -6,11 +6,11 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
 
-class formularioGestionIngreso extends Model
+
+class MatrizRiesgo extends Model
 {
     use HasFactory;
-
-    protected $table = 'usr_app_formulario_ingreso';
+    protected $table = 'usr_app_matriz_riesgo';
 
     public function fromDateTime($value)
     {
@@ -38,7 +38,7 @@ class formularioGestionIngreso extends Model
                     $nuevo_numero = str_pad((int)$ultimo_numero + 1, 4, '0', STR_PAD_LEFT);
                 } else {
                     // $nuevo_numero = '0001';
-                    $nuevo_numero = str_pad(1, 8, '0', STR_PAD_LEFT);
+                    $nuevo_numero = str_pad(1, 4, '0', STR_PAD_LEFT);
                 }
 
                 // Establecer el nuevo número de registro

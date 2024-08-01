@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\DB;
 use Tymon\JWTAuth\Facades\JWTAuth;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Str;
 use Validator;
 
 class AuthController extends Controller
@@ -41,7 +42,7 @@ class AuthController extends Controller
         } else {
             $user = $request->email;
         }
-      
+
         $ldapconn = ldap_connect('saitempsa.local');
         ldap_set_option($ldapconn, LDAP_OPT_PROTOCOL_VERSION, 3);
         try {
@@ -51,15 +52,15 @@ class AuthController extends Controller
                     if ($ldapbind) {
                         ldap_close($ldapconn);
                         $user = User::where('email', $request->email)->first();
-
+                        $uuid = $this->guadarMarcaTemporal($user->email);
                         if ($user) {
                             Auth::guard('no-password-validation')->login($user);
                             $token = JWTAuth::fromUser($user);
-
                             return response()->json([
                                 'access_token' => $token,
                                 'token_type' => 'bearer',
                                 'expires_in' => auth()->factory()->getTTL() * 60 * 60 * 8,
+                                'marca' => $uuid
                             ]);
                         }
 
@@ -80,7 +81,10 @@ class AuthController extends Controller
                         return response()->json(['status' => 'error', 'message' => 'Por favor verifique sus datos de inicio de sesión e intente nuevamente']);
                     }
 
-                    return $this->createNewToken($token);
+                    $uuid = $this->guadarMarcaTemporal($request->email);
+                    $token_marca = $this->createNewToken($token, $uuid);
+                    // $token_marca['marca'] = $uuid;
+                    return $token_marca;
                 }
             }
         } catch (\Exception $e) {
@@ -102,6 +106,16 @@ class AuthController extends Controller
         // }
 
         // return $this->createNewToken($token);
+    }
+
+    public function guadarMarcaTemporal($email)
+    {
+        $user = User::where('email', $email)->first();
+        $uuid = (string) Str::orderedUuid();
+        $user->marca_temporal =  $uuid;
+        if ($user->save()) {
+            return $user->marca_temporal;
+        }
     }
 
     /**
@@ -201,12 +215,13 @@ class AuthController extends Controller
      *
      * @return \Illuminate\Http\JsonResponse
      */
-    protected function createNewToken($token)
+    protected function createNewToken($token, $uuid = null)
     {
         return response()->json([
             'access_token' => $token,
             'token_type' => 'bearer',
             'expires_in' => auth()->factory()->getTTL() * 60 * 60 * 8,
+            'marca' => $uuid
             // 'user' => auth()->user()
         ]);
     }

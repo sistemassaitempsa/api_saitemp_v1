@@ -127,7 +127,23 @@ use App\Http\Controllers\SeguimientoCrmController;
 use App\Http\Controllers\IndicadoresSeyaController;
 use App\Http\Controllers\CuentaRegresivaController;
 use App\Http\Controllers\ModalPrincipalController;
-
+use App\Http\Controllers\RiesgosNivelImpactoController;
+use App\Http\Controllers\RiesgosNivelProbabilidadController;
+use App\Http\Controllers\RiesgosTiposProcesoController;
+use App\Http\Controllers\RiesgosNombresProcesoController;
+use App\Http\Controllers\RiesgosMetodosIdentificacionController;
+use App\Http\Controllers\RiesgoFactoresController;
+use App\Http\Controllers\RiesgoSeguimientosController;
+use App\Http\Controllers\RiesgoDocumentosRegistradosController;
+use App\Http\Controllers\RiesgoClasesControlController;
+use App\Http\Controllers\RiesgoFrecuenciasControlController;
+use App\Http\Controllers\RiesgoExisteEvidenciasController;
+use App\Http\Controllers\RiesgoTiposControlController;
+use App\Http\Controllers\RiesgoEjecucionesEficacesController;
+use App\Http\Controllers\RiesgoControlController;
+use App\Http\Controllers\MatrizAmenazaController;
+use App\Http\Controllers\MatrizOportunidadController;
+use App\Http\Controllers\MatrizRiesgoController;
 
 
 /*
@@ -576,6 +592,7 @@ Route::group([
   Route::post('/formulariocliente/{id}', [formularioDebidaDiligenciaController::class, 'update']);
   Route::delete('/formulariocliente/{id}', [formularioDebidaDiligenciaController::class, 'destroy']);
   Route::post('/actualizaestadofirma/{item_id}/{estado_id}', [formularioDebidaDiligenciaController::class, 'actualizaestadofirma']);
+  Route::get('/versiondebidadiligencia', [formularioDebidaDiligenciaController::class, 'versionformulario']);
 
   Route::get('/consultaformulariocliente/{cantidad}', [formularioDebidaDiligenciaController::class, 'consultacliente']);
   Route::get('/clientesactivos', [formularioDebidaDiligenciaController::class, 'clientesactivos']);
@@ -708,7 +725,7 @@ Route::group([
 
   Route::get('/cargosVacantesHojasVida/{anio}', [DashBoardSeleccionController::class, 'cargosVacantesHojasVida']);
   Route::get('/cantidadvacantestiposervicio/{anio}', [DashBoardSeleccionController::class, 'cantidadVacantesTipoServicio']);
-  
+
 
   // Nivel de accidentalidad
   Route::get('/nivelaccidentalidad', [NivelAccidentalidadController::class, 'index']);
@@ -823,17 +840,49 @@ Route::group([
   Route::post('/borrar_nc/{id}', [formularioGestionIngresoController::class, 'borrar_nc']);
   Route::get('/hora', [formularioGestionIngresoController::class, 'hora']);
 
-
   Route::post('/buscarcedula', [formularioGestionIngresoController::class, 'buscarcedula']);
 
   Route::get('/actualizacionprogramada', [CuentaRegresivaController::class, 'index']);
   Route::post('/actualizacionprogramada', [CuentaRegresivaController::class, 'create']);
   Route::post('/actualizacionprogramada/{id}', [CuentaRegresivaController::class, 'update']);
-  
+
   Route::get('/modalprincipal', [ModalPrincipalController::class, 'index']);
   Route::post('/modalprincipal', [ModalPrincipalController::class, 'create']);
   Route::post('/modalprincipal/{id}', [ModalPrincipalController::class, 'update']);
   Route::post('/showmodalprincipal/{id}', [ModalPrincipalController::class, 'updatevisibility']);
+
+
+  Route::get('/nivelimpacto', [RiesgosNivelImpactoController::class, 'index']);
+  Route::get('/nivelprobabilidad', [RiesgosNivelProbabilidadController::class, 'index']);
+  Route::get('/tiposproceso', [RiesgosTiposProcesoController::class, 'index']);
+  Route::get('/nombresproceso', [RiesgosNombresProcesoController::class, 'index']);
+  Route::get('/metodosidentificacion', [RiesgosMetodosIdentificacionController::class, 'index']);
+  Route::get('/factores', [RiesgoFactoresController::class, 'index']);
+  Route::get('/seguimientos', [RiesgoSeguimientosController::class, 'index']);
+  
+  Route::get('/documentosregistrados', [RiesgoDocumentosRegistradosController::class, 'index']);
+  Route::get('/clasescontrol', [RiesgoClasesControlController::class, 'index']);
+  Route::get('/frecuenciascontrol', [RiesgoFrecuenciasControlController::class, 'index']);
+  Route::get('/tiposcontrol', [RiesgoTiposControlController::class, 'index']);
+  Route::get('/existeevidencias', [RiesgoExisteEvidenciasController::class, 'index']);
+  Route::get('/ejecucioneseficaces', [RiesgoEjecucionesEficacesController::class, 'index']);
+  
+  Route::get('/riesgoscontrol', [RiesgoControlController::class, 'index']);
+  Route::get('/matrizamenazas', [MatrizAmenazaController::class, 'index']);
+  Route::get('/matrizoportunidades', [MatrizOportunidadController::class, 'index']);
+  Route::get('/matrizriesgo/{cantidad}', [MatrizRiesgoController::class, 'index']);
+  Route::get('/matrizriesgobyid/{id}', [MatrizRiesgoController::class, 'byid']);
+  Route::post('/matrizriesgo', [MatrizRiesgoController::class, 'create']);
+  Route::post('/matrizriesgo/{id}', [MatrizRiesgoController::class, 'update']);
+  Route::post('/matrizriesgo/doc/{id}', [MatrizRiesgoController::class, 'store']);
+  Route::get('/matrizriesgofiltro/{cadena}', [MatrizRiesgoController::class, 'riesgosfiltro']);
+  Route::get('/exportamatrizriesgo/{cadena}', [MatrizRiesgoController::class, 'exportamatrizriesgo']);
+  Route::get('/buscarradicado/{radicado}', [MatrizRiesgoController::class, 'buscarradicado']);
+  Route::get('/lideres', [MatrizRiesgoController::class, 'lideres']);
+  
+
+
+
 
   // Route::get('/otrosi/{id}', [OtroSiController::class, 'byid']);
   // Route::post('/otrosi', [OtroSiController::class, 'create']);

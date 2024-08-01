@@ -2,10 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Sucursal;
 use Illuminate\Http\Request;
+use App\Models\RiesgoControl;
 
-class SucursalController extends Controller
+class RiesgoControlController extends Controller
 {
     /**
      * Display a listing of the resource.
@@ -14,26 +14,13 @@ class SucursalController extends Controller
      */
     public function index()
     {
-
-        // $result = Sucursal::select()
-        // ->get();
-        // return response()->json($result);
-        // Realiza la consulta
-        $result = Sucursal::all();
-
-        // Define las ciudades deseadas
-        $ciudadesDeseadas = ['NO APLICA','MEDELLIN', 'BOGOTA', 'CARTAGENA'];
-
-        // Filtra las ciudades deseadas
-        $ciudadesFiltradas = $result->filter(function ($sucursal) use ($ciudadesDeseadas) {
-            return in_array(trim($sucursal->nom_suc), $ciudadesDeseadas);
-        });
-
-        // Limita el resultado a los primeros tres elementos después de filtrar
-        $ciudadesFiltradas = $ciudadesFiltradas->take(4);
-
-        // Convertir a JSON para la respuesta
-        return response()->json($ciudadesFiltradas->values());
+        $result = RiesgoControl::select(
+            'peso',
+            'nombre_control as control',
+            'color'
+        )
+        ->get();
+        return response()->json($result);
     }
 
     /**

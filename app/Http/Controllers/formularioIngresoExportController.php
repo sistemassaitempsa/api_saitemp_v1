@@ -135,9 +135,6 @@ class formularioIngresoExportController extends Controller
                     // return $prefijoCampo . $campoActual . 'LIKE' . '%' . $valorCompararActual . '%';
                     $query->where($prefijoCampo . $campoActual, 'like', '%' . $valorCompararActual . '%');
                     break;
-                    // default:
-                    //     // Manejar el operador desconocido
-                    //     break;
             }
         }
 
@@ -188,11 +185,6 @@ class formularioIngresoExportController extends Controller
                 )
                 ->orderby('usr_app_formulario_ingreso_seguimiento_estado.id', 'desc')
                 ->get();
-            // unset($item->id);
-
-            // return $seguimiento_estados;
-
-            // $seguimientosGuardados = [];
 
             $item->seguimiento_e = '';
 
@@ -219,7 +211,6 @@ class formularioIngresoExportController extends Controller
                     'usr_app_formulario_ingreso_seguimiento.created_at',
 
                 )
-                // ->orderby('usr_app_formulario_ingreso_seguimiento.id', 'asc')
                 ->orderby('usr_app_formulario_ingreso_seguimiento.id', 'desc')
                 ->get();
             unset($item->id);
@@ -228,10 +219,7 @@ class formularioIngresoExportController extends Controller
 
             foreach ($seguimiento as $seguimientos) {
                 $nuevaVariable = $seguimientos->usuario . ' | ' . $seguimientos->estado . ' | ' . $seguimientos->created_at . "\n" . "\n" . "\n";
-
                 $item->nuevaVariable .= $nuevaVariable;
-
-                // return $item->seguimiento_e;
             }
 
             $item->espacio2 = ' ';
