@@ -12,6 +12,7 @@ use App\Models\RegistroIngresoLaboratorio;
 use App\Models\FormularioIngresoSeguimiento;
 use App\Models\UsuarioPermiso;
 use App\Models\FormularioIngresoSeguimientoEstado;
+use App\Models\User;
 use Carbon\Carbon;
 // use App\Events\NotificacionesPush;
 use TCPDF;
@@ -2317,6 +2318,66 @@ class formularioGestionIngresoController extends Controller
 
         array_unshift($valores_por_mes, ["nombres" => $meses_con_valores]);
         return $valores_por_mes;
+    }
+
+    public function asignacionmasiva(Request $request, $id_estado, $id_encargado)
+    {
+        $array = $request->all();
+        $user = auth()->user();
+        $permisos = $this->validaPermiso();
+        $responsable = User::find($id_encargado);
+        $cantidad = count($array);
+        $bandera = true;
+        if ($cantidad <= 10) {
+            DB::beginTransaction();
+            foreach ($array as $id) {
+                try {
+                    $registro_ingreso = formularioGestionIngreso::where('usr_app_formulario_ingreso.id', '=', $id)
+                        ->first();
+                    if ($registro_ingreso->responsable_id != null && $registro_ingreso->responsable_id != $user->id && !in_array('31', $permisos) ) {
+                        // return response()->json(['status' => 'error', 'message' => 'Solo el responsable puede realizar esta acción.']);
+                        $bandera = false;
+                    }if(!in_array('35', $permisos)){
+                        $bandera = false;
+                        // return response()->json(['status' => 'error', 'message' => 'Usted no cuenta con este permiso.']);
+                    }
+
+                    $seguimiento_estado = new FormularioIngresoSeguimientoEstado;
+                    $seguimiento_estado->responsable_inicial =  $registro_ingreso->responsable;
+                    $seguimiento_estado->responsable_final = $responsable->nombres . ' ' . $responsable->apellidos;
+                    $seguimiento_estado->estado_ingreso_inicial =  $registro_ingreso->estado_ingreso_id;
+                    $seguimiento_estado->estado_ingreso_final =  $id_estado;
+                    $seguimiento_estado->formulario_ingreso_id =  $id;
+                    $seguimiento_estado->actualiza_registro =   $user->nombres . ' ' .  str_replace('null', '', $responsable->apellidos);
+
+                    $seguimiento_estado->save();
+
+                    $registro_ingreso->responsable_anterior = $registro_ingreso->responsable;
+                    $registro_ingreso->responsable = $responsable->nombres . ' ' . str_replace('null', '', $responsable->apellidos);
+                    $registro_ingreso->asignacion_manual = 1;
+                    $registro_ingreso->responsable_id = $responsable->id;
+                    $registro_ingreso->estado_ingreso_id = $id_estado;
+                    $registro_ingreso->save();
+
+                    $seguimiento = new FormularioIngresoSeguimiento;
+                    $seguimiento->estado_ingreso_id = $id_estado;
+                    $seguimiento->usuario = $responsable->nombres . ' ' . str_replace('null', '', $responsable->apellidos);
+                    $seguimiento->formulario_ingreso_id = $id;
+                    $seguimiento->save();
+                } catch (\Exception $e) {
+                    DB::rollback();
+                    return response()->json(['status' => 'error', 'message' => 'Error al actualizar registro.']);
+                }
+            }
+            if($bandera){
+                DB::commit();
+                return response()->json(['status' => 'success', 'message' => 'Registro actualizado de manera exitosa.']);
+            }else{
+                return response()->json(['status' => 'error', 'message' => 'Solo el responsable puede realizar esta acción.']);
+            }
+        }else{
+            return response()->json(['status' => 'success', 'message' => 'La cantidad permitida de registros a actualizar es de 10.']);
+        }
     }
 
     /**

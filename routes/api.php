@@ -798,6 +798,7 @@ Route::group([
   Route::get('/buscardocumentoformularioi/{documento}', [formularioGestionIngresoController::class, 'buscardocumentoformularioi']);
   Route::get('/buscardocumentolistai/{documento}', [formularioGestionIngresoController::class, 'buscardocumentolistai']);
   Route::delete('/eliminararchivosingreso/{item}/{id}', [formularioGestionIngresoController::class, 'eliminararchivo']);
+  Route::post('/asignacionmasivaformularioingreso/{id_estado}/{id_encargado}', [formularioGestionIngresoController::class, 'asignacionmasiva']);
 
   Route::get('/observacionestado', [ObservacionEstadoFormIngresoController::class, 'index']);
 
