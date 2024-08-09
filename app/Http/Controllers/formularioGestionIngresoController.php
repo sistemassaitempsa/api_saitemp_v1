@@ -1386,7 +1386,17 @@ class formularioGestionIngresoController extends Controller
             $pdfPath = storage_path('app/temp.pdf');
             $pdf->Output($pdfPath, 'F');
         } else {
-            $pdf->Output('I');
+            $nombre_archivo = "";
+            if($id == 1){
+                $nombre_archivo = "Orden_servicio";
+            }else if($id == 2){
+                $nombre_archivo = "Informe_seleccion";
+            }else if($id == 3){
+                $nombre_archivo = "Orden_laboratorio";
+            }else if($id == 4){
+                $nombre_archivo = "Citacion_candidato";
+            }
+            $pdf->Output($nombre_archivo.'.pdf','I');
         }
 
         $body = '';
