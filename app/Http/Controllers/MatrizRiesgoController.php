@@ -23,7 +23,9 @@ class MatrizRiesgoController extends Controller
         $user = auth()->user();
 
         $result = MatrizRiesgo::join('usr_app_riesgos_tipos_proceso as tp', 'tp.id', 'usr_app_matriz_riesgo.tipo_proceso_id')
-            ->join('usr_app_riesgos_nombres_proceso as np', 'np.id', 'usr_app_matriz_riesgo.nombre_proceso_id')
+        ->join('usr_app_riesgos_nombres_proceso as np', 'np.id', 'usr_app_matriz_riesgo.nombre_proceso_id')
+            ->join('usr_app_clasificacion_riesgo as cr', 'cr.id', 'usr_app_matriz_riesgo.amenaza')
+            ->join('usr_app_clasificacion_riesgo as cr2', 'cr2.id', 'usr_app_matriz_riesgo.oportunidad_2')
             ->when(!in_array('34', $permisos), function ($query) use ($user) {
                 return $query->where('usr_app_matriz_riesgo.responsable_id', $user->id);
             })
@@ -38,8 +40,8 @@ class MatrizRiesgoController extends Controller
                 'usr_app_matriz_riesgo.plan_accion',
                 'usr_app_matriz_riesgo.consecuencia',
                 'usr_app_matriz_riesgo.efecto',
-                'usr_app_matriz_riesgo.amenaza',
-                'usr_app_matriz_riesgo.oportunidad_2',
+                'cr.nombre as amenaza',
+                'cr2.nombre as oportunidad_2',
                 'usr_app_matriz_riesgo.a_nivel_riesgo',
                 'usr_app_matriz_riesgo.a_tratamiento',
                 'usr_app_matriz_riesgo.a_total',
@@ -52,21 +54,7 @@ class MatrizRiesgoController extends Controller
                 'usr_app_matriz_riesgo.created_at',
             )
             ->paginate($cantidad);
-
-        // Añadir datos adicionales a cada elemento paginado
-        $result->getCollection()->transform(function ($item) {
-            $color_a = $this->getColoresMatriz($item->a_total, 'usr_app_matriz_amenazas', 'peso_celda');
-            $color_o = $this->getColoresMatriz($item->o_total, 'usr_app_matriz_oportunidades', 'peso_celda');
-            $color_a_resultado = $this->getColoresMatrizControl(explode("-", $item->a_resultado_control)[1], 'usr_app_riesgos_control');
-            $color_o_resultado = $this->getColoresMatrizControl(explode("-", $item->o_resultado_control)[1], 'usr_app_riesgos_control');
-
-            $item->a_total_color = $color_a->color;
-            $item->o_total_color = $color_o->color;
-            $item->a_color_resultado = $color_a_resultado->color;
-            $item->o_color_resultado = $color_o_resultado->color;
-
-            return $item;
-        });
+            $result = $this->colorCelda($result);
 
         return response()->json($result);
     }
@@ -156,6 +144,8 @@ class MatrizRiesgoController extends Controller
             ->join('usr_app_riesgos_tipos_control as o_tc', 'o_tc.id', 'usr_app_matriz_riesgo.o_tipo_control_id')
             ->join('usr_app_riesgos_existe_evidencias as o_eev', 'o_eev.id', 'usr_app_matriz_riesgo.o_existe_evidencia_id')
             ->join('usr_app_riesgos_ejecuciones_eficaces as o_ee', 'o_ee.id', 'usr_app_matriz_riesgo.o_ejecucion_eficaz_id')
+            ->join('usr_app_clasificacion_riesgo as cr', 'cr.id', 'usr_app_matriz_riesgo.amenaza')
+            ->join('usr_app_clasificacion_riesgo as cr2', 'cr2.id', 'usr_app_matriz_riesgo.oportunidad_2')
             ->select(
                 'usr_app_matriz_riesgo.id',
                 'usr_app_matriz_riesgo.nombre_riesgo',
@@ -164,8 +154,8 @@ class MatrizRiesgoController extends Controller
                 'usr_app_matriz_riesgo.plan_accion',
                 'usr_app_matriz_riesgo.consecuencia',
                 'usr_app_matriz_riesgo.efecto',
-                'usr_app_matriz_riesgo.amenaza',
-                'usr_app_matriz_riesgo.oportunidad_2',
+                'cr.id as amenaza',
+                'cr2.id as oportunidad_2',
                 'usr_app_matriz_riesgo.a_nombre_control',
                 'usr_app_matriz_riesgo.o_nombre_control',
                 'usr_app_matriz_riesgo.a_soporte',
@@ -264,7 +254,6 @@ class MatrizRiesgoController extends Controller
             ->orderby('usr_app_formulario_riesgo_seguimiento.id', 'desc')
             ->get();
         $result['seguimiento'] = $seguimiento;
-
         $color_a = $this->getColoresMatriz($result->a_total, 'usr_app_matriz_amenazas', 'peso_celda');
         $color_o = $this->getColoresMatriz($result->o_total, 'usr_app_matriz_oportunidades', 'peso_celda');
         $color_a_resultado = $this->getColoresMatrizControl($result->a_resultado_control_peso, 'usr_app_riesgos_control');
@@ -307,8 +296,8 @@ class MatrizRiesgoController extends Controller
             $result->plan_accion = $request->plan_accion;
             $result->consecuencia = $request->consecuencia;
             $result->efecto = $request->efecto;
-            $result->amenaza = $request->amenaza;
-            $result->oportunidad_2 = $request->oportunidad2;
+            $result->amenaza = $request->amenaza['id'];
+            $result->oportunidad_2 = $request->oportunidad2['id'];
 
             $result->a_probabilidad_id = $request->a_probabilidad['id'];
             $result->a_impacto_id = $request->a_impacto['id'];
@@ -409,6 +398,8 @@ class MatrizRiesgoController extends Controller
                 ->join('usr_app_riesgos_tipos_control as o_tc', 'o_tc.id', 'usr_app_matriz_riesgo.o_tipo_control_id')
                 ->join('usr_app_riesgos_existe_evidencias as o_eev', 'o_eev.id', 'usr_app_matriz_riesgo.o_existe_evidencia_id')
                 ->join('usr_app_riesgos_ejecuciones_eficaces as o_ee', 'o_ee.id', 'usr_app_matriz_riesgo.o_ejecucion_eficaz_id')
+                ->join('usr_app_clasificacion_riesgo as cr', 'cr.id', 'usr_app_matriz_riesgo.amenaza')
+                ->join('usr_app_clasificacion_riesgo as cr2', 'cr2.id', 'usr_app_matriz_riesgo.oportunidad_2')
                 ->when(!in_array('34', $permisos), function ($query) use ($user) {
                     return $query->where('usr_app_matriz_riesgo.responsable_id', $user->id);
                 })
@@ -423,8 +414,8 @@ class MatrizRiesgoController extends Controller
                     'usr_app_matriz_riesgo.plan_accion',
                     'usr_app_matriz_riesgo.consecuencia',
                     'usr_app_matriz_riesgo.efecto',
-                    'usr_app_matriz_riesgo.amenaza',
-                    'usr_app_matriz_riesgo.oportunidad_2',
+                    'cr.nombre as amenaza',
+                    'cr2.nombre as oportunidad_2',
                     'usr_app_matriz_riesgo.a_total',
                     'usr_app_matriz_riesgo.a_nivel_riesgo',
                     'usr_app_matriz_riesgo.a_tratamiento',
@@ -453,6 +444,10 @@ class MatrizRiesgoController extends Controller
                         $query->where('usr_app_matriz_riesgo.o_resultado_control_peso', 'like', '%' . $valor . '%');
                     } else if ($campo == "o_resultado_control" && !is_numeric($valor)) {
                         $query->where('usr_app_matriz_riesgo.o_resultado_control_descripcion', 'like', '%' . $valor . '%');
+                    } else if ($campo == "amenaza") {
+                        $query->where('cr.nombre', 'like', '%' . $valor . '%');
+                    } else if ($campo == "oportunidad_2") {
+                        $query->where('cr2.nombre', 'like', '%' . $valor . '%');
                     } else {
                         $query->where($campo, 'like', '%' . $valor . '%');
                     }
@@ -470,6 +465,10 @@ class MatrizRiesgoController extends Controller
                         $query->where('usr_app_matriz_riesgo.o_resultado_control_peso', 'like', '%' . $valor . '%');
                     } else if ($campo == "o_resultado_control" && !is_numeric($valor)) {
                         $query->where('usr_app_matriz_riesgo.o_resultado_control_descripcion', 'like', '%' . $valor . '%');
+                    } else if ($campo == "amenaza") {
+                        $query->where('cr.nombre', 'like', '%' . $valor . '%');
+                    } else if ($campo == "oportunidad_2") {
+                        $query->where('cr2.nombre', 'like', '%' . $valor . '%');
                     } else {
                         $query->where('usr_app_matriz_riesgo.' . $campo, '=', $valor);
                     }
@@ -484,10 +483,28 @@ class MatrizRiesgoController extends Controller
             }
 
             $result = $query->paginate();
+            $result = $this->colorCelda($result);
             return response()->json($result);
         } catch (\Exception $e) {
             return $e;
         }
+    }
+
+    public function colorCelda($result){
+        $result->getCollection()->transform(function ($item) {
+            $color_a = $this->getColoresMatriz($item->a_total, 'usr_app_matriz_amenazas', 'peso_celda');
+            $color_o = $this->getColoresMatriz($item->o_total, 'usr_app_matriz_oportunidades', 'peso_celda');
+            $color_a_resultado = $this->getColoresMatrizControl(explode("-", $item->a_resultado_control)[1], 'usr_app_riesgos_control');
+            $color_o_resultado = $this->getColoresMatrizControl(explode("-", $item->o_resultado_control)[1], 'usr_app_riesgos_control');
+
+            $item->a_total_color = $color_a->color;
+            $item->o_total_color = $color_o->color;
+            $item->a_color_resultado = $color_a_resultado->color;
+            $item->o_color_resultado = $color_o_resultado->color;
+
+            return $item;
+        });
+        return $result;
     }
 
     public function buscarradicado($radicado)
@@ -497,6 +514,8 @@ class MatrizRiesgoController extends Controller
 
         $result = MatrizRiesgo::join('usr_app_riesgos_tipos_proceso as tp', 'tp.id', 'usr_app_matriz_riesgo.tipo_proceso_id')
             ->join('usr_app_riesgos_nombres_proceso as np', 'np.id', 'usr_app_matriz_riesgo.nombre_proceso_id')
+            ->join('usr_app_clasificacion_riesgo as cr', 'cr.id', 'usr_app_matriz_riesgo.amenaza')
+            ->join('usr_app_clasificacion_riesgo as cr2', 'cr2.id', 'usr_app_matriz_riesgo.oportunidad_2')
             ->where('usr_app_matriz_riesgo.numero_radicado', 'like', '%' . $radicado . '%')
             ->when(!in_array('34', $permisos), function ($query) use ($user) {
                 return $query->where('usr_app_matriz_riesgo.responsable_id', $user->id);
@@ -512,8 +531,8 @@ class MatrizRiesgoController extends Controller
                 'usr_app_matriz_riesgo.plan_accion',
                 'usr_app_matriz_riesgo.consecuencia',
                 'usr_app_matriz_riesgo.efecto',
-                'usr_app_matriz_riesgo.amenaza',
-                'usr_app_matriz_riesgo.oportunidad_2',
+                'cr.nombre as amenaza',
+                'cr2.nombre as oportunidad_2',
                 'usr_app_matriz_riesgo.a_total',
                 'usr_app_matriz_riesgo.a_nivel_riesgo',
                 'usr_app_matriz_riesgo.a_tratamiento',
@@ -573,6 +592,8 @@ class MatrizRiesgoController extends Controller
                 ->join('usr_app_riesgos_tipos_control as o_tc', 'o_tc.id', 'usr_app_matriz_riesgo.o_tipo_control_id')
                 ->join('usr_app_riesgos_existe_evidencias as o_eev', 'o_eev.id', 'usr_app_matriz_riesgo.o_existe_evidencia_id')
                 ->join('usr_app_riesgos_ejecuciones_eficaces as o_ee', 'o_ee.id', 'usr_app_matriz_riesgo.o_ejecucion_eficaz_id')
+                ->join('usr_app_clasificacion_riesgo as cr', 'cr.id', 'usr_app_matriz_riesgo.amenaza')
+                ->join('usr_app_clasificacion_riesgo as cr2', 'cr2.id', 'usr_app_matriz_riesgo.oportunidad_2')
                 // ->when(!in_array('34', $permisos), function ($query) use ($user) {
                 //     return $query->where('usr_app_matriz_riesgo.responsable_id', $user->id);
                 // })
@@ -586,9 +607,8 @@ class MatrizRiesgoController extends Controller
                     'usr_app_matriz_riesgo.plan_accion',
                     'usr_app_matriz_riesgo.consecuencia',
                     'usr_app_matriz_riesgo.efecto',
-                    'usr_app_matriz_riesgo.amenaza',
-                    'usr_app_matriz_riesgo.oportunidad_2',
-
+                    'cr.nombre as amenaza',
+                    'cr2.nombre as oportunidad_2',
                     'a_nip.nivel as a_nivel_probabilidad',
                     'a_nip.probabilidad as a_probabilidad',
                     'a_niip.nivel as a_nivel_impacto',
@@ -787,8 +807,8 @@ class MatrizRiesgoController extends Controller
             $result->plan_accion = $request->plan_accion;
             $result->consecuencia = $request->consecuencia;
             $result->efecto = $request->efecto;
-            $result->amenaza = $request->amenaza;
-            $result->oportunidad_2 = $request->oportunidad2;
+            $result->amenaza = $request->amenaza['id'];
+            $result->oportunidad_2 = $request->oportunidad2['id'];
 
             $result->a_probabilidad_id = $request->a_probabilidad['id'];
             $result->a_impacto_id = $request->a_impacto['id'];

@@ -144,6 +144,7 @@ use App\Http\Controllers\RiesgoControlController;
 use App\Http\Controllers\MatrizAmenazaController;
 use App\Http\Controllers\MatrizOportunidadController;
 use App\Http\Controllers\MatrizRiesgoController;
+use App\Http\Controllers\ClasificacionRiesgoController;
 
 
 /*
@@ -880,6 +881,7 @@ Route::group([
   Route::get('/exportamatrizriesgo/{cadena}', [MatrizRiesgoController::class, 'exportamatrizriesgo']);
   Route::get('/buscarradicado/{radicado}', [MatrizRiesgoController::class, 'buscarradicado']);
   Route::get('/lideres', [MatrizRiesgoController::class, 'lideres']);
+  Route::get('/clasificacionesriesgos', [ClasificacionRiesgoController::class, 'index']);
   
 
 
