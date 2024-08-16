@@ -17,7 +17,7 @@ use Carbon\Carbon;
 // use App\Events\NotificacionesPush;
 use TCPDF;
 use Illuminate\Support\Facades\DB;
-
+use Mockery\Undefined;
 
 // use App\Events\EventoPrueba2;
 
@@ -1387,16 +1387,16 @@ class formularioGestionIngresoController extends Controller
             $pdf->Output($pdfPath, 'F');
         } else {
             $nombre_archivo = "";
-            if($id == 1){
+            if ($id == 1) {
                 $nombre_archivo = "Orden_servicio";
-            }else if($id == 2){
+            } else if ($id == 2) {
                 $nombre_archivo = "Informe_seleccion";
-            }else if($id == 3){
+            } else if ($id == 3) {
                 $nombre_archivo = "Orden_laboratorio";
-            }else if($id == 4){
+            } else if ($id == 4) {
                 $nombre_archivo = "Citacion_candidato";
             }
-            $pdf->Output($nombre_archivo.'.pdf','I');
+            $pdf->Output($nombre_archivo . '.pdf', 'I');
         }
 
         $body = '';
@@ -2332,5 +2332,77 @@ class formularioGestionIngresoController extends Controller
         } catch (\Exception $e) {
             return response()->json(['status' => 'error', 'message' => 'Error al eliminar el registro, por favor intente nuevamente']);
         }
+    }
+
+    public function consultaseguimiento($id)
+    {
+        // $seguimiento_estados = FormularioIngresoSeguimientoEstado::join('usr_app_estados_ingreso as ei', 'ei.id', '=', 'usr_app_formulario_ingreso_seguimiento_estado.estado_ingreso_inicial')
+        //     ->join('usr_app_estados_ingreso as ef', 'ef.id', '=', 'usr_app_formulario_ingreso_seguimiento_estado.estado_ingreso_final')
+        //     ->where('usr_app_formulario_ingreso_seguimiento_estado.estado_ingreso_final', $id)
+        //     ->select(
+        //         'usr_app_formulario_ingreso_seguimiento_estado.responsable_inicial',
+        //         'usr_app_formulario_ingreso_seguimiento_estado.responsable_final',
+        //         'ei.nombre as estado_ingreso_inicial',
+        //         'ef.nombre as estado_ingreso_final',
+        //         'usr_app_formulario_ingreso_seguimiento_estado.actualiza_registro',
+        //         DB::raw("FORMAT(usr_app_formulario_ingreso_seguimiento_estado.created_at, 'dd/MM/yyyy HH:mm:ss') as fecha_radicado"),
+        //         'usr_app_formulario_ingreso_seguimiento_estado.formulario_ingreso_id',
+
+
+        //     )
+        //     ->orderby('usr_app_formulario_ingreso_seguimiento_estado.formulario_ingreso_id', 'desc')
+        //     ->get();
+
+        // $array = [];
+
+        // for ($i = 0; $i < count($seguimiento_estados) - 1; $i++) {
+        //     if ($seguimiento_estados[$i]->formulario_ingreso_id != $seguimiento_estados[$i + 1]->formulario_ingreso_id) {
+        //         // Si los IDs no son iguales, inserta el actual
+        //         array_push($array, $seguimiento_estados[$i]);
+        //     } else {
+        //         // Si los IDs son iguales, compara las fechas
+        //         if (Carbon::parse($seguimiento_estados[$i]->created_at) > Carbon::parse($seguimiento_estados[$i + 1]->created_at)) {
+        //             array_push($array, $seguimiento_estados[$i]);
+        //         } else {
+        //             array_push($array, $seguimiento_estados[$i + 1]);
+        //         }
+
+        //         // Salta el siguiente elemento ya que ha sido comparado e insertado
+        //         $i++;
+        //     }
+        // }
+
+        // // Asegúrate de agregar el último elemento si no ha sido comparado
+        // if ($i == count($seguimiento_estados) - 1) {
+        //     array_push($array, $seguimiento_estados[$i]);
+        // }
+        // $result['cantidad'] = count($array);
+        // $result['seguimiento_estados'] = $array;
+        // return response()->json($result);
+        $seguimiento_estados = FormularioIngresoSeguimientoEstado::join('usr_app_estados_ingreso as ei', 'ei.id', '=', 'usr_app_formulario_ingreso_seguimiento_estado.estado_ingreso_inicial')
+            ->join('usr_app_estados_ingreso as ef', 'ef.id', '=', 'usr_app_formulario_ingreso_seguimiento_estado.estado_ingreso_final')
+            ->where('usr_app_formulario_ingreso_seguimiento_estado.estado_ingreso_final', $id)
+            ->select(
+                'usr_app_formulario_ingreso_seguimiento_estado.responsable_inicial',
+                'usr_app_formulario_ingreso_seguimiento_estado.responsable_final',
+                'ei.nombre as estado_ingreso_inicial',
+                'ef.nombre as estado_ingreso_final',
+                'usr_app_formulario_ingreso_seguimiento_estado.actualiza_registro',
+                DB::raw("FORMAT(usr_app_formulario_ingreso_seguimiento_estado.created_at, 'dd/MM/yyyy HH:mm:ss') as fecha_radicado"),
+                'usr_app_formulario_ingreso_seguimiento_estado.formulario_ingreso_id',
+                'usr_app_formulario_ingreso_seguimiento_estado.created_at'
+            )
+            ->orderby('usr_app_formulario_ingreso_seguimiento_estado.formulario_ingreso_id', 'desc')
+            ->orderby('usr_app_formulario_ingreso_seguimiento_estado.created_at', 'desc')
+            ->get();
+
+        // Agrupamos por formulario_ingreso_id y seleccionamos el registro más reciente
+        $filtered = $seguimiento_estados->groupBy('formulario_ingreso_id')->map(function ($items) {
+            return $items->sortByDesc('created_at')->first();
+        })->values();
+
+        $result['cantidad'] = $filtered->count();
+        $result['seguimiento_estados'] = $filtered;
+        return response()->json($result);
     }
 }

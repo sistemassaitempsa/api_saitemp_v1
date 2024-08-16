@@ -1,5 +1,5 @@
 <?php
-
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
@@ -808,6 +808,7 @@ Route::group([
   Route::get('/actualizaResponsableingreso/{item}/{responsable_id}/{nombre}', [formularioGestionIngresoController::class, 'actualizaResponsableingreso']);
   Route::get('/responsableingresos/{estado}', [formularioGestionIngresoController::class, 'responsableingresos']);
   Route::get('/gestioningresospdf/{modulo}/{id}/{id_btn}', [formularioGestionIngresoController::class, 'gestioningresospdf']);
+  Route::get('/consultaseguimiento/{id}', [formularioGestionIngresoController::class, 'consultaseguimiento']);
 
   Route::get('/consulta_id_trump/{id}', [formularioGestionIngresoController::class, 'consulta_id_trump']);
 
@@ -883,7 +884,12 @@ Route::group([
   Route::get('/lideres', [MatrizRiesgoController::class, 'lideres']);
   Route::get('/clasificacionesriesgos', [ClasificacionRiesgoController::class, 'index']);
   
-
+  Route::get('/clear-cache', function () {
+    echo Artisan::call('config:clear');
+    echo Artisan::call('config:cache');
+    echo Artisan::call('cache:clear');
+    echo Artisan::call('route:clear');
+ });
 
 
 
