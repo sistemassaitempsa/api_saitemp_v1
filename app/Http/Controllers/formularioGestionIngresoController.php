@@ -12,11 +12,12 @@ use App\Models\RegistroIngresoLaboratorio;
 use App\Models\FormularioIngresoSeguimiento;
 use App\Models\UsuarioPermiso;
 use App\Models\FormularioIngresoSeguimientoEstado;
+use App\Models\User;
 use Carbon\Carbon;
 // use App\Events\NotificacionesPush;
 use TCPDF;
 use Illuminate\Support\Facades\DB;
-
+use Mockery\Undefined;
 
 // use App\Events\EventoPrueba2;
 
@@ -1379,19 +1380,23 @@ class formularioGestionIngresoController extends Controller
                 $pdf->SetX(10);
                 $pdf->MultiCell($ancho_texto + 7, 7, $linea, 0, 'L');
             }
-
-            // foreach ($lineas as $linea) {
-            //     $ancho_texto = $pdf->GetStringWidth($linea);
-            //     $pdf->SetX(10);
-            //     $pdf->MultiCell($ancho_texto + 7, 7, $linea, 0, 'L');
-            // }
         }
 
         if ($modulo != 'null') {
             $pdfPath = storage_path('app/temp.pdf');
             $pdf->Output($pdfPath, 'F');
         } else {
-            $pdf->Output('I');
+            $nombre_archivo = "";
+            if ($id == 1) {
+                $nombre_archivo = "Orden_servicio";
+            } else if ($id == 2) {
+                $nombre_archivo = "Informe_seleccion";
+            } else if ($id == 3) {
+                $nombre_archivo = "Orden_laboratorio";
+            } else if ($id == 4) {
+                $nombre_archivo = "Citacion_candidato";
+            }
+            $pdf->Output($nombre_archivo . '.pdf', 'I');
         }
 
         $body = '';
@@ -1547,23 +1552,11 @@ class formularioGestionIngresoController extends Controller
                     $query->where($prefijoCampo . $campoActual, '=', $valorCompararActual);
                     break;
                 case 'Igual a fecha':
-                    // $fechaHora = date('Y-m-d H:i:s', strtotime($valorCompararActual));
-                    // $query->whereRaw("TRY_CONVERT(datetime, $prefijoCampo$campoActual) = ?", [$fechaHora]);
-                    // break;
-                    // if ($prefijoCampo == 'usr_app_formulario_ingreso.created_at') {
-                    //     $fechaComparar = trim($valorCompararActual, '"'); // Eliminar las comillas dobles
-                    //     $query->whereRaw("TRY_CONVERT(DATE, $prefijoCampo$campoActual, 126) = ?", [$fechaComparar]);
-                    // }
-                    //    return $prefijoCampo .''. $campoActual. '='. $valorCompararActual;
                     $query->whereDate($prefijoCampo . $campoActual, '=', $valorCompararActual);
                     break;
                 case 'Contiene':
-                    // return $prefijoCampo . $campoActual . 'LIKE' . '%' . $valorCompararActual . '%';
                     $query->where($prefijoCampo . $campoActual, 'like', '%' . $valorCompararActual . '%');
                     break;
-                    // default:
-                    //     // Manejar el operador desconocido
-                    //     break;
             }
         }
 
@@ -2046,7 +2039,6 @@ class formularioGestionIngresoController extends Controller
                 $seguimiento->save();
 
                 return response()->json(['status' => '200', 'message' => 'ok', 'registro_ingreso_id' => $ids]);
-                // return response()->json(['status' => 'error', 'message' => 'Solo el responsable puede realizar esta acción.']);
             }
 
             $result->fecha_ingreso = $request->fecha_ingreo;
@@ -2188,85 +2180,6 @@ class formularioGestionIngresoController extends Controller
 
     public function buscarcedula(Request $request)
     {
-        // $array = $request->all();
-        // $no_encontradas = [];
-        // $encontradas = [];
-        // $total = [];
-        // foreach ($array as $item) {
-        //     $result = formularioGestionIngreso::
-        //         leftJoin('usr_app_formulario_ingreso_seguimiento as fs', 'fs.formulario_ingreso_id', '=', 'usr_app_formulario_ingreso.id')
-        //         ->leftJoin('usr_app_estados_ingreso as ei', 'ei.id', '=', 'fs.estado_ingreso_id')
-        //         ->where('fs.estado_ingreso_id','10')
-        //         ->where('numero_identificacion', $item)->first();
-        //     if (!$result) {
-        //         array_push($no_encontradas, $item);
-        //     } else {
-        //         array_push($encontradas, $item . '-' . $result['created_at']);
-        //     }
-        // }
-        // $total['encontradas total'] =  count($encontradas);
-        // $total['encontradas'] =  $encontradas;
-        // $total['no encontradas total'] =  count($no_encontradas);
-        // $total['no encontradas'] =  $no_encontradas;
-        // return $total;
-
-
-
-
-        // // Subconsulta para obtener la primera aparición de cada formulario_ingreso_id con estado_ingreso_id = 10
-        // $firstOccurrence = DB::table('usr_app_formulario_ingreso_seguimiento as u1')
-        //     ->select('u1.formulario_ingreso_id', DB::raw('MIN(u1.created_at) as first_created_at'))
-        //     ->where('u1.estado_ingreso_id', 10)
-        //     ->groupBy('u1.formulario_ingreso_id');
-
-        // // Consulta principal para obtener los registros que coinciden con la primera aparición en el mes especificado
-        // $result = DB::table('usr_app_formulario_ingreso_seguimiento as u2')
-        //     ->joinSub($firstOccurrence, 'first_occurrence', function ($join) {
-        //         $join->on('u2.formulario_ingreso_id', '=', 'first_occurrence.formulario_ingreso_id')
-        //              ->on('u2.created_at', '=', 'first_occurrence.first_created_at');
-        //     })
-        //     ->select('u2.formulario_ingreso_id', 'u2.created_at')
-        //     ->where('u2.estado_ingreso_id', 10)
-        //     ->whereMonth('u2.created_at', 5) // Filtrar por el mes en la tabla principal
-        //     ->orderBy('u2.formulario_ingreso_id')
-        //     ->get();
-
-        // // Crear un array con los ids de formulario_ingreso_id
-        // $ids = $result->pluck('formulario_ingreso_id')->toArray();
-
-        // $total = [
-        //     'total' => $result->count(),
-        //     'registros' => $result,
-        //     'ids' => $ids
-        // ];
-
-        // return $total;
-
-
-
-
-
-        // $array = $request->all();
-        // $no_encontradas = [];
-        // $encontradas = [];
-        // $total = [];
-        // foreach ($array as $item) {
-        //     $result = formularioGestionIngreso:: //leftJoin('usr_app_formulario_ingreso_seguimiento as fs', 'fs.formulario_ingreso_id', '=', 'usr_app_formulario_ingreso.id')
-        //         // ->leftJoin('usr_app_estados_ingreso as ei', 'ei.id', '=', 'fs.estado_ingreso_id')
-        //         // where('fs.estado_ingreso_id', '10')
-        //         where('id', $item)->first();
-        //     if (!$result) {
-        //         array_push($no_encontradas, $item);
-        //     } else {
-        //         array_push($encontradas, $result['numero_identificacion']);
-        //     }
-        // }
-        // $total['encontradas total'] =  count($encontradas);
-        // $total['encontradas'] =  $encontradas;
-        // $total['no encontradas total'] =  count($no_encontradas);
-        // $total['no encontradas'] =  $no_encontradas;
-        // return $total;
-
         // Subconsulta para obtener la primera aparición de cada formulario_ingreso_id con estado_ingreso_id = 10
         $firstOccurrence = DB::table('usr_app_formulario_ingreso_seguimiento as u1')
             ->select('u1.formulario_ingreso_id', DB::raw('MIN(u1.created_at) as first_created_at'))
@@ -2319,6 +2232,65 @@ class formularioGestionIngresoController extends Controller
         return $valores_por_mes;
     }
 
+    public function asignacionmasiva(Request $request, $id_estado, $id_encargado)
+    {
+        $array = $request->all();
+        $user = auth()->user();
+        $permisos = $this->validaPermiso();
+        $responsable = User::find($id_encargado);
+        $cantidad = count($array);
+        $bandera = true;
+        if ($cantidad <= 10) {
+            DB::beginTransaction();
+            foreach ($array as $id) {
+                try {
+                    $registro_ingreso = formularioGestionIngreso::where('usr_app_formulario_ingreso.id', '=', $id)
+                        ->first();
+                    if ($registro_ingreso->responsable_id != null && $registro_ingreso->responsable_id != $user->id && !in_array('31', $permisos)) {
+                        $bandera = false;
+                    }
+                    if (!in_array('35', $permisos)) {
+                        $bandera = false;
+                    }
+
+                    $seguimiento_estado = new FormularioIngresoSeguimientoEstado;
+                    $seguimiento_estado->responsable_inicial =  $registro_ingreso->responsable;
+                    $seguimiento_estado->responsable_final = $responsable->nombres . ' ' . $responsable->apellidos;
+                    $seguimiento_estado->estado_ingreso_inicial =  $registro_ingreso->estado_ingreso_id;
+                    $seguimiento_estado->estado_ingreso_final =  $id_estado;
+                    $seguimiento_estado->formulario_ingreso_id =  $id;
+                    $seguimiento_estado->actualiza_registro =   $user->nombres . ' ' .  str_replace('null', '', $responsable->apellidos);
+
+                    $seguimiento_estado->save();
+
+                    $registro_ingreso->responsable_anterior = $registro_ingreso->responsable;
+                    $registro_ingreso->responsable = $responsable->nombres . ' ' . str_replace('null', '', $responsable->apellidos);
+                    $registro_ingreso->asignacion_manual = 1;
+                    $registro_ingreso->responsable_id = $responsable->id;
+                    $registro_ingreso->estado_ingreso_id = $id_estado;
+                    $registro_ingreso->save();
+
+                    $seguimiento = new FormularioIngresoSeguimiento;
+                    $seguimiento->estado_ingreso_id = $id_estado;
+                    $seguimiento->usuario = $responsable->nombres . ' ' . str_replace('null', '', $responsable->apellidos);
+                    $seguimiento->formulario_ingreso_id = $id;
+                    $seguimiento->save();
+                } catch (\Exception $e) {
+                    DB::rollback();
+                    return response()->json(['status' => 'error', 'message' => 'Error al actualizar registro.']);
+                }
+            }
+            if ($bandera) {
+                DB::commit();
+                return response()->json(['status' => 'success', 'message' => 'Registro actualizado de manera exitosa.']);
+            } else {
+                return response()->json(['status' => 'error', 'message' => 'Solo el responsable puede realizar esta acción.']);
+            }
+        } else {
+            return response()->json(['status' => 'success', 'message' => 'La cantidad permitida de registros a actualizar es de 10.']);
+        }
+    }
+
     /**
      * Remove the specified resource from storage.
      *
@@ -2360,5 +2332,77 @@ class formularioGestionIngresoController extends Controller
         } catch (\Exception $e) {
             return response()->json(['status' => 'error', 'message' => 'Error al eliminar el registro, por favor intente nuevamente']);
         }
+    }
+
+    public function consultaseguimiento($id)
+    {
+        // $seguimiento_estados = FormularioIngresoSeguimientoEstado::join('usr_app_estados_ingreso as ei', 'ei.id', '=', 'usr_app_formulario_ingreso_seguimiento_estado.estado_ingreso_inicial')
+        //     ->join('usr_app_estados_ingreso as ef', 'ef.id', '=', 'usr_app_formulario_ingreso_seguimiento_estado.estado_ingreso_final')
+        //     ->where('usr_app_formulario_ingreso_seguimiento_estado.estado_ingreso_final', $id)
+        //     ->select(
+        //         'usr_app_formulario_ingreso_seguimiento_estado.responsable_inicial',
+        //         'usr_app_formulario_ingreso_seguimiento_estado.responsable_final',
+        //         'ei.nombre as estado_ingreso_inicial',
+        //         'ef.nombre as estado_ingreso_final',
+        //         'usr_app_formulario_ingreso_seguimiento_estado.actualiza_registro',
+        //         DB::raw("FORMAT(usr_app_formulario_ingreso_seguimiento_estado.created_at, 'dd/MM/yyyy HH:mm:ss') as fecha_radicado"),
+        //         'usr_app_formulario_ingreso_seguimiento_estado.formulario_ingreso_id',
+
+
+        //     )
+        //     ->orderby('usr_app_formulario_ingreso_seguimiento_estado.formulario_ingreso_id', 'desc')
+        //     ->get();
+
+        // $array = [];
+
+        // for ($i = 0; $i < count($seguimiento_estados) - 1; $i++) {
+        //     if ($seguimiento_estados[$i]->formulario_ingreso_id != $seguimiento_estados[$i + 1]->formulario_ingreso_id) {
+        //         // Si los IDs no son iguales, inserta el actual
+        //         array_push($array, $seguimiento_estados[$i]);
+        //     } else {
+        //         // Si los IDs son iguales, compara las fechas
+        //         if (Carbon::parse($seguimiento_estados[$i]->created_at) > Carbon::parse($seguimiento_estados[$i + 1]->created_at)) {
+        //             array_push($array, $seguimiento_estados[$i]);
+        //         } else {
+        //             array_push($array, $seguimiento_estados[$i + 1]);
+        //         }
+
+        //         // Salta el siguiente elemento ya que ha sido comparado e insertado
+        //         $i++;
+        //     }
+        // }
+
+        // // Asegúrate de agregar el último elemento si no ha sido comparado
+        // if ($i == count($seguimiento_estados) - 1) {
+        //     array_push($array, $seguimiento_estados[$i]);
+        // }
+        // $result['cantidad'] = count($array);
+        // $result['seguimiento_estados'] = $array;
+        // return response()->json($result);
+        $seguimiento_estados = FormularioIngresoSeguimientoEstado::join('usr_app_estados_ingreso as ei', 'ei.id', '=', 'usr_app_formulario_ingreso_seguimiento_estado.estado_ingreso_inicial')
+            ->join('usr_app_estados_ingreso as ef', 'ef.id', '=', 'usr_app_formulario_ingreso_seguimiento_estado.estado_ingreso_final')
+            ->where('usr_app_formulario_ingreso_seguimiento_estado.estado_ingreso_final', $id)
+            ->select(
+                'usr_app_formulario_ingreso_seguimiento_estado.responsable_inicial',
+                'usr_app_formulario_ingreso_seguimiento_estado.responsable_final',
+                'ei.nombre as estado_ingreso_inicial',
+                'ef.nombre as estado_ingreso_final',
+                'usr_app_formulario_ingreso_seguimiento_estado.actualiza_registro',
+                DB::raw("FORMAT(usr_app_formulario_ingreso_seguimiento_estado.created_at, 'dd/MM/yyyy HH:mm:ss') as fecha_radicado"),
+                'usr_app_formulario_ingreso_seguimiento_estado.formulario_ingreso_id',
+                'usr_app_formulario_ingreso_seguimiento_estado.created_at'
+            )
+            ->orderby('usr_app_formulario_ingreso_seguimiento_estado.formulario_ingreso_id', 'desc')
+            ->orderby('usr_app_formulario_ingreso_seguimiento_estado.created_at', 'desc')
+            ->get();
+
+        // Agrupamos por formulario_ingreso_id y seleccionamos el registro más reciente
+        $filtered = $seguimiento_estados->groupBy('formulario_ingreso_id')->map(function ($items) {
+            return $items->sortByDesc('created_at')->first();
+        })->values();
+
+        $result['cantidad'] = $filtered->count();
+        $result['seguimiento_estados'] = $filtered;
+        return response()->json($result);
     }
 }

@@ -3,9 +3,9 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Models\MatrizOportunidades;
+use App\Models\ClasificacionRiesgo;
 
-class MatrizOportunidadController extends Controller
+class ClasificacionRiesgoController extends Controller
 {
     /**
      * Display a listing of the resource.
@@ -14,24 +14,13 @@ class MatrizOportunidadController extends Controller
      */
     public function index()
     {
-        $result = MatrizOportunidades::select(
+        $result = ClasificacionRiesgo::select(
             'id',
-            'peso_columna',
-            'peso_celda',
-            'atributo_1',
-            'atributo_2',
-            'color',
-            'descripcion'
+            'nombre'
         )
-        ->get()
-        ->map(function ($item) {
-            $item->show = false;
-            return $item;
-        });
-    
+        ->get();
         return response()->json($result);
     }
-    
 
     /**
      * Show the form for creating a new resource.

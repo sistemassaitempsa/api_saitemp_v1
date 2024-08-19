@@ -15,13 +15,19 @@ class MatrizAmenazaController extends Controller
     public function index()
     {
         $result = MatrizAmenazas::select(
+            'id',
             'peso_columna',
             'peso_celda',
             'atributo_1',
             'atributo_2',
-            'color'
+            'color',
+            'descripcion'
         )
-            ->get();
+            ->get()
+            ->map(function ($item) {
+                $item->show = false;
+                return $item;
+            });
         return response()->json($result);
     }
 

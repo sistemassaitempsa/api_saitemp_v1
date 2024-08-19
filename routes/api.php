@@ -1,5 +1,5 @@
 <?php
-
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
@@ -144,6 +144,7 @@ use App\Http\Controllers\RiesgoControlController;
 use App\Http\Controllers\MatrizAmenazaController;
 use App\Http\Controllers\MatrizOportunidadController;
 use App\Http\Controllers\MatrizRiesgoController;
+use App\Http\Controllers\ClasificacionRiesgoController;
 
 
 /*
@@ -798,6 +799,7 @@ Route::group([
   Route::get('/buscardocumentoformularioi/{documento}', [formularioGestionIngresoController::class, 'buscardocumentoformularioi']);
   Route::get('/buscardocumentolistai/{documento}', [formularioGestionIngresoController::class, 'buscardocumentolistai']);
   Route::delete('/eliminararchivosingreso/{item}/{id}', [formularioGestionIngresoController::class, 'eliminararchivo']);
+  Route::post('/asignacionmasivaformularioingreso/{id_estado}/{id_encargado}', [formularioGestionIngresoController::class, 'asignacionmasiva']);
 
   Route::get('/observacionestado', [ObservacionEstadoFormIngresoController::class, 'index']);
 
@@ -806,6 +808,7 @@ Route::group([
   Route::get('/actualizaResponsableingreso/{item}/{responsable_id}/{nombre}', [formularioGestionIngresoController::class, 'actualizaResponsableingreso']);
   Route::get('/responsableingresos/{estado}', [formularioGestionIngresoController::class, 'responsableingresos']);
   Route::get('/gestioningresospdf/{modulo}/{id}/{id_btn}', [formularioGestionIngresoController::class, 'gestioningresospdf']);
+  Route::get('/consultaseguimiento/{id}', [formularioGestionIngresoController::class, 'consultaseguimiento']);
 
   Route::get('/consulta_id_trump/{id}', [formularioGestionIngresoController::class, 'consulta_id_trump']);
 
@@ -879,8 +882,14 @@ Route::group([
   Route::get('/exportamatrizriesgo/{cadena}', [MatrizRiesgoController::class, 'exportamatrizriesgo']);
   Route::get('/buscarradicado/{radicado}', [MatrizRiesgoController::class, 'buscarradicado']);
   Route::get('/lideres', [MatrizRiesgoController::class, 'lideres']);
+  Route::get('/clasificacionesriesgos', [ClasificacionRiesgoController::class, 'index']);
   
-
+  Route::get('/clear-cache', function () {
+    echo Artisan::call('config:clear');
+    echo Artisan::call('config:cache');
+    echo Artisan::call('cache:clear');
+    echo Artisan::call('route:clear');
+ });
 
 
 

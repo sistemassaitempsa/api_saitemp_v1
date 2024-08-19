@@ -432,7 +432,7 @@ class FormularioDDExportController extends Controller
                 ->join('usr_app_tipo_operaciones_internacionales as topi', 'topi.id', '=', 'opi.tipo_operaciones_id')
                 ->join('usr_app_tipo_proveedor as tpro', 'tpro.id', '=', 'usr_app_clientes.tipo_proveedor_id')
                 ->join('usr_app_tipo_cliente as tcli', 'tcli.id', '=', 'usr_app_clientes.tipo_cliente_id')
-                ->leftJoin('usr_app_formulario_ingreso_tipo_servicio as tiser', 'tiser.id', 'usr_app_formulario_ingreso.tipo_servicio_id')
+                // ->leftJoin('usr_app_formulario_ingreso_tipo_servicio as tiser', 'tiser.id', 'usr_app_formulario_ingreso.tipo_servicio_id')
                 ->select(
                     'usr_app_clientes.id',
                     'tcli.nombre as tipo_cliente',
@@ -497,7 +497,7 @@ class FormularioDDExportController extends Controller
                     'topi.nombre as tipo_operacion_internacional',
                     'usr_app_clientes.declaraciones_autirizaciones',
                     'usr_app_clientes.tratamiento_datos_personales',
-                    'tiser.nombre_servicio',
+                    // 'tiser.nombre_servicio',
                 )
                 ->whereDate('usr_app_clientes.' . $campo, '>=', $valor)
                 ->whereDate('usr_app_clientes.' . $campo, '<=', $valor2)
