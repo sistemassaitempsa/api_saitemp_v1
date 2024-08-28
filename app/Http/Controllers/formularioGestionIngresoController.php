@@ -14,7 +14,7 @@ use App\Models\UsuarioPermiso;
 use App\Models\FormularioIngresoSeguimientoEstado;
 use App\Models\User;
 use Carbon\Carbon;
-// use App\Events\NotificacionesPush;
+use App\Events\NotificacionSeiya;
 use TCPDF;
 use Illuminate\Support\Facades\DB;
 use Mockery\Undefined;
@@ -55,7 +55,6 @@ class formularioGestionIngresoController extends Controller
                 'usr_app_formulario_ingreso.novedades',
                 'usr_app_formulario_ingreso.observacion_estado',
                 'usr_app_formulario_ingreso.profesional',
-                // 'usr_app_formulario_ingreso.citacion_entrevista',
                 'tiser.nombre_servicio',
                 'usr_app_formulario_ingreso.afectacion_servicio',
                 'usr_app_formulario_ingreso.responsable_corregir',
@@ -84,7 +83,6 @@ class formularioGestionIngresoController extends Controller
         )
             ->where('cod_emp', '=', $id)
             ->first();
-
         if ($result !== null) {
             if ($result->bloqueado == 1) {
                 return response()->json(['status' => 'error', 'message' => 'Este candidato se encuentra en la lista trump', 'bloqueado' => 'Si']);
@@ -103,7 +101,6 @@ class formularioGestionIngresoController extends Controller
                     'usr_app_formulario_ingreso.responsable as responsable_ingreso'
                 )
                 ->first();
-            // return [];
             if ($result != null) {
                 if ($result->estado_ingreso_id == 31 || $result->estado_ingreso_id == 32 || $result->estado_ingreso_id == 44 || $result->estado_ingreso_id == 17 || $result->estado_ingreso_id == 12 && $result->responsable_id == 502) {
                     return response()->json(['status' => 'success', 'message' => 'Este candidato es apto para activar o ingresar.', 'apto' => '1']);
@@ -117,6 +114,7 @@ class formularioGestionIngresoController extends Controller
 
     public function actualizaestadoingreso($item_id, $estado_id, $responsable_id = null,  $responsable_actual = null, $estado_inicial = null)
     {
+
         $user = auth()->user();
         $usuarios = FormularioIngresoResponsable::where('usr_app_formulario_ingreso_responsable.estado_ingreso_id', '=', $estado_id)
             ->join('usr_app_usuarios as usr', 'usr.id', '=', 'usr_app_formulario_ingreso_responsable.usuario_id')
@@ -144,6 +142,8 @@ class formularioGestionIngresoController extends Controller
         $indiceResponsable = $registro_ingreso->id % $numeroResponsables; // Calcula el índice del responsable basado en el ID del registro
         $responsable = $usuarios[$indiceResponsable];
 
+        $this->eventoSocket($responsable->usuario_id);
+
         $seguimiento_estado = new FormularioIngresoSeguimientoEstado;
         $seguimiento_estado->responsable_inicial =  $registro_ingreso->responsable != null ?  str_replace("null", "", $registro_ingreso->responsable) : str_replace("null", "", $responsable_actual);
         $seguimiento_estado->responsable_final = $responsable->nombres . ' ' . str_replace("null", "", $responsable->apellidos);;
@@ -156,7 +156,7 @@ class formularioGestionIngresoController extends Controller
         // Actualizar el registro de ingreso con el estado y el responsable
         $registro_ingreso->estado_ingreso_id = $estado_id;
         $registro_ingreso->asignacion_manual = 0;
-        $registro_ingreso->responsable_id = $responsable_id;
+        $registro_ingreso->responsable_id = $responsable->usuario_id;
         $registro_ingreso->responsable = $responsable->nombres . ' ' . str_replace("null", "", $responsable->apellidos);
         if ($registro_ingreso->save()) {
             return response()->json(['status' => 'success', 'message' => 'Registro actualizado de manera exitosa.']);
@@ -263,6 +263,7 @@ class formularioGestionIngresoController extends Controller
         return $permisos;
     }
 
+
     public function responsableingresos($estado)
     {
         $usuarios = FormularioIngresoResponsable::join('usr_app_usuarios as usr', 'usr.id', '=', 'usr_app_formulario_ingreso_responsable.usuario_id')
@@ -342,6 +343,8 @@ class formularioGestionIngresoController extends Controller
                 'usr_app_formulario_ingreso.contacto_empresa',
                 'usr_app_formulario_ingreso.responsable_corregir',
                 'usr_app_formulario_ingreso.nc_hora_cierre',
+                'usr_app_formulario_ingreso.n_servicio',
+
 
             )
             ->first();
@@ -1635,6 +1638,7 @@ class formularioGestionIngresoController extends Controller
                 'usr_app_formulario_ingreso.observacion_estado',
                 'usr_app_formulario_ingreso.correo_laboratorio',
                 'usr_app_formulario_ingreso.contacto_empresa',
+                'usr_app_formulario_ingreso.n_servicio',
 
             )
             ->first();
@@ -1791,6 +1795,9 @@ class formularioGestionIngresoController extends Controller
                 if ($request->variableX == 1) {
                     $result->nc_hora_cierre = 'Servicio no conforme';
                 }
+                if ($request->n_servicio != null) {
+                    $result->n_servicio = $request->n_servicio;
+                }
                 $result->save();
 
                 $laboratorio = new RegistroIngresoLaboratorio;
@@ -1809,6 +1816,9 @@ class formularioGestionIngresoController extends Controller
                 if ($result->responsable == null) {
                     $this->actualizaestadoingreso($result->id, $result->estado_ingreso_id, $result->responsable_id, $responsable_actual);
                 }
+                if ($request->consulta_encargado != null) {
+                    $this->eventoSocket($request->encargado_id);
+                }
             } catch (\Exception $e) {
                 // Revertir la transacción si se produce alguna excepción
                 DB::rollback();
@@ -1821,13 +1831,17 @@ class formularioGestionIngresoController extends Controller
         return response()->json(['status' => '200', 'message' => 'ok', 'registro_ingreso_id' => $ids]);
     }
 
-    public function eventoSocket()
+    public function eventoSocket($id)
     {
-        $data = [
-            'marca_temporal' => $user->marca_temporal,
-            'mensaje' => 'Te han asignado un nuevo radicado en SEIYA',
-        ];
-        // event(new NotificacionesPush($data));
+        try {
+            $data = [
+                'encargado_id' => $id,
+                'mensaje' => 'Te han asignado una nueva actividad en el módulo Seiya.'
+            ];
+            event(new NotificacionSeiya($data));
+        } catch (\Throwable $th) {
+        }
+        return;
     }
 
     public function pendientes(Request $request)
@@ -2102,6 +2116,10 @@ class formularioGestionIngresoController extends Controller
                 $result->nc_hora_cierre = 'Servicio no conforme';
             }
 
+            if ($request->n_servicio != null) {
+                $result->n_servicio = $request->n_servicio;
+            }
+
             $result->save();
 
             $seguimiento = new FormularioIngresoSeguimiento;
@@ -2142,9 +2160,7 @@ class formularioGestionIngresoController extends Controller
                 $seguimiento_estado->actualiza_registro =   $user->nombres . ' ' . str_replace("null", "", $user->apellidos);
                 $seguimiento_estado->save();
             }
-
             DB::commit();
-
             return response()->json(['status' => '200', 'message' => 'ok', 'registro_ingreso_id' => $ids]);
         } catch (\Exception $e) {
             // Revertir la transacción si se produce alguna excepción

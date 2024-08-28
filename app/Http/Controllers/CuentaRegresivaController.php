@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\ActualizacionProgramada;
 use App\Events\TiempoActualizacion;
+use Illuminate\Support\Facades\DB;
 
 
 class CuentaRegresivaController extends Controller
@@ -16,7 +17,17 @@ class CuentaRegresivaController extends Controller
      */
     public function index()
     {
-        $result = ActualizacionProgramada::first();
+        $result = ActualizacionProgramada::select(
+            'id',
+            'visible',
+            'mensaje_navbar',
+            'fecha_hora',
+            'estilo_span',
+            'estilo_contador',
+            'tamano_contador',
+            'tamano_texto_contador'
+        )
+            ->first();
         return response()->json($result);
     }
 
@@ -28,7 +39,7 @@ class CuentaRegresivaController extends Controller
     public function create(Request $request)
     {
         $result = new ActualizacionProgramada;
-        $result->visible = $request->visible;
+        $result->visible = $request->contador_visible;
         $result->fecha_hora = $request->fecha_hora;
         $result->mensaje_navbar = $request->mensaje_navbar;
         $result->estilo_span = $request->estilo_span;
@@ -37,6 +48,15 @@ class CuentaRegresivaController extends Controller
         $result->tamano_texto_contador = $request->tamano_texto_contador;
         if ($result->save()) {
             return response()->json(["status" => "success", "message" => "Registro insertado de manera exitosa."]);
+        }
+    }
+
+    public function ocultacontador()
+    {
+        $result = ActualizacionProgramada::find(1);
+        $result->visible = 0;
+        if ($result->save()) {
+            return response()->json(0);
         }
     }
 
@@ -84,7 +104,7 @@ class CuentaRegresivaController extends Controller
     {
 
         $data = [
-            'visible' => $request->visible,
+            'visible' => $request->contador_visible,
             'fecha_hora' => $request->fecha_hora,
             'mensaje_navbar' => $request->mensaje_navbar,
             'estilo_span' => $request->estilo_span,
@@ -95,7 +115,7 @@ class CuentaRegresivaController extends Controller
 
         event(new TiempoActualizacion($data));
         $result = ActualizacionProgramada::find($id);
-        $result->visible = $request->visible;
+        $result->visible = $request->contador_visible;
         $result->fecha_hora = $request->fecha_hora;
         $result->mensaje_navbar = $request->mensaje_navbar;
         $result->estilo_span = $request->estilo_span;

@@ -28,10 +28,9 @@ class ModalPrincipalController extends Controller
     public function create(Request $request)
     {
         $result = new ModalPrincipal;
-        $result->visible = $request->visible;
+        $result->visible = $request->modal_visible;
         $result->titulo = $request->titulo;
-        $result->contenido = $request->contenido;
-        $result->actualiza_pagina = $request->actualiza_pagina;
+        $result->contenido = $request->descripcion;
         if ($result->save()) {
             return response()->json(["status" => "success", "message" => "Registro insertado de manera exitosa."]);
         }
@@ -80,17 +79,17 @@ class ModalPrincipalController extends Controller
     public function update(Request $request, $id)
     {
         $data = [
-            'visible' => $request->visible,
+            'visible' => $request->modal_visible,
             'titulo' => $request->titulo,
-            'contenido' => $request->contenido,
-            'actualiza_pagina' => $request->actualiza_pagina,
+            'contenido' => $request->descripcion,
+            'actualiza_pagina' => $request->recarga_navegador,
+            'alerta' => $request->alerta,
         ];
         event(new VentanaModalPrincipal($data));
         $result = ModalPrincipal::find($id);
-        $result->visible = $request->visible;
+        $result->visible = $request->modal_visible;
         $result->titulo = $request->titulo;
-        $result->contenido = $request->contenido;
-        $result->actualiza_pagina = $request->actualiza_pagina;
+        $result->contenido = $request->descripcion;
         $result2 = ActualizacionProgramada::find($id);
         $result2->visible = 0;
         $result2->save();
