@@ -848,6 +848,7 @@ Route::group([
   Route::get('/actualizacionprogramada', [CuentaRegresivaController::class, 'index']);
   Route::post('/actualizacionprogramada', [CuentaRegresivaController::class, 'create']);
   Route::post('/actualizacionprogramada/{id}', [CuentaRegresivaController::class, 'update']);
+  Route::get('/ocultacontador', [CuentaRegresivaController::class, 'ocultacontador']);
 
   Route::get('/modalprincipal', [ModalPrincipalController::class, 'index']);
   Route::post('/modalprincipal', [ModalPrincipalController::class, 'create']);
