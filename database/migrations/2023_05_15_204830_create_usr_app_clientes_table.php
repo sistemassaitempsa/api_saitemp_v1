@@ -52,7 +52,7 @@ class CreateUsrAppClientesTable extends Migration
             $table->string('correo_facturacion_electronica',200);
             // $table->char('vendedor_id');
             // $table->char('sucursal_facturacion_id',3);
-            $table->boolean('declaraciones_autirizaciones');
+            $table->boolean('declaraciones_autorizaciones');
             // $table->boolean('transparencia_etica');
             $table->boolean('tratamiento_datos_personales');
             $table->boolean('operaciones_internacionales');

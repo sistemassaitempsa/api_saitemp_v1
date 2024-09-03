@@ -200,7 +200,7 @@ class formularioDebidaDiligenciaController extends Controller
                     'rl.id as riesgo_cliente_id',
                     'usr_app_clientes.responsable_inpuesto_ventas',
                     'usr_app_clientes.correo_facturacion_electronica',
-                    'usr_app_clientes.declaraciones_autirizaciones',
+                    'usr_app_clientes.declaraciones_autorizaciones',
                     'usr_app_clientes.tratamiento_datos_personales',
                     'usr_app_clientes.operaciones_internacionales',
                     'scf.nom_suc as sucursal_facturacion',
@@ -788,7 +788,7 @@ class formularioDebidaDiligenciaController extends Controller
             $cliente->responsable_inpuesto_ventas = $request['responsable_inpuesto_ventas'];
             $cliente->correo_facturacion_electronica = $request['correo_factura_electronica'];
             $cliente->sucursal_facturacion_id = $request['sucursal_facturacion'] == '' ? '0' : $request['sucursal_facturacion'];
-            $cliente->declaraciones_autirizaciones = $request['declaraciones_autorizaciones'];
+            $cliente->declaraciones_autorizaciones = $request['declaraciones_autorizaciones']  == 0 ? 0:1;
             $cliente->tratamiento_datos_personales = $request['tratamiento_datos_personales'];
             $cliente->operaciones_internacionales = $request['operaciones_internacionales'];
             $cliente->tipo_cliente_id = $request['tipo_cliente_id'];
@@ -1200,7 +1200,7 @@ class formularioDebidaDiligenciaController extends Controller
             $cliente->responsable_inpuesto_ventas = $request['responsable_inpuesto_ventas'];
             $cliente->correo_facturacion_electronica = $request['correo_factura_electronica'];
             $cliente->sucursal_facturacion_id = $request['sucursal_facturacion'];
-            $cliente->declaraciones_autirizaciones = $request['declaraciones_autorizaciones'];
+            $cliente->declaraciones_autorizaciones = $request['declaraciones_autorizaciones'];
             $cliente->tratamiento_datos_personales = $request['tratamiento_datos_personales'];
             $cliente->operaciones_internacionales = $request['operaciones_internacionales'];
             $cliente->tipo_cliente_id = $request['tipo_cliente_id'];
