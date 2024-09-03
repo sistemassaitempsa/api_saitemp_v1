@@ -753,7 +753,6 @@ class formularioDebidaDiligenciaController extends Controller
             $cliente->fecha_documento = '21/05/2024';
             $cliente->version_documento = '21';
             // fin encabezado paraa el formato del contrato
-
             $cliente->operacion_id = $request['operacion'] == '' ? 1 : $request['operacion'];
             $cliente->tipo_persona_id = $request['tipo_persona'];
             $cliente->digito_verificacion = $request['digito_verificacion'];
