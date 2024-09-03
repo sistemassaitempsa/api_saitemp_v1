@@ -128,7 +128,7 @@ class FormularioDDExportController extends Controller
                     'fin.patrimonio as patrimonio',
                     'usr_app_clientes.operaciones_internacionales',
                     'topi.nombre as tipo_operacion_internacional',
-                    'usr_app_clientes.declaraciones_autirizaciones',
+                    'usr_app_clientes.declaraciones_autorizaciones',
                     'usr_app_clientes.tratamiento_datos_personales'
                 )
                 ->whereDate('usr_app_clientes.' . $campo, $operador, $valor)
@@ -495,7 +495,7 @@ class FormularioDDExportController extends Controller
                     'fin.patrimonio as patrimonio',
                     'usr_app_clientes.operaciones_internacionales',
                     'topi.nombre as tipo_operacion_internacional',
-                    'usr_app_clientes.declaraciones_autirizaciones',
+                    'usr_app_clientes.declaraciones_autorizaciones',
                     'usr_app_clientes.tratamiento_datos_personales',
                     // 'tiser.nombre_servicio',
                 )
@@ -865,7 +865,7 @@ class FormularioDDExportController extends Controller
                     'fin.patrimonio as patrimonio',
                     'usr_app_clientes.operaciones_internacionales',
                     'topi.nombre as tipo_operacion_internacional',
-                    'usr_app_clientes.declaraciones_autirizaciones',
+                    'usr_app_clientes.declaraciones_autorizaciones',
                     'usr_app_clientes.tratamiento_datos_personales'
                 )
                 ->where('ven.nom_ven', $operador, $valor2)
@@ -1224,7 +1224,7 @@ class FormularioDDExportController extends Controller
                 'fin.patrimonio as patrimonio',
                 'usr_app_clientes.operaciones_internacionales',
                 'topi.nombre as tipo_operacion_internacional',
-                'usr_app_clientes.declaraciones_autirizaciones',
+                'usr_app_clientes.declaraciones_autorizaciones',
                 'usr_app_clientes.tratamiento_datos_personales'
             )
             ->where('usr_app_clientes.' . $campo, $operador, $valor)
