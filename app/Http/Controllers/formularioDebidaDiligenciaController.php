@@ -788,11 +788,7 @@ class formularioDebidaDiligenciaController extends Controller
             $cliente->responsable_inpuesto_ventas = $request['responsable_inpuesto_ventas'];
             $cliente->correo_facturacion_electronica = $request['correo_factura_electronica'];
             $cliente->sucursal_facturacion_id = $request['sucursal_facturacion'] == '' ? '0' : $request['sucursal_facturacion'];
-<<<<<<< HEAD
-            $cliente->declaraciones_autorizaciones = $request['declaraciones_autorizaciones'];
-=======
-            $cliente->declaraciones_autorizaciones = $request['declaraciones_autorizaciones']  == 0 ? 0:1;
->>>>>>> 26f9989d6afd96500ec71ec53ed26f397d3c4141
+            $cliente->declaraciones_autorizaciones = $request['declaraciones_autorizaciones']  == 0 ? 0 : 1;
             $cliente->tratamiento_datos_personales = $request['tratamiento_datos_personales'];
             $cliente->operaciones_internacionales = $request['operaciones_internacionales'];
             $cliente->tipo_cliente_id = $request['tipo_cliente_id'];

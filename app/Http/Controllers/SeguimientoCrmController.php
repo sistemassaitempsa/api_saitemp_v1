@@ -7,6 +7,7 @@ use App\Models\SeguimientoCrm;
 use App\Models\SeguimientoCrmPendiente;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use App\Models\Evidencia;
 
 
 class SeguimientoCrmController extends Controller
@@ -40,7 +41,7 @@ class SeguimientoCrmController extends Controller
             ->paginate($cantidad);
         return response()->json($result);
     }
-
+   
 
     public function byid($id)
     {
@@ -78,6 +79,12 @@ class SeguimientoCrmController extends Controller
                 'usr_app_seguimiento_crm.responsable',
             )
             ->first();
+            $evidencias = Evidencia::where('registro_id', $id)->get();
+            $evidencias->transform(function ($item) {
+            $item->edit=false;
+            return $item;
+            });
+            $result["Evidencias"]= $evidencias;
         return response()->json($result);
     }
 
@@ -214,30 +221,61 @@ class SeguimientoCrmController extends Controller
      */
     public function create(Request $request)
     {
-        $user = auth()->user();
-        $result = new SeguimientoCrm;
-        $result->sede_id = $request->sede_id;
-        $result->proceso_id = $request->proceso_id;
-        $result->solicitante_id = $request->solicitante_id;
-        $result->nombre_contacto = $request->nombre_contacto;
-        $result->tipo_atencion_id = $request->tipo_atencion_id;
-        $result->telefono = $request->telefono;
-        $result->correo = $request->correo;
-        $result->estado_id = $request->estado_id;
-        $result->observacion = $request->observacion;
-        $result->nit_documento = $request->nit_documento;
-        $result->pqrsf_id = $request->pqrsf_id;
-        $result->creacion_pqrsf = $user->nombres.' '.$user->apellidos;
-        $result->cierre_pqrsf = $request->cierre_pqrsf;
-        $result->responsable = $request->responsable;
-        if ($request->estado_id == 2) {
-            $fechaHoraActual = Carbon::now();
-            $result->fecha_cerrado = $fechaHoraActual->format('d-m-Y H:i:s');
-        }
-        if ($result->save()) {
+        DB::beginTransaction();
+        try {
+            $user = auth()->user();
+            $result = new SeguimientoCrm;
+            $result->sede_id = $request->sede_id;
+            $result->proceso_id = $request->proceso_id;
+            $result->solicitante_id = $request->solicitante_id;
+            $result->nombre_contacto = $request->nombre_contacto;
+            $result->tipo_atencion_id = $request->tipo_atencion_id;
+            $result->telefono = $request->telefono;
+            $result->correo = $request->correo;
+            $result->estado_id = $request->estado_id;
+            $result->observacion = $request->observacion;
+            $result->nit_documento = $request->nit_documento;
+            $result->pqrsf_id = $request->pqrsf_id;
+            $result->creacion_pqrsf = $user->nombres . ' ' . $user->apellidos;
+            $result->cierre_pqrsf = $request->cierre_pqrsf;
+            $result->responsable = $request->responsable;
+    
+            if ($request->estado_id == 2) {
+                $fechaHoraActual = Carbon::now();
+                $result->fecha_cerrado = $fechaHoraActual->format('d-m-Y H:i:s');
+            }
+    
+            $result->save();
+            
+            foreach ($request->input('evidencias') as $index => $evidenciaData) {
+                $evidencia = new Evidencia;
+                $evidencia->registro_id = $result->id; // Relacionar con el SeguimientoCrm
+            
+                // Guardar la observación
+                $evidencia->descripcion = $evidenciaData['observacion'];
+            
+                // Procesar el archivo
+                if ($request->hasFile("evidencias.$index.file")) {
+                    $file = $request->file("evidencias.$index.file");
+                    $nombreArchivoOriginal = $file->getClientOriginalName();
+                    $idForm=$result->id;
+                    $nuevoNombre = Carbon::now()->timestamp ."_". $idForm . "_" . $nombreArchivoOriginal;
+    
+                    // Guardar el archivo en el directorio 'uploads/evidenciasCrm'
+                    $carpetaDestino = 'upload/evidenciasCrm';
+                    $file->move(public_path($carpetaDestino), $nuevoNombre);
+                    $evidencia->archivo =  $carpetaDestino . '/' . $nuevoNombre;
+                }
+    
+                $evidencia->save();
+            }
+    
+            DB::commit();
             return response()->json(['status' => 'success', 'message' => 'Registro guardado de manera exitosa', 'id' => $result->id]);
-        } else {
-            return response()->json(['status' => 'error', 'message' => 'Error al guardar registro']);
+        }
+        catch (\Exception $e) {
+            DB::rollback();
+            return response()->json(['status' => 'error', 'message' => 'Error al guardar el formulario, por favor intenta nuevamente']);
         }
     }
 
@@ -330,5 +368,27 @@ class SeguimientoCrmController extends Controller
      */
     public function destroy($id)
     {
+    }
+    public function eliminararchivo($item, $id)
+    {
+        
+        $result = Evidencia::where('usr_app_evidencia_crm.registro_id', '=', $item)
+            ->where('usr_app_evidencia_crm.id', '=', $id)
+            ->first();
+        $registro = Evidencia::find($result->id);
+        if ($registro->delete()) {
+            return response()->json(['status' => 'success', 'message' => 'Registro eliminado con Exito']);
+        } else {
+            return response()->json(['status' => 'success', 'message' => 'Error al eliminar registro']);
+        }
+    }
+    public function updateEvidencia(Request $request, $id){
+        $result = Evidencia::find($id); 
+        $result->descripcion = $request->descripcion;
+        if ($result->save()) {
+            return response()->json(['status' => 'success', 'message' => 'Registro actualizado de manera exitosa', 'id' => $result->id]);
+        } else {
+            return response()->json(['status' => 'error', 'message' => 'Error al actualizar registro']);
+        }
     }
 }

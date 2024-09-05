@@ -827,6 +827,8 @@ Route::group([
   Route::post('/seguimientocrmpendientes', [SeguimientoCrmController::class, 'pendientes']);
   Route::get('/seguimientocrmpendientes/{cantidad}', [SeguimientoCrmController::class, 'pendientes2']);
   Route::post('/seguimientocrmpendientesborradomasivo', [SeguimientoCrmController::class, 'borradomasivo']);
+  Route::delete('/eliminararevidencia/{item}/{id}', [SeguimientoCrmController::class, 'eliminararchivo']);
+  Route::put('/seguimientocrmupdateevidencia/{id}', [SeguimientoCrmController::class, 'updateEvidencia']);
   // Route::delete('/seguimientocrm', [SeguimientoCrmController::class, 'destroy']);
 
 
