@@ -7,6 +7,7 @@ use App\Models\SeguimientoCrm;
 use App\Models\SeguimientoCrmPendiente;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use App\Models\Evidencia;
 
 
 class SeguimientoCrmController extends Controller
@@ -39,7 +40,7 @@ class SeguimientoCrmController extends Controller
             ->paginate($cantidad);
         return response()->json($result);
     }
-
+   
 
     public function byid($id)
     {
@@ -77,6 +78,12 @@ class SeguimientoCrmController extends Controller
                 'usr_app_seguimiento_crm.responsable',
             )
             ->first();
+            $evidencias = Evidencia::where('registro_id', $id)->get();
+            $evidencias->transform(function ($item) {
+            $item->edit=false;
+            return $item;
+            });
+            $result["Evidencias"]= $evidencias;
         return response()->json($result);
     }
 
@@ -211,30 +218,56 @@ class SeguimientoCrmController extends Controller
      */
     public function create(Request $request)
     {
-        $user = auth()->user();
-        $result = new SeguimientoCrm;
-        $result->sede_id = $request->sede_id;
-        $result->proceso_id = $request->proceso_id;
-        $result->solicitante_id = $request->solicitante_id;
-        $result->nombre_contacto = $request->nombre_contacto;
-        $result->tipo_atencion_id = $request->tipo_atencion_id;
-        $result->telefono = $request->telefono;
-        $result->correo = $request->correo;
-        $result->estado_id = $request->estado_id;
-        $result->observacion = $request->observacion;
-        $result->nit_documento = $request->nit_documento;
-        $result->pqrsf_id = $request->pqrsf_id;
-        $result->creacion_pqrsf = $user->nombres.' '.$user->apellidos;
-        $result->cierre_pqrsf = $request->cierre_pqrsf;
-        $result->responsable = $request->responsable;
-        if ($request->estado_id == 2) {
-            $fechaHoraActual = Carbon::now();
-            $result->fecha_cerrado = $fechaHoraActual->format('d-m-Y H:i:s');
-        }
-        if ($result->save()) {
+        DB::beginTransaction();
+        try {
+            $user = auth()->user();
+            $result = new SeguimientoCrm;
+            $result->sede_id = $request->sede_id;
+            $result->proceso_id = $request->proceso_id;
+            $result->solicitante_id = $request->solicitante_id;
+            $result->nombre_contacto = $request->nombre_contacto;
+            $result->tipo_atencion_id = $request->tipo_atencion_id;
+            $result->telefono = $request->telefono;
+            $result->correo = $request->correo;
+            $result->estado_id = $request->estado_id;
+            $result->observacion = $request->observacion;
+            $result->nit_documento = $request->nit_documento;
+            $result->pqrsf_id = $request->pqrsf_id;
+            $result->creacion_pqrsf = $user->nombres . ' ' . $user->apellidos;
+            $result->cierre_pqrsf = $request->cierre_pqrsf;
+            $result->responsable = $request->responsable;
+    
+            if ($request->estado_id == 2) {
+                $fechaHoraActual = Carbon::now();
+                $result->fecha_cerrado = $fechaHoraActual->format('d-m-Y H:i:s');
+            }
+    
+            $result->save();
+            
+            foreach ($request->imagen as $item) {
+                for ($i = 0; $i < count($item); $i++) {
+                    if ($i > 0) {
+                        $evidencia = new Evidencia;
+                        $evidencia->descripcion = $item[0]?$item[0]:"";
+                        $evidencia->registro_id = $result->id;
+
+                        $nombreArchivoOriginal = $item[$i]->getClientOriginalName();
+                        $nuevoNombre = Carbon::now()->timestamp . "_" . $nombreArchivoOriginal;
+
+                        $carpetaDestino = './upload/evidenciasCrm/';
+                        $item[$i]->move($carpetaDestino, $nuevoNombre);
+                        $evidencia->archivo = ltrim($carpetaDestino, '.') . $nuevoNombre;
+                        $evidencia->save();
+                    }
+                }
+            }
+    
+            DB::commit();
             return response()->json(['status' => 'success', 'message' => 'Registro guardado de manera exitosa', 'id' => $result->id]);
-        } else {
-            return response()->json(['status' => 'error', 'message' => 'Error al guardar registro']);
+        }
+        catch (\Exception $e) {
+            DB::rollback();
+            return response()->json(['status' => 'error', 'message' => 'Error al guardar el formulario, por favor intenta nuevamente']);
         }
     }
 
@@ -280,7 +313,9 @@ class SeguimientoCrmController extends Controller
      */
     public function update(Request $request, $id)
     {
-        $result = SeguimientoCrm::find($id);
+        DB::beginTransaction();
+        try {
+            $result = SeguimientoCrm::find($id);
         $result->sede_id = $request->sede_id;
         $result->proceso_id = $request->proceso_id;
         $result->solicitante_id = $request->solicitante_id;
@@ -294,15 +329,40 @@ class SeguimientoCrmController extends Controller
         $result->cierre_pqrsf = $request->cierre_pqrsf;
         $result->responsable = $request->responsable;
         $result->pqrsf_id = $request->pqrsf_id;
+       
+
         if ($request->estado_id == 2) {
             $fechaHoraActual = Carbon::now();
             $result->fecha_cerrado = $fechaHoraActual->format('d-m-Y H:i:s');
         }
-        if ($result->save()) {
-            return response()->json(['status' => 'success', 'message' => 'Registro actualizado de manera exitosa', 'id' => $result->id]);
-        } else {
-            return response()->json(['status' => 'error', 'message' => 'Error al actualizar registro']);
+        $result->save();
+
+        foreach ($request->imagen as $item) {
+            for ($i = 0; $i < count($item); $i++) {
+                if ($i > 0) {
+                    $evidencia = new Evidencia;
+                    $evidencia->descripcion = $item[0];
+                    $evidencia->registro_id = $result->id;
+
+                    $nombreArchivoOriginal = $item[$i]->getClientOriginalName();
+                    $nuevoNombre = Carbon::now()->timestamp . "_" . $nombreArchivoOriginal;
+
+                    $carpetaDestino = './upload/evidenciasCrm/';
+                    $item[$i]->move($carpetaDestino, $nuevoNombre);
+                    $evidencia->archivo = ltrim($carpetaDestino, '.') . $nuevoNombre;
+                    $evidencia->save();
+                }
+            }
         }
+        DB::commit();
+        return response()->json(['status' => 'success', 'message' => 'Registro actualizado de manera exitosa', 'id' => $result->id]);
+        } catch (\Throwable $th) {
+            DB::rollback();
+            return response()->json(['status' => 'error', 'message' => 'Error al guardar el formulario, por favor intenta nuevamente']);
+        }
+       
+       
+        
     }
 
     public function borradomasivo(Request $request)
@@ -327,5 +387,33 @@ class SeguimientoCrmController extends Controller
      */
     public function destroy($id)
     {
+    }
+    public function eliminararchivo($item, $id)
+    {
+        
+        $result = Evidencia::where('usr_app_evidencia_crm.registro_id', '=', $item)
+            ->where('usr_app_evidencia_crm.id', '=', $id)
+            ->first();
+        $registro = Evidencia::find($result->id);
+        if ($registro->archivo != null) {
+            $rutaArchivo = base_path('public') . $registro->archivo;
+            if (file_exists($rutaArchivo)) {
+                unlink($rutaArchivo);
+            }
+        }
+        if ($registro->delete()) {
+            return response()->json(['status' => 'success', 'message' => 'Registro eliminado con Exito']);
+        } else {
+            return response()->json(['status' => 'fail', 'message' => 'Error al eliminar registro']);
+        }
+    }
+    public function updateEvidencia(Request $request, $id){
+        $result = Evidencia::find($id); 
+        $result->descripcion = $request->descripcion;
+        if ($result->save()) {
+            return response()->json(['status' => 'success', 'message' => 'Registro actualizado de manera exitosa', 'id' => $result->id]);
+        } else {
+            return response()->json(['status' => 'error', 'message' => 'Error al actualizar registro']);
+        }
     }
 }
