@@ -247,28 +247,22 @@ class SeguimientoCrmController extends Controller
     
             $result->save();
             
-            foreach ($request->input('evidencias') as $index => $evidenciaData) {
-                $evidencia = new Evidencia;
-                $evidencia->registro_id = $result->id; // Relacionar con el SeguimientoCrm
-            
-                // Guardar la observación
-                $evidencia->descripcion = $evidenciaData['observacion'];
-            
-                // Procesar el archivo
-                
-                if ($request->hasFile("evidencias.$index.file") ) {
-                    $file = $request->file("evidencias.$index.file");
-                    $nombreArchivoOriginal = $file->getClientOriginalName();
-                    $idForm=$result->id;
-                    $nuevoNombre = Carbon::now()->timestamp ."_". $idForm . "_" . $nombreArchivoOriginal;
-    
-                    // Guardar el archivo en el directorio 'uploads/evidenciasCrm'
-                    $carpetaDestino = 'upload/evidenciasCrm';
-                    $file->move(public_path($carpetaDestino), $nuevoNombre);
-                    $evidencia->archivo =  $carpetaDestino . '/' . $nuevoNombre;
+            foreach ($request->imagen as $item) {
+                for ($i = 0; $i < count($item); $i++) {
+                    if ($i > 0) {
+                        $evidencia = new Evidencia;
+                        $evidencia->descripcion = $item[0]?$item[0]:"";
+                        $evidencia->registro_id = $result->id;
+
+                        $nombreArchivoOriginal = $item[$i]->getClientOriginalName();
+                        $nuevoNombre = Carbon::now()->timestamp . "_" . $nombreArchivoOriginal;
+
+                        $carpetaDestino = './upload/evidenciasCrm/';
+                        $item[$i]->move($carpetaDestino, $nuevoNombre);
+                        $evidencia->archivo = ltrim($carpetaDestino, '.') . $nuevoNombre;
+                        $evidencia->save();
+                    }
                 }
-    
-                $evidencia->save();
             }
     
             DB::commit();
@@ -346,27 +340,22 @@ class SeguimientoCrmController extends Controller
         }
         $result->save();
 
-        foreach ($request->input('evidencias') as $index => $evidenciaData) {
-            $evidencia = new Evidencia;
-            $evidencia->registro_id = $result->id; // Relacionar con el SeguimientoCrm
-        
-            // Guardar la observación
-            $evidencia->descripcion = $evidenciaData['observacion'];
-        
-            // Procesar el archivo
-            if ($request->hasFile("evidencias.$index.file")) {
-                $file = $request->file("evidencias.$index.file");
-                $nombreArchivoOriginal = $file->getClientOriginalName();
-                $idForm=$result->id;
-                $nuevoNombre = Carbon::now()->timestamp ."_". $idForm . "_" . $nombreArchivoOriginal;
+        foreach ($request->imagen as $item) {
+            for ($i = 0; $i < count($item); $i++) {
+                if ($i > 0) {
+                    $evidencia = new Evidencia;
+                    $evidencia->descripcion = $item[0];
+                    $evidencia->registro_id = $result->id;
 
-                // Guardar el archivo en el directorio 'uploads/evidenciasCrm'
-                $carpetaDestino = 'upload/evidenciasCrm';
-                $file->move(public_path($carpetaDestino), $nuevoNombre);
-                $evidencia->archivo =  $carpetaDestino . '/' . $nuevoNombre;
+                    $nombreArchivoOriginal = $item[$i]->getClientOriginalName();
+                    $nuevoNombre = Carbon::now()->timestamp . "_" . $nombreArchivoOriginal;
+
+                    $carpetaDestino = './upload/evidenciasCrm/';
+                    $item[$i]->move($carpetaDestino, $nuevoNombre);
+                    $evidencia->archivo = ltrim($carpetaDestino, '.') . $nuevoNombre;
+                    $evidencia->save();
+                }
             }
-
-            $evidencia->save();
         }
         DB::commit();
         return response()->json(['status' => 'success', 'message' => 'Registro actualizado de manera exitosa', 'id' => $result->id]);
@@ -409,6 +398,12 @@ class SeguimientoCrmController extends Controller
             ->where('usr_app_evidencia_crm.id', '=', $id)
             ->first();
         $registro = Evidencia::find($result->id);
+        if ($registro->archivo != null) {
+            $rutaArchivo = base_path('public') . $registro->archivo;
+            if (file_exists($rutaArchivo)) {
+                unlink($rutaArchivo);
+            }
+        }
         if ($registro->delete()) {
             return response()->json(['status' => 'success', 'message' => 'Registro eliminado con Exito']);
         } else {
