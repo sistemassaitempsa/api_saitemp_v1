@@ -29,12 +29,11 @@ class SeguimientoCrmController extends Controller
                 'sede.nombre as sede',
                 'proces.nombre as proceso',
                 'soli.nombre as solicitante',
-                'inter.nombre as iteraccion',
                 'usr_app_seguimiento_crm.nombre_contacto',
+                'inter.nombre as iteraccion',
                 'usr_app_seguimiento_crm.telefono',
                 'usr_app_seguimiento_crm.correo',
                 'cierre.nombre as estado',
-                'usr_app_seguimiento_crm.observacion',
             )
             ->orderby('usr_app_seguimiento_crm.id','DESC')
             ->paginate($cantidad);
@@ -104,12 +103,11 @@ class SeguimientoCrmController extends Controller
                     'sede.nombre as sede',
                     'proces.nombre as proceso',
                     'soli.nombre as solicitante',
-                    'inter.nombre as iteraccion',
                     'usr_app_seguimiento_crm.nombre_contacto',
+                    'inter.nombre as iteraccion',
                     'usr_app_seguimiento_crm.telefono',
                     'usr_app_seguimiento_crm.correo',
                     'cierre.nombre as estado',
-                    'usr_app_seguimiento_crm.observacion',
                 )
                 ->orderby('id', 'DESC');
 
@@ -199,7 +197,6 @@ class SeguimientoCrmController extends Controller
                 'usr_app_seguimiento_crm.telefono',
                 'usr_app_seguimiento_crm.correo',
                 'cierre.nombre as estado',
-                'usr_app_seguimiento_crm.observacion',
             )
             ->orderby('usr_app_seguimiento_crm.id', 'DESC')
             ->paginate($cantidad);
