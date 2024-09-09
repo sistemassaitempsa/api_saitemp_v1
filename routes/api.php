@@ -146,7 +146,6 @@ use App\Http\Controllers\MatrizOportunidadController;
 use App\Http\Controllers\MatrizRiesgoController;
 use App\Http\Controllers\ClasificacionRiesgoController;
 
-
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -884,7 +883,7 @@ Route::group([
   Route::get('/buscarradicado/{radicado}', [MatrizRiesgoController::class, 'buscarradicado']);
   Route::get('/lideres', [MatrizRiesgoController::class, 'lideres']);
   Route::get('/clasificacionesriesgos', [ClasificacionRiesgoController::class, 'index']);
-  
+
   Route::get('/clear-cache', function () {
     echo Artisan::call('config:clear');
     echo Artisan::call('config:cache');
