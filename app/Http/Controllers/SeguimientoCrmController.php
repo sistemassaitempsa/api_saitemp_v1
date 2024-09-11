@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\DB;
 use App\Models\Evidencia;
 use App\Models\TemasVisitaCrm;
 use App\Models\CompromisosVisitaCrm;
+use App\Models\AsistenciaVisitaCrm;
 
 class SeguimientoCrmController extends Controller
 {
@@ -289,6 +290,15 @@ class SeguimientoCrmController extends Controller
                 }
             } 
             
+            if(count($request->asistencias)>0){
+                foreach ($request->asistencias as $item){
+                    $asistencia= new AsistenciaVisitaCrm();
+                    $asistencia->nombre= $item->nombre;
+                    $asistencia->cargo= $item->cargoAsistencia;
+                    $asistencia->firma= $item->firmaAsistencia;
+                    $asistencia->registro_id = $result->id;
+                }
+            } 
     
             DB::commit();
             return response()->json(['status' => 'success', 'message' => 'Registro guardado de manera exitosa', 'id' => $result->id]);
