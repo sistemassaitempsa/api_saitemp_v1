@@ -9,7 +9,7 @@ use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use App\Models\Evidencia;
 use App\Models\TemasVisitaCrm;
-
+use App\Models\CompromisosVisitaCrm;
 
 class SeguimientoCrmController extends Controller
 {
@@ -272,20 +272,20 @@ class SeguimientoCrmController extends Controller
                     }
                 }
             }
-            if(count($request->temas_principales)>0){
+            if(count($request->temasPrincipales)>0){
                 foreach ($request->temas_principales as $item){
                     $temaPrincipal= new TemasVisitaCrm;
-                    $temaPrincipal->titulo= $item->titulo_tema;
-                    $temaPrincipal->descripcion= $item->descripcion_tema;
+                    $temaPrincipal->titulo= $item->tituloTema;
+                    $temaPrincipal->descripcion= $item->descripcionTema;
                     $temaPrincipal->registro_id = $result->id;
                 }
             } 
-            if(count($request->temas_principales)>0){
-                foreach ($request->temas_principales as $item){
-                    $temaPrincipal= new TemasVisitaCrm;
-                    $temaPrincipal->titulo= $item->titulo_tema;
-                    $temaPrincipal->descripcion= $item->descripcion_tema;
-                    $temaPrincipal->registro_id = $result->id;
+            if(count($request->compromisos)>0){
+                foreach ($request->compromisos as $item){
+                    $compromiso= new CompromisosVisitaCrm;
+                    $compromiso->titulo= $item->tituloCompromiso;
+                    $compromiso->descripcion= $item->descripcionCompromiso;
+                    $compromiso->registro_id = $result->id;
                 }
             } 
             
