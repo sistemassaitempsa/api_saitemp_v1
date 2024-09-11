@@ -236,6 +236,16 @@ class SeguimientoCrmController extends Controller
             $result->creacion_pqrsf = $user->nombres . ' ' . $user->apellidos;
             $result->cierre_pqrsf = $request->cierre_pqrsf;
             $result->responsable = $request->responsable;
+            //
+            $result->visitante= $request->visitante;
+            $result->visitado= $request->visitado;
+            $result-> hora_inicio = $request->hora_inicio;
+            $result-> hora_cierre = $request->hora_cierre;
+            $result-> cargo_visitante = $request->cargo_visitante;
+            $result-> cargo_visitado= $request->cargo_atendio;
+            $result-> objetivo = $request->objetivo_visita;
+            $result-> alcance = $request->alcance_visita;
+
     
             if ($request->estado_id == 2) {
                 $fechaHoraActual = Carbon::now();
