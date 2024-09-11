@@ -8,6 +8,7 @@ use App\Models\SeguimientoCrmPendiente;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use App\Models\Evidencia;
+use App\Models\TemasVisitaCrm;
 
 
 class SeguimientoCrmController extends Controller
@@ -271,6 +272,23 @@ class SeguimientoCrmController extends Controller
                     }
                 }
             }
+            if(count($request->temas_principales)>0){
+                foreach ($request->temas_principales as $item){
+                    $temaPrincipal= new TemasVisitaCrm;
+                    $temaPrincipal->titulo= $item->titulo_tema;
+                    $temaPrincipal->descripcion= $item->descripcion_tema;
+                    $temaPrincipal->registro_id = $result->id;
+                }
+            } 
+            if(count($request->temas_principales)>0){
+                foreach ($request->temas_principales as $item){
+                    $temaPrincipal= new TemasVisitaCrm;
+                    $temaPrincipal->titulo= $item->titulo_tema;
+                    $temaPrincipal->descripcion= $item->descripcion_tema;
+                    $temaPrincipal->registro_id = $result->id;
+                }
+            } 
+            
     
             DB::commit();
             return response()->json(['status' => 'success', 'message' => 'Registro guardado de manera exitosa', 'id' => $result->id]);
