@@ -1431,7 +1431,7 @@ class formularioGestionIngresoController extends Controller
 
 
 
-        $correo = null;
+        $correo = [];
         $correo['subject'] =  $subject;
         $correo['body'] = $body;
         $correo['formulario_ingreso'] = $pdfPath;
