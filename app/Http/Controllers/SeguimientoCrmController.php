@@ -392,6 +392,33 @@ class SeguimientoCrmController extends Controller
                 }
             }
         }
+
+        if(count($request->temasPrincipales)>0){
+            foreach ($request->temas_principales as $item){
+                $temaPrincipal= new TemasVisitaCrm;
+                $temaPrincipal->titulo= $item->tituloTema;
+                $temaPrincipal->descripcion= $item->descripcionTema;
+                $temaPrincipal->registro_id = $result->id;
+            }
+        } 
+        if(count($request->compromisos)>0){
+            foreach ($request->compromisos as $item){
+                $compromiso= new CompromisosVisitaCrm;
+                $compromiso->titulo= $item->tituloCompromiso;
+                $compromiso->descripcion= $item->descripcionCompromiso;
+                $compromiso->registro_id = $result->id;
+            }
+        } 
+        
+        if(count($request->asistencias)>0){
+            foreach ($request->asistencias as $item){
+                $asistencia= new AsistenciaVisitaCrm();
+                $asistencia->nombre= $item->nombre;
+                $asistencia->cargo= $item->cargoAsistencia;
+                $asistencia->firma= $item->firmaAsistencia;
+                $asistencia->registro_id = $result->id;
+            }
+        } 
         DB::commit();
         return response()->json(['status' => 'success', 'message' => 'Registro actualizado de manera exitosa', 'id' => $result->id]);
         } catch (\Throwable $th) {
