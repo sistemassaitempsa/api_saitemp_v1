@@ -220,9 +220,10 @@ class SeguimientoCrmController extends Controller
      */
     public function create(Request $request)
     {
+        return $request;
         DB::beginTransaction();
         try {
-            $user = auth()->user();
+            
             $result = new SeguimientoCrm;
             $result->sede_id = $request->sede_id;
             $result->proceso_id = $request->proceso_id;
@@ -238,7 +239,7 @@ class SeguimientoCrmController extends Controller
             $result->creacion_pqrsf = $user->nombres . ' ' . $user->apellidos;
             $result->cierre_pqrsf = $request->cierre_pqrsf;
             $result->responsable = $request->responsable;
-            //
+            //campos agregados para el formulario de visita
             $result->visitante= $request->visitante;
             $result->visitado= $request->visitado;
             $result-> hora_inicio = $request->hora_inicio;
@@ -290,15 +291,24 @@ class SeguimientoCrmController extends Controller
                 }
             } 
             
-            if(count($request->asistencias)>0){
-                foreach ($request->asistencias as $item){
-                    $asistencia= new AsistenciaVisitaCrm();
-                    $asistencia->nombre= $item->nombre;
-                    $asistencia->cargo= $item->cargoAsistencia;
-                    $asistencia->firma= $item->firmaAsistencia;
-                    $asistencia->registro_id = $result->id;
+            foreach ($request->asistencia as $item) {
+
+                for ($i = 0; $i < count($item); $i++) {
+                    if ($i > 0) {
+                        $asistencia = new AsistenciaVisitaCrm;
+                        $asistencia->nombre = $item[0]?$item[0]->nombre:"";
+                        $asistencia->registro_id = $result->id;
+                        $asistencia->cargo= $item[0]?$item[0]->cargo:""; 
+                        $nombreArchivoOriginal = $item[$i]->getClientOriginalName();
+                        $nuevoNombre = Carbon::now()->timestamp . "_" . $nombreArchivoOriginal;
+
+                        $carpetaDestino = './upload/evidenciasCrm/';
+                        $item[$i]->move($carpetaDestino, $nuevoNombre);
+                        $asistencia->firma = ltrim($carpetaDestino, '.') . $nuevoNombre;
+                        $asistencia->save();
+                    }
                 }
-            } 
+            }
     
             DB::commit();
             return response()->json(['status' => 'success', 'message' => 'Registro guardado de manera exitosa', 'id' => $result->id]);
