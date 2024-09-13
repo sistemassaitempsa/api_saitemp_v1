@@ -220,36 +220,36 @@ class SeguimientoCrmController extends Controller
      */
     public function create(Request $request)
     {
-        return $request;
-        DB::beginTransaction();
-        try {
-            
-            $result = new SeguimientoCrm;
-            $result->sede_id = $request->sede_id;
-            $result->proceso_id = $request->proceso_id;
-            $result->solicitante_id = $request->solicitante_id;
-            $result->nombre_contacto = $request->nombre_contacto;
-            $result->tipo_atencion_id = $request->tipo_atencion_id;
-            $result->telefono = $request->telefono;
-            $result->correo = $request->correo;
-            $result->estado_id = $request->estado_id;
-            $result->observacion = $request->observacion;
-            $result->nit_documento = $request->nit_documento;
-            $result->pqrsf_id = $request->pqrsf_id;
-            $result->creacion_pqrsf = $user->nombres . ' ' . $user->apellidos;
-            $result->cierre_pqrsf = $request->cierre_pqrsf;
-            $result->responsable = $request->responsable;
+        
+            DB::beginTransaction();
+            try {
+                $user = auth()->user();
+                $result = new SeguimientoCrm;
+                $result->sede_id = $request->sede_id;
+                $result->proceso_id = $request->proceso_id;
+                $result->solicitante_id = $request->solicitante_id;
+                $result->nombre_contacto = $request->nombre_contacto;
+                $result->tipo_atencion_id = $request->tipo_atencion_id;
+                $result->telefono = $request->telefono;
+                $result->correo = $request->correo;
+                $result->estado_id = $request->estado_id;
+                $result->observacion = $request->observacion;
+                $result->nit_documento = $request->nit_documento;
+                $result->pqrsf_id = $request->pqrsf_id;
+                $result->creacion_pqrsf = $user->nombres . ' ' . $user->apellidos;
+                $result->cierre_pqrsf = $request->cierre_pqrsf;
+                $result->responsable = $request->responsable;
             //campos agregados para el formulario de visita
             $result->visitante= $request->visitante;
-            $result->visitado= $request->visitado;
+            $result->visitado= $request->visitado; 
             $result-> hora_inicio = $request->hora_inicio;
-            $result-> hora_cierre = $request->hora_cierre;
+            $result-> hora_cierre = $request->hora_cierre;  
             $result-> cargo_visitante = $request->cargo_visitante;
             $result-> cargo_visitado= $request->cargo_atendio;
             $result-> objetivo = $request->objetivo_visita;
             $result-> alcance = $request->alcance_visita;
 
-    
+            
             if ($request->estado_id == 2) {
                 $fechaHoraActual = Carbon::now();
                 $result->fecha_cerrado = $fechaHoraActual->format('d-m-Y H:i:s');
@@ -274,47 +274,55 @@ class SeguimientoCrmController extends Controller
                     }
                 }
             }
-            if(count($request->temasPrincipales)>0){
-                foreach ($request->temas_principales as $item){
-                    $temaPrincipal= new TemasVisitaCrm;
-                    $temaPrincipal->titulo= $item->tituloTema;
-                    $temaPrincipal->descripcion= $item->descripcionTema;
-                    $temaPrincipal->registro_id = $result->id;
-                }
-            } 
-            if(count($request->compromisos)>0){
-                foreach ($request->compromisos as $item){
-                    $compromiso= new CompromisosVisitaCrm;
-                    $compromiso->titulo= $item->tituloCompromiso;
-                    $compromiso->descripcion= $item->descripcionCompromiso;
-                    $compromiso->registro_id = $result->id;
-                }
-            } 
-            
-            foreach ($request->asistencia as $item) {
+             $decodeCompromisos= json_decode($request->compromisos,true);
+            $decodeTemas= json_decode($request->temasPrincipales,true);
+           // Procesar temas principales
+if (count($decodeTemas) > 0) {
+    foreach ($decodeTemas as $item) {
+        
+        $temaPrincipal = new TemasVisitaCrm;
+        $temaPrincipal->titulo = isset($item['tituloTema']) ? $item['tituloTema'] : '';
+        $temaPrincipal->descripcion = isset($item['descripcionTema']) ? $item['descripcionTema'] : '';
+        $temaPrincipal->registro_id = $result->id;
+        $temaPrincipal->save();
+    }
+}
 
+// Procesar compromisos
+if (count($decodeCompromisos) > 0) {
+    foreach ($decodeCompromisos as $item) {
+        $compromiso = new CompromisosVisitaCrm; 
+        $compromiso->titulo = isset($item['tituloCompromiso']) ? $item['tituloCompromiso'] : '';
+        $compromiso->descripcion = isset($item['descripcionCompromiso']) ? $item['descripcionCompromiso'] : '';
+        $compromiso->registro_id = $result->id;
+        $compromiso->save();
+    }
+}
+            foreach ($request->asistencia as $item) {
                 for ($i = 0; $i < count($item); $i++) {
                     if ($i > 0) {
                         $asistencia = new AsistenciaVisitaCrm;
-                        $asistencia->nombre = $item[0]?$item[0]->nombre:"";
+                        $decodeFirma= json_decode($item[0],true);
+                    
+                        $asistencia->nombre = $decodeFirma?$decodeFirma["nombre"]:"";
                         $asistencia->registro_id = $result->id;
-                        $asistencia->cargo= $item[0]?$item[0]->cargo:""; 
+                        $asistencia->cargo= $decodeFirma?$decodeFirma["cargo"]:""; 
                         $nombreArchivoOriginal = $item[$i]->getClientOriginalName();
                         $nuevoNombre = Carbon::now()->timestamp . "_" . $nombreArchivoOriginal;
-
                         $carpetaDestino = './upload/evidenciasCrm/';
                         $item[$i]->move($carpetaDestino, $nuevoNombre);
                         $asistencia->firma = ltrim($carpetaDestino, '.') . $nuevoNombre;
-                        $asistencia->save();
+                        $asistencia ->save();
                     }
                 }
-            }
+            } 
     
             DB::commit();
             return response()->json(['status' => 'success', 'message' => 'Registro guardado de manera exitosa', 'id' => $result->id]);
         }
         catch (\Exception $e) {
             DB::rollback();
+            return $e;
             return response()->json(['status' => 'error', 'message' => 'Error al guardar el formulario, por favor intenta nuevamente']);
         }
     }
