@@ -11,7 +11,7 @@ use App\Models\Evidencia;
 use App\Models\TemasVisitaCrm;
 use App\Models\CompromisosVisitaCrm;
 use App\Models\AsistenciaVisitaCrm;
-
+use TCPDF;
 class SeguimientoCrmController extends Controller
 {
     /**
@@ -551,5 +551,115 @@ class SeguimientoCrmController extends Controller
             return response()->json(['status' => 'error', 'message' => 'Error al actualizar registro']);
         }
     }
+
+    
+        public function generarPdfCrm($modulo = null, $registro_id, $id)
+{
+    // Obtener los datos del formulario
+    $formulario = $this->byid($registro_id)->getData();
+
+    // Inicializar TCPDF
+    $pdf = new \TCPDF();
+
+    // Establecer los metadatos del documento
+    $pdf->SetCreator(PDF_CREATOR);
+    $pdf->SetAuthor('Tu Nombre');
+    $pdf->SetTitle('Reporte CRM');
+    $pdf->SetSubject('Detalles del CRM');
+    $pdf->SetKeywords('TCPDF, PDF, CRM, reporte');
+
+    // Eliminar la cabecera y pie de página por defecto
+    $pdf->setPrintHeader(false);
+    $pdf->setPrintFooter(false);
+
+    // Añadir una página
+    $pdf->AddPage();
+
+    // Agregar imagen de fondo
+    $url = public_path('\/upload\/MEMBRETE.png');
+    $pdf->Image($url, 0, 0, 210, 297, '', '', '', false, 300, '', false, false, 0);
+
+
+    // Establecer fuente
+    $pdf->SetFont('helvetica', '', 12);
+
+    // Construir el contenido del PDF con las claves y valores del formulario
+    $html = '
+     <style>
+            h1 {
+                color: #2E86C1;
+                text-align: center;
+                font-size: 24px;
+                margin-bottom: 20px;
+            }
+            p {
+                font-size: 12px;
+                color: #000;
+                line-height: 1.5;
+                margin-bottom: 8px;
+            }
+            .data-label {
+                font-weight: bold;
+            }
+            .section-title {
+                font-size: 16px;
+                color: #1F618D;
+                margin-top: 15px;
+                margin-bottom: 10px;
+            }
+            table {
+                width: 100%;
+                border-collapse: collapse;
+            }
+            td {
+                border: 1px solid #ddd;
+                padding: 8px;
+                font-size: 12px;
+            }
+            .signature {
+                width: 100px;
+                height: 50px;
+                border: 1px solid #ddd;
+                text-align: center;
+                vertical-align: middle;
+            }
+        </style>
+        <div > 
+        <h1>Registro de servicio</h1>
+        <p><strong>Número Radicado:</strong> ' . $formulario->numero_radicado . '</p>
+        <p><strong>Nombre Contacto:</strong> ' . $formulario->nombre_contacto . '</p>
+        <p><strong>Correo:</strong> ' . $formulario->correo . '</p>
+        <p><strong>Teléfono:</strong> ' . $formulario->telefono . '</p>
+        <p><strong>Observación:</strong> ' . $formulario->observacion . '</p>
+        <p><strong>Fecha de Creación:</strong> ' . $formulario->created_at . '</p>
+        <p><strong>Estado:</strong> ' . $formulario->estado . '</p>
+        <p><strong>Objetivo:</strong> ' . $formulario->objetivo . '</p>
+        <p><strong>Alcance:</strong> ' . $formulario->alcance . '</p>
+        </div> 
+    ';
+
+    // Puedes iterar sobre los arrays (evidencias, compromisos, temas principales, etc.)
+    $html .= '<h2>Evidencias</h2>';
+    foreach ($formulario->Evidencias as $evidencia) {
+        $html .= '<p><strong>Descripción:</strong> ' . $evidencia->descripcion . '</p>';
+        $html .= '<p><strong>Archivo:</strong> ' . $evidencia->archivo . '</p>';
+    }
+
+    $html .= '<h2>Asistencias</h2>';
+    foreach ($formulario->asistencias as $asistencia) {
+        $html .= '<p><strong>Nombre:</strong> ' . $asistencia->nombre . '</p>';
+        $html .= '<p><strong>Cargo:</strong> ' . $asistencia->cargo . '</p>';
+        $html .= '<p><strong>Firma:</strong> <img src="' . public_path($asistencia->firma) . '" width="100" /></p>';
+    }
+
+    // Establecer el contenido HTML en el PDF
+    $pdf->writeHTML($html, true, false, true, false, '');
+
+    // Opción 1: Descargar el PDF
+    /* $pdf->Output('formulario.pdf', 'D'); */
+
+    // Opción 2: Mostrar el PDF en el navegador
+     $pdf->Output('formulario.pdf', 'I');
+}
     
 }
