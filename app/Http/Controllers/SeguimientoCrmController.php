@@ -78,6 +78,14 @@ class SeguimientoCrmController extends Controller
                 'usr_app_seguimiento_crm.creacion_pqrsf',
                 'usr_app_seguimiento_crm.cierre_pqrsf',
                 'usr_app_seguimiento_crm.responsable',
+                'usr_app_seguimiento_crm.hora_inicio',
+                'usr_app_seguimiento_crm.hora_cierre',
+                'usr_app_seguimiento_crm.alcance',
+                'usr_app_seguimiento_crm.objetivo',
+                'usr_app_seguimiento_crm.cargo_visitado',
+                'usr_app_seguimiento_crm.visitado',
+                'usr_app_seguimiento_crm.cargo_visitante',
+                'usr_app_seguimiento_crm.visitante',
             )
             ->first();
             $evidencias = Evidencia::where('registro_id', $id)->get();
@@ -297,26 +305,26 @@ class SeguimientoCrmController extends Controller
              $decodeCompromisos= json_decode($request->compromisos,true);
             $decodeTemas= json_decode($request->temasPrincipales,true);
            // Procesar temas principales
-if (count($decodeTemas) > 0) {
-    foreach ($decodeTemas as $item) {
-        
-        $temaPrincipal = new TemasVisitaCrm;
-        $temaPrincipal->titulo = isset($item['tituloTema']) ? $item['tituloTema'] : '';
-        $temaPrincipal->descripcion = isset($item['descripcionTema']) ? $item['descripcionTema'] : '';
-        $temaPrincipal->registro_id = $result->id;
-        $temaPrincipal->save();
-    }
-}
+            if (count($decodeTemas) > 0) {
+                foreach ($decodeTemas as $item) {
+                    
+                    $temaPrincipal = new TemasVisitaCrm;
+                    $temaPrincipal->titulo = isset($item['titulo']) ? $item['titulo'] : '';
+                    $temaPrincipal->descripcion = isset($item['descripcion']) ? $item['descripcion'] : '';
+                    $temaPrincipal->registro_id = $result->id;
+                    $temaPrincipal->save();
+                }
+            }
 
-if (count($decodeCompromisos) > 0) {
-    foreach ($decodeCompromisos as $item) {
-        $compromiso = new CompromisosVisitaCrm; 
-        $compromiso->titulo = isset($item['tituloCompromiso']) ? $item['tituloCompromiso'] : '';
-        $compromiso->descripcion = isset($item['descripcionCompromiso']) ? $item['descripcionCompromiso'] : '';
-        $compromiso->registro_id = $result->id;
-        $compromiso->save();
-    }
-}
+            if (count($decodeCompromisos) > 0) {
+                foreach ($decodeCompromisos as $item) {
+                    $compromiso = new CompromisosVisitaCrm; 
+                    $compromiso->titulo = isset($item['titulo']) ? $item['titulo'] : '';
+                    $compromiso->descripcion = isset($item['descripcion']) ? $item['descripcion'] : '';
+                    $compromiso->registro_id = $result->id;
+                    $compromiso->save();
+                }
+            }
             foreach ($request->asistencia as $item) {
                 for ($i = 0; $i < count($item); $i++) {
                     if ($i > 0) {
@@ -404,58 +412,83 @@ if (count($decodeCompromisos) > 0) {
         $result->cierre_pqrsf = $request->cierre_pqrsf;
         $result->responsable = $request->responsable;
         $result->pqrsf_id = $request->pqrsf_id;
-       
+          //campos agregados para el formulario de visita
+          $result->visitante= $request->visitante;
+          $result->visitado= $request->visitado; 
+          $result-> hora_inicio = $request->hora_inicio;
+          $result-> hora_cierre = $request->hora_cierre;  
+          $result-> cargo_visitante = $request->cargo_visitante;
+          $result-> cargo_visitado= $request->cargo_atendio;
+          $result-> objetivo = $request->objetivo_visita;
+          $result-> alcance = $request->alcance_visita;
 
-        if ($request->estado_id == 2) {
-            $fechaHoraActual = Carbon::now();
-            $result->fecha_cerrado = $fechaHoraActual->format('d-m-Y H:i:s');
-        }
-        $result->save();
+          
+          if ($request->estado_id == 2) {
+              $fechaHoraActual = Carbon::now();
+              $result->fecha_cerrado = $fechaHoraActual->format('d-m-Y H:i:s');
+          }
+  
+          $result->save();
+          
+          foreach ($request->imagen as $item) {
+              for ($i = 0; $i < count($item); $i++) {
+                  if ($i > 0) {
+                      $evidencia = new Evidencia;
+                      $evidencia->descripcion = $item[0]?$item[0]:"";
+                      $evidencia->registro_id = $result->id;
 
-        foreach ($request->imagen as $item) {
-            for ($i = 0; $i < count($item); $i++) {
-                if ($i > 0) {
-                    $evidencia = new Evidencia;
-                    $evidencia->descripcion = $item[0];
-                    $evidencia->registro_id = $result->id;
+                      $nombreArchivoOriginal = $item[$i]->getClientOriginalName();
+                      $nuevoNombre = Carbon::now()->timestamp . "_" . $nombreArchivoOriginal;
 
-                    $nombreArchivoOriginal = $item[$i]->getClientOriginalName();
-                    $nuevoNombre = Carbon::now()->timestamp . "_" . $nombreArchivoOriginal;
+                      $carpetaDestino = './upload/evidenciasCrm/';
+                      $item[$i]->move($carpetaDestino, $nuevoNombre);
+                      $evidencia->archivo = ltrim($carpetaDestino, '.') . $nuevoNombre;
+                      $evidencia->save();
+                  }
+              }
+          }
+           $decodeCompromisos= json_decode($request->compromisos,true);
+          $decodeTemas= json_decode($request->temasPrincipales,true);
+         // Procesar temas principales
+          if (count($decodeTemas) > 0) {
+              foreach ($decodeTemas as $item) {
+                  
+                  $temaPrincipal = new TemasVisitaCrm;
+                  $temaPrincipal->titulo = isset($item['titulo']) ? $item['titulo'] : '';
+                  $temaPrincipal->descripcion = isset($item['descripcion']) ? $item['descripcion'] : '';
+                  $temaPrincipal->registro_id = $result->id;
+                  $temaPrincipal->save();
+              }
+          }
 
-                    $carpetaDestino = './upload/evidenciasCrm/';
-                    $item[$i]->move($carpetaDestino, $nuevoNombre);
-                    $evidencia->archivo = ltrim($carpetaDestino, '.') . $nuevoNombre;
-                    $evidencia->save();
-                }
-            }
-        }
-
-        if(count($request->temasPrincipales)>0){
-            foreach ($request->temas_principales as $item){
-                $temaPrincipal= new TemasVisitaCrm;
-                $temaPrincipal->titulo= $item->tituloTema;
-                $temaPrincipal->descripcion= $item->descripcionTema;
-                $temaPrincipal->registro_id = $result->id;
-            }
-        } 
-        if(count($request->compromisos)>0){
-            foreach ($request->compromisos as $item){
-                $compromiso= new CompromisosVisitaCrm;
-                $compromiso->titulo= $item->tituloCompromiso;
-                $compromiso->descripcion= $item->descripcionCompromiso;
-                $compromiso->registro_id = $result->id;
-            }
-        } 
-        
-        if(count($request->asistencias)>0){
-            foreach ($request->asistencias as $item){
-                $asistencia= new AsistenciaVisitaCrm();
-                $asistencia->nombre= $item->nombre;
-                $asistencia->cargo= $item->cargoAsistencia;
-                $asistencia->firma= $item->firmaAsistencia;
-                $asistencia->registro_id = $result->id;
-            }
-        } 
+          if (count($decodeCompromisos) > 0) {
+              foreach ($decodeCompromisos as $item) {
+                  $compromiso = new CompromisosVisitaCrm; 
+                  $compromiso->titulo = isset($item['titulo']) ? $item['titulo'] : '';
+                  $compromiso->descripcion = isset($item['descripcion']) ? $item['descripcion'] : '';
+                  $compromiso->registro_id = $result->id;
+                  $compromiso->save();
+              }
+          }
+          foreach ($request->asistencia as $item) {
+              for ($i = 0; $i < count($item); $i++) {
+                  if ($i > 0) {
+                      $asistencia = new AsistenciaVisitaCrm;
+                      $decodeFirma= json_decode($item[0],true);
+                  
+                      $asistencia->nombre = $decodeFirma?$decodeFirma["nombre"]:"";
+                      $asistencia->registro_id = $result->id;
+                      $asistencia->cargo= $decodeFirma?$decodeFirma["cargo"]:""; 
+                      $nombreArchivoOriginal = $item[$i]->getClientOriginalName();
+                      $nuevoNombre = Carbon::now()->timestamp . "_" . $nombreArchivoOriginal;
+                      $carpetaDestino = './upload/evidenciasCrm/';
+                      $item[$i]->move($carpetaDestino, $nuevoNombre);
+                      $asistencia->firma = ltrim($carpetaDestino, '.') . $nuevoNombre;
+                      $asistencia ->save();
+                  }
+              }
+          } 
+  
         DB::commit();
         return response()->json(['status' => 'success', 'message' => 'Registro actualizado de manera exitosa', 'id' => $result->id]);
         } catch (\Throwable $th) {
@@ -518,4 +551,5 @@ if (count($decodeCompromisos) > 0) {
             return response()->json(['status' => 'error', 'message' => 'Error al actualizar registro']);
         }
     }
+    
 }
