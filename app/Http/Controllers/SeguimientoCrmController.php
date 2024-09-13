@@ -86,6 +86,26 @@ class SeguimientoCrmController extends Controller
             return $item;
             });
             $result["Evidencias"]= $evidencias;
+            $temasPrincipales =  TemasVisitaCrm::where('registro_id', $id)->get();
+            $temasPrincipales->transform(function ($item) {
+                $item->edit=false;
+                return $item;
+                });
+                $result["temasPrincipales"]= $temasPrincipales;
+                $compromisos =  CompromisosVisitaCrm::where('registro_id', $id)->get();
+                $compromisos->transform(function ($item) {
+                    $item->edit=false;
+                    return $item;
+                    });
+                    $result["compromisos"]= $compromisos;
+                    $asistencias =  AsistenciaVisitaCrm::where('registro_id', $id)->get();
+                    $asistencias->transform(function ($item) {
+                        $item->edit=false;
+                        return $item;
+                        });
+                        $result["asistencias"]= $asistencias;
+
+
         return response()->json($result);
     }
 
@@ -288,7 +308,6 @@ if (count($decodeTemas) > 0) {
     }
 }
 
-// Procesar compromisos
 if (count($decodeCompromisos) > 0) {
     foreach ($decodeCompromisos as $item) {
         $compromiso = new CompromisosVisitaCrm; 
