@@ -553,8 +553,8 @@ class SeguimientoCrmController extends Controller
     }
 
     
-        public function generarPdfCrm($modulo = null, $registro_id, $id)
-        {
+        public function generarPdfCrm($registro_id)
+        {$modulo = 46;
             // Obtener los datos del formulario
             $formulario = $this->byid($registro_id)->getData();
         
@@ -729,12 +729,14 @@ class SeguimientoCrmController extends Controller
             $pdf->writeHTML($html, true, false, true, false, '');
         
             // Opción 1: Descargar el PDF
-            $pdf->Output('formulario.pdf', 'D');
+           /*  $pdf->Output('formulario.pdf', 'D');  */
         
             // Opción 2: Mostrar el PDF en el navegador
             // $pdf->Output('formulario.pdf', 'I');
-            $pdfPath = storage_path('app/temp.pdf');
+           $pdfPath = storage_path('app/temp.pdf');
             $pdf->Output($pdfPath, 'F');
+            if (!file_exists($pdfPath)) {
+                return response()->json(['message' => 'Error al crear el PDF'], 500);}
             $body = "Cordial saludo, esperamos se encuentren muy bien.\n\n Informamos que el registro de servicio ha sido creado satisfactoriamente, Cualquier información adicional podrá ser atendida en la línea Servisai de Saitemp S.A. marcando  al (604) 4485744, con gusto uno de nuestros facilitadores atenderá su llamada.\n\n simplificando conexiones, facilitando experiencias.";
             $body = nl2br($body);
             $subject = 'Confirmación registro de servicio  .';
