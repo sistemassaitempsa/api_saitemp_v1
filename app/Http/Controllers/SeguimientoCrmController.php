@@ -554,112 +554,205 @@ class SeguimientoCrmController extends Controller
 
     
         public function generarPdfCrm($modulo = null, $registro_id, $id)
-{
-    // Obtener los datos del formulario
-    $formulario = $this->byid($registro_id)->getData();
+        {
+            // Obtener los datos del formulario
+            $formulario = $this->byid($registro_id)->getData();
+        
+            // Inicializar TCPDF
+            $pdf = new \TCPDF();
+        
+            // Establecer los metadatos del documento
+            $pdf->SetCreator(PDF_CREATOR);
+            $pdf->SetAuthor('Saitemp');
+            $pdf->SetTitle('Reporte CRM');
+            $pdf->SetSubject('Detalles del CRM');
+            $pdf->SetKeywords('TCPDF, PDF, CRM, reporte');
+        
+            // Eliminar la cabecera y pie de página por defecto
+            $pdf->setPrintHeader(false);
+            $pdf->setPrintFooter(false);
+        
+            // Añadir una página
+            $pdf->AddPage();
+        
+            // Agregar imagen de fondo
+            $url = public_path('/upload/MEMBRETE.png');
+            $pdf->Image($url, 0, 0, 210, 297, '', '', '', false, 300, '', false, false, 0);
+            // Colocar la imagen como fondo, cubriendo toda la página (A4 en este caso, 210x297 mm)
+        
+            // Asegurarse de que el contenido no esté afectado por la imagen de fondo
+            $pdf->setPageMark(); // Esto asegura que cualquier contenido escrito después de esta línea quede encima de la imagen
+        
+            // Establecer fuente
+            $pdf->SetFont('helvetica', '', 12);
+        
+            // Construir el contenido del PDF con las claves y valores del formulario y aplicando estilos
+            $html = '
+                <style>
+            
+                    h1 {
+                        color: #043c69;
+                        text-align: center;
+                        font-size: 24px;
+                        margin-bottom: 20px;
+                    }
+                    .info {
+                        font-size: 12px;
+                        color: #000;
+                        line-height: 1.5;
+                        margin-bottom: 8px;
+                        font-weight: normal;
+                        
+                        
+                    }
+                    .data-label {
+                        font-weight: bold;
+                        color: #043c69;
+                    }
+                    .section-title {
+                        font-size: 16px;
+                        color: #043c69;
+                        margin-top: 15px;
+                        margin-bottom: 10px;
+                    }
+                    table {
+                        width: 100%;
+                        border-collapse: collapse;
+                    }
+                    td {
+                        border: 1px solid #ddd;
+                        padding: 8px;
+                        font-size: 12px;
+                    }
+                    .signature {
+                        width: 100px;
+                        height: 50px;
+                        border: 1px solid #ddd;
+                        text-align: center;
+                        vertical-align: middle;
+                    }
+                        .asistencia_title{
+                        color: #043c69; }
+                </style>
+         <h1> Registro de servicio </h1>
 
-    // Inicializar TCPDF
-    $pdf = new \TCPDF();
 
-    // Establecer los metadatos del documento
-    $pdf->SetCreator(PDF_CREATOR);
-    $pdf->SetAuthor('Tu Nombre');
-    $pdf->SetTitle('Reporte CRM');
-    $pdf->SetSubject('Detalles del CRM');
-    $pdf->SetKeywords('TCPDF, PDF, CRM, reporte');
-
-    // Eliminar la cabecera y pie de página por defecto
-    $pdf->setPrintHeader(false);
-    $pdf->setPrintFooter(false);
-
-    // Añadir una página
-    $pdf->AddPage();
-
-    // Agregar imagen de fondo
-    $url = public_path('\/upload\/MEMBRETE.png');
-    $pdf->Image($url, 0, 0, 210, 297, '', '', '', false, 300, '', false, false, 0);
-
-
-    // Establecer fuente
-    $pdf->SetFont('helvetica', '', 12);
-
-    // Construir el contenido del PDF con las claves y valores del formulario
-    $html = '
-     <style>
-            h1 {
-                color: #2E86C1;
-                text-align: center;
-                font-size: 24px;
-                margin-bottom: 20px;
+                <table>
+        <tr>
+            <td class="data-label">Número Radicado:<br> <span class="info">' . $formulario->numero_radicado . '</span></td>
+             <td class="data-label">Fecha de Creación:<br><span class="info"> ' . $formulario->created_at . '</span></td>
+        </tr>
+        </table>
+        <table>
+        <tr>
+          <td class="data-label">Ciudad:<br><span class="info"> ' . $formulario->sede . '</span></td>
+          <td class="data-label">Hora inicio:<br><span class="info"> ' . $formulario->hora_inicio . '</span></td>
+           <td class="data-label">Hora cierre:<br> <span class="info">' . $formulario->hora_cierre . '</span></td>
+       </tr>
+</table>
+       <table>
+        <tr>
+            <td class="data-label">Empresa usuaria:<br><span class="info"> ' . $formulario->nombre_contacto . '</span></td>
+            <td class="data-label">Nit:<br><span class="info"> ' . $formulario->nit_documento. '</span></td>
+            
+        </tr>
+        <tr>
+             <td class="data-label">Teléfono:<br><span class="info"> ' . $formulario->telefono . '</span></td>
+             <td class="data-label">Correo:<br><span class="info"> ' . $formulario->correo . '</span></td>
+        </tr>
+        <tr>
+            <td class="data-label">Visita realizada por:<br><span class="info"> '. $formulario->visitante . '</span></td>
+            <td class="data-label">Cargo:<br><span class="info"> ' . $formulario->cargo_visitante . '</span></td>
+        </tr>
+         <tr>
+            <td class="data-label">Visita atendida por:<br><span class="info"> '. $formulario->visitado . '</span></td>
+            <td class="data-label">Cargo:<br><span class="info"> ' . $formulario->cargo_visitado . '</span></td>
+        </tr>
+        </table>
+        <table>
+        <tr>
+        <td class="data-label">Objetivo:<br><span class="info"> ' . $formulario->objetivo . '</span></td>
+        </tr>
+       <tr>
+        <td class="data-label">Alcance:<br><span class="info"> ' . $formulario->alcance . '</span></td>
+        </tr>
+        
+        <tr>
+            <td class="data-label">Observación:<br><span class="info"> ' . $formulario->observacion . '</span></td>
+        </tr>
+    </table>
+            ';
+        
+            // Mostrar evidencias en una tabla
+            $html .= '
+                <h2 class="section-title">Presentación y revision de temas</h2>
+                <table>';
+                    foreach ($formulario->temasPrincipales as $tema) {
+                        $html .= '
+                            <tr>
+                                <td>' . $tema->titulo . ':</td>
+                                <td>' . $tema->descripcion . '</td>
+                            </tr>';
+                    }
+                    $html .= '
+                    <h2 class="section-title">Compromisos Generales</h2>
+                    <table>';
+            foreach ($formulario->compromisos as $compromiso) {
+                $html .= '
+                    <tr>
+                        <td>' . $compromiso->titulo . ':</td>
+                        <td>' . $compromiso->descripcion . '</td>
+                    </tr>';
             }
-            p {
-                font-size: 12px;
-                color: #000;
-                line-height: 1.5;
-                margin-bottom: 8px;
+            $html .= '</table>';
+        
+            // Mostrar asistencias
+            $html .= '
+                <h2 class="section-title">Asistencias</h2>
+                <table>
+                    <tr>
+                        <td class="asistencia_title" ><strong>Nombre:</strong></td>
+                        <td class="asistencia_title"><strong>Cargo:</strong></td>
+                        <td class="asistencia_title"><strong>Firma:</strong></td>
+                    </tr>';
+            foreach ($formulario->asistencias as $asistencia) {
+                $html .= '
+                    <tr>
+                        <td>' . $asistencia->nombre . '</td>
+                        <td>' . $asistencia->cargo . '</td>
+                        <td><img src="' . public_path($asistencia->firma) . '" class="signature" /></td>
+                    </tr>';
             }
-            .data-label {
-                font-weight: bold;
-            }
-            .section-title {
-                font-size: 16px;
-                color: #1F618D;
-                margin-top: 15px;
-                margin-bottom: 10px;
-            }
-            table {
-                width: 100%;
-                border-collapse: collapse;
-            }
-            td {
-                border: 1px solid #ddd;
-                padding: 8px;
-                font-size: 12px;
-            }
-            .signature {
-                width: 100px;
-                height: 50px;
-                border: 1px solid #ddd;
-                text-align: center;
-                vertical-align: middle;
-            }
-        </style>
-        <div > 
-        <h1>Registro de servicio</h1>
-        <p><strong>Número Radicado:</strong> ' . $formulario->numero_radicado . '</p>
-        <p><strong>Nombre Contacto:</strong> ' . $formulario->nombre_contacto . '</p>
-        <p><strong>Correo:</strong> ' . $formulario->correo . '</p>
-        <p><strong>Teléfono:</strong> ' . $formulario->telefono . '</p>
-        <p><strong>Observación:</strong> ' . $formulario->observacion . '</p>
-        <p><strong>Fecha de Creación:</strong> ' . $formulario->created_at . '</p>
-        <p><strong>Estado:</strong> ' . $formulario->estado . '</p>
-        <p><strong>Objetivo:</strong> ' . $formulario->objetivo . '</p>
-        <p><strong>Alcance:</strong> ' . $formulario->alcance . '</p>
-        </div> 
-    ';
-
-    // Puedes iterar sobre los arrays (evidencias, compromisos, temas principales, etc.)
-    $html .= '<h2>Evidencias</h2>';
-    foreach ($formulario->Evidencias as $evidencia) {
-        $html .= '<p><strong>Descripción:</strong> ' . $evidencia->descripcion . '</p>';
-        $html .= '<p><strong>Archivo:</strong> ' . $evidencia->archivo . '</p>';
-    }
-
-    $html .= '<h2>Asistencias</h2>';
-    foreach ($formulario->asistencias as $asistencia) {
-        $html .= '<p><strong>Nombre:</strong> ' . $asistencia->nombre . '</p>';
-        $html .= '<p><strong>Cargo:</strong> ' . $asistencia->cargo . '</p>';
-        $html .= '<p><strong>Firma:</strong> <img src="' . public_path($asistencia->firma) . '" width="100" /></p>';
-    }
-
-    // Establecer el contenido HTML en el PDF
-    $pdf->writeHTML($html, true, false, true, false, '');
-
-    // Opción 1: Descargar el PDF
-    /* $pdf->Output('formulario.pdf', 'D'); */
-
-    // Opción 2: Mostrar el PDF en el navegador
-     $pdf->Output('formulario.pdf', 'I');
-}
-    
+            $html .= '</table>';
+        
+            // Escribir el HTML en el PDF
+            $pdf->writeHTML($html, true, false, true, false, '');
+        
+            // Opción 1: Descargar el PDF
+            $pdf->Output('formulario.pdf', 'D');
+        
+            // Opción 2: Mostrar el PDF en el navegador
+            // $pdf->Output('formulario.pdf', 'I');
+            $pdfPath = storage_path('app/temp.pdf');
+            $pdf->Output($pdfPath, 'F');
+            $body = "Cordial saludo, esperamos se encuentren muy bien.\n\n Informamos que el registro de servicio ha sido creado satisfactoriamente, Cualquier información adicional podrá ser atendida en la línea Servisai de Saitemp S.A. marcando  al (604) 4485744, con gusto uno de nuestros facilitadores atenderá su llamada.\n\n simplificando conexiones, facilitando experiencias.";
+            $body = nl2br($body);
+            $subject = 'Confirmación registro de servicio  .';
+            $nomb_membrete='Informe de servicio';
+            $combinacion_correos= $formulario->correo;
+            $correo = [];
+            $correo['subject'] =  $subject;
+            $correo['body'] = $body;
+            $correo['formulario_ingreso'] = $pdfPath;
+            $correo['to'] = $combinacion_correos;
+            $correo['cc'] = '';
+            $correo['cco'] = '';
+            $correo['modulo'] = $modulo;
+            $correo['registro_id'] = $registro_id;
+            $correo['nom_membrete'] = $nomb_membrete;
+            $EnvioCorreoController = new EnvioCorreoController();
+            $request = Request::createFromBase(new Request($correo));
+            $result = $EnvioCorreoController->sendEmail($request);
+            return $result;
+        }
 }
