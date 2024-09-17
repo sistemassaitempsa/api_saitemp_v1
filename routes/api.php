@@ -828,7 +828,7 @@ Route::group([
   Route::post('/seguimientocrmpendientesborradomasivo', [SeguimientoCrmController::class, 'borradomasivo']);
   Route::delete('/eliminararevidencia/{item}/{id}', [SeguimientoCrmController::class, 'eliminararchivo']);
   Route::put('/seguimientocrmupdateevidencia/{id}', [SeguimientoCrmController::class, 'updateEvidencia']);
-  Route::get('/seguimientocrmpdf/{id}', [SeguimientoCrmController::class, 'generarPdfCrm']);
+  Route::get('/seguimientocrmpdf/{id}/{btnId}', [SeguimientoCrmController::class, 'generarPdfCrm']);
   // Route::delete('/seguimientocrm', [SeguimientoCrmController::class, 'destroy']);
 
 

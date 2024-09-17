@@ -86,6 +86,8 @@ class SeguimientoCrmController extends Controller
                 'usr_app_seguimiento_crm.visitado',
                 'usr_app_seguimiento_crm.cargo_visitante',
                 'usr_app_seguimiento_crm.visitante',
+                'usr_app_seguimiento_crm.latitud',
+                'usr_app_seguimiento_crm.longitud',
             )
             ->first();
             $evidencias = Evidencia::where('registro_id', $id)->get();
@@ -276,6 +278,8 @@ class SeguimientoCrmController extends Controller
             $result-> cargo_visitado= $request->cargo_atendio;
             $result-> objetivo = $request->objetivo_visita;
             $result-> alcance = $request->alcance_visita;
+            $result-> latitud = $request->latitud;
+            $result-> longitud = $request->longitud;
 
             
             if ($request->estado_id == 2) {
@@ -322,6 +326,10 @@ class SeguimientoCrmController extends Controller
                     $compromiso->titulo = isset($item['titulo']) ? $item['titulo'] : '';
                     $compromiso->descripcion = isset($item['descripcion']) ? $item['descripcion'] : '';
                     $compromiso->registro_id = $result->id;
+                    $compromiso->responsable = isset($item['responsable']) ? $item['responsable'] : '';
+                    $compromiso->estado_cierre_id = isset($item['estado_cierre_id']) ? $item['estado_cierre_id'] : '';
+            /*         $fechaCierreFormatted = Carbon::parse($item['fecha_cierre'])->format('d-m-Y H:i:s');
+                    $compromiso->fecha_cierre = isset($fechaCierreFormatted) ? $fechaCierreFormatted : ''; */
                     $compromiso->save();
                 }
             }
@@ -349,7 +357,6 @@ class SeguimientoCrmController extends Controller
         }
         catch (\Exception $e) {
             DB::rollback();
-            return $e;
             return response()->json(['status' => 'error', 'message' => 'Error al guardar el formulario, por favor intenta nuevamente']);
         }
     }
@@ -452,8 +459,7 @@ class SeguimientoCrmController extends Controller
          // Procesar temas principales
           if (count($decodeTemas) > 0) {
               foreach ($decodeTemas as $item) {
-                  
-                  $temaPrincipal = new TemasVisitaCrm;
+                $temaPrincipal = TemasVisitaCrm::find($item['id']);
                   $temaPrincipal->titulo = isset($item['titulo']) ? $item['titulo'] : '';
                   $temaPrincipal->descripcion = isset($item['descripcion']) ? $item['descripcion'] : '';
                   $temaPrincipal->registro_id = $result->id;
@@ -462,14 +468,17 @@ class SeguimientoCrmController extends Controller
           }
 
           if (count($decodeCompromisos) > 0) {
-              foreach ($decodeCompromisos as $item) {
-                  $compromiso = new CompromisosVisitaCrm; 
-                  $compromiso->titulo = isset($item['titulo']) ? $item['titulo'] : '';
-                  $compromiso->descripcion = isset($item['descripcion']) ? $item['descripcion'] : '';
-                  $compromiso->registro_id = $result->id;
-                  $compromiso->save();
-              }
-          }
+            foreach ($decodeCompromisos as $item) {
+                $compromiso = CompromisosVisitaCrm::find($item['id']);
+                $compromiso->titulo = isset($item['titulo']) ? $item['titulo'] : '';
+                $compromiso->descripcion = isset($item['descripcion']) ? $item['descripcion'] : '';
+                $compromiso->registro_id = $result->id;
+                $compromiso->estado_cierre_id = isset($item['estado_cierre_id']) ? $item['estado_cierre_id'] : '';
+                $fechaCierreFormatted = Carbon::parse($item['fecha_cierre'])->format('d-m-Y H:i:s');
+                $compromiso->fecha_cierre = isset($fechaCierreFormatted) ? $fechaCierreFormatted : '';
+                $compromiso->save();
+            }
+        }
           foreach ($request->asistencia as $item) {
               for ($i = 0; $i < count($item); $i++) {
                   if ($i > 0) {
@@ -553,7 +562,7 @@ class SeguimientoCrmController extends Controller
     }
 
     
-        public function generarPdfCrm($registro_id)
+        public function generarPdfCrm($registro_id, $btnId)
         {$modulo = 46;
             // Obtener los datos del formulario
             $formulario = $this->byid($registro_id)->getData();
@@ -729,32 +738,34 @@ class SeguimientoCrmController extends Controller
             $pdf->writeHTML($html, true, false, true, false, '');
         
             // Opción 1: Descargar el PDF
-           /*  $pdf->Output('formulario.pdf', 'D');  */
+            if($btnId==2){
+            $pdf->Output('formulario.pdf', 'D');};  
         
             // Opción 2: Mostrar el PDF en el navegador
             // $pdf->Output('formulario.pdf', 'I');
-           $pdfPath = storage_path('app/temp.pdf');
-            $pdf->Output($pdfPath, 'F');
-            if (!file_exists($pdfPath)) {
-                return response()->json(['message' => 'Error al crear el PDF'], 500);}
-            $body = "Cordial saludo, esperamos se encuentren muy bien.\n\n Informamos que el registro de servicio ha sido creado satisfactoriamente, Cualquier información adicional podrá ser atendida en la línea Servisai de Saitemp S.A. marcando  al (604) 4485744, con gusto uno de nuestros facilitadores atenderá su llamada.\n\n simplificando conexiones, facilitando experiencias.";
-            $body = nl2br($body);
-            $subject = 'Confirmación registro de servicio  .';
-            $nomb_membrete='Informe de servicio';
-            $combinacion_correos= $formulario->correo;
-            $correo = [];
-            $correo['subject'] =  $subject;
-            $correo['body'] = $body;
-            $correo['formulario_ingreso'] = $pdfPath;
-            $correo['to'] = $combinacion_correos;
-            $correo['cc'] = '';
-            $correo['cco'] = '';
-            $correo['modulo'] = $modulo;
-            $correo['registro_id'] = $registro_id;
-            $correo['nom_membrete'] = $nomb_membrete;
-            $EnvioCorreoController = new EnvioCorreoController();
-            $request = Request::createFromBase(new Request($correo));
-            $result = $EnvioCorreoController->sendEmail($request);
-            return $result;
+            if($btnId==1){$pdfPath = storage_path('app/temp.pdf');
+                $pdf->Output($pdfPath, 'F');
+                if (!file_exists($pdfPath)) {
+                    return response()->json(['message' => 'Error al crear el PDF'], 500);}
+                $body = "Cordial saludo, esperamos se encuentren muy bien.\n\n Informamos que el registro de servicio ha sido creado satisfactoriamente, Cualquier información adicional podrá ser atendida en la línea Servisai de Saitemp S.A. marcando  al (604) 4485744, con gusto uno de nuestros facilitadores atenderá su llamada.\n\n simplificando conexiones, facilitando experiencias.";
+                $body = nl2br($body);
+                $subject = 'Confirmación registro de servicio  .';
+                $nomb_membrete='Informe de servicio';
+                $combinacion_correos= $formulario->correo;
+                $correo = [];
+                $correo['subject'] =  $subject;
+                $correo['body'] = $body;
+                $correo['formulario_ingreso'] = $pdfPath;
+                $correo['to'] = $combinacion_correos;
+                $correo['cc'] = '';
+                $correo['cco'] = '';
+                $correo['modulo'] = $modulo;
+                $correo['registro_id'] = $registro_id;
+                $correo['nom_membrete'] = $nomb_membrete;
+                $EnvioCorreoController = new EnvioCorreoController();
+                $request = Request::createFromBase(new Request($correo));
+                $result = $EnvioCorreoController->sendEmail($request);
+                return $result;}
+           
         }
 }
