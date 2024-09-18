@@ -16,11 +16,13 @@ class EstadoCierreCrmController extends Controller
     {
         $result = EstadoCierreCrm::select(
             'id',
-            'nombre'
+            'nombre',
+            'tipo_estado'
         )
         ->get();
         return response()->json($result);
     }
+    /* lider columna de usuarios */
 
     /**
      * Show the form for creating a new resource.

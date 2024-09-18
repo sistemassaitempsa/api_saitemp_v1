@@ -306,33 +306,41 @@ class SeguimientoCrmController extends Controller
                     }
                 }
             }
-             $decodeCompromisos= json_decode($request->compromisos,true);
-            $decodeTemas= json_decode($request->temasPrincipales,true);
-           // Procesar temas principales
-            if (count($decodeTemas) > 0) {
-                foreach ($decodeTemas as $item) {
-                    
-                    $temaPrincipal = new TemasVisitaCrm;
-                    $temaPrincipal->titulo = isset($item['titulo']) ? $item['titulo'] : '';
-                    $temaPrincipal->descripcion = isset($item['descripcion']) ? $item['descripcion'] : '';
-                    $temaPrincipal->registro_id = $result->id;
-                    $temaPrincipal->save();
-                }
-            }
 
-            if (count($decodeCompromisos) > 0) {
-                foreach ($decodeCompromisos as $item) {
-                    $compromiso = new CompromisosVisitaCrm; 
-                    $compromiso->titulo = isset($item['titulo']) ? $item['titulo'] : '';
-                    $compromiso->descripcion = isset($item['descripcion']) ? $item['descripcion'] : '';
-                    $compromiso->registro_id = $result->id;
-                    $compromiso->responsable = isset($item['responsable']) ? $item['responsable'] : '';
-                    $compromiso->estado_cierre_id = isset($item['estado_cierre_id']) ? $item['estado_cierre_id'] : '';
-            /*         $fechaCierreFormatted = Carbon::parse($item['fecha_cierre'])->format('d-m-Y H:i:s');
-                    $compromiso->fecha_cierre = isset($fechaCierreFormatted) ? $fechaCierreFormatted : ''; */
-                    $compromiso->save();
+            if($request->compromisos ){
+                $decodeCompromisos= json_decode($request->compromisos,true);
+                if (count($decodeCompromisos) > 0) {
+                    foreach ($decodeCompromisos as $item) {
+                        $compromiso = new CompromisosVisitaCrm; 
+                        $compromiso->titulo = isset($item['titulo']) ? $item['titulo'] : '';
+                        $compromiso->descripcion = isset($item['descripcion']) ? $item['descripcion'] : '';
+                        $compromiso->registro_id = $result->id;
+                        $compromiso->responsable = isset($item['responsable']) ? $item['responsable'] : '';
+                        $compromiso->estado_cierre_id = isset($item['estado_cierre_id']) ? $item['estado_cierre_id'] : '';
+                /*         $fechaCierreFormatted = Carbon::parse($item['fecha_cierre'])->format('d-m-Y H:i:s');
+                        $compromiso->fecha_cierre = isset($fechaCierreFormatted) ? $fechaCierreFormatted : ''; */
+                        $compromiso->save();
+                    }
                 }
             }
+             if($request->temasPrincipales){
+                $decodeTemas= json_decode($request->temasPrincipales,true);
+                if (count($decodeTemas) > 0) {
+                    foreach ($decodeTemas as $item) {
+                        
+                        $temaPrincipal = new TemasVisitaCrm;
+                        $temaPrincipal->titulo = isset($item['titulo']) ? $item['titulo'] : '';
+                        $temaPrincipal->descripcion = isset($item['descripcion']) ? $item['descripcion'] : '';
+                        $temaPrincipal->registro_id = $result->id;
+                        $temaPrincipal->save();
+                    }
+                }
+             }
+           
+           // Procesar temas principales
+           
+
+           if($request->asistencia ){
             foreach ($request->asistencia as $item) {
                 for ($i = 0; $i < count($item); $i++) {
                     if ($i > 0) {
@@ -351,6 +359,8 @@ class SeguimientoCrmController extends Controller
                     }
                 }
             } 
+           }
+            
     
             DB::commit();
             return response()->json(['status' => 'success', 'message' => 'Registro guardado de manera exitosa', 'id' => $result->id]);
@@ -430,7 +440,7 @@ class SeguimientoCrmController extends Controller
           $result-> alcance = $request->alcance_visita;
 
           
-          if ($request->estado_id == 2) {
+          if ($request->estado_id == 3) {
               $fechaHoraActual = Carbon::now();
               $result->fecha_cerrado = $fechaHoraActual->format('d-m-Y H:i:s');
           }
@@ -454,53 +464,62 @@ class SeguimientoCrmController extends Controller
                   }
               }
           }
-           $decodeCompromisos= json_decode($request->compromisos,true);
-          $decodeTemas= json_decode($request->temasPrincipales,true);
-         // Procesar temas principales
-          if (count($decodeTemas) > 0) {
-              foreach ($decodeTemas as $item) {
-                $temaPrincipal = TemasVisitaCrm::find($item['id']);
-                  $temaPrincipal->titulo = isset($item['titulo']) ? $item['titulo'] : '';
-                  $temaPrincipal->descripcion = isset($item['descripcion']) ? $item['descripcion'] : '';
-                  $temaPrincipal->registro_id = $result->id;
-                  $temaPrincipal->save();
-              }
+          if($request->compromisos){
+            $decodeCompromisos= json_decode($request->compromisos,true);
+            if (count($decodeCompromisos) > 0) {
+                foreach ($decodeCompromisos as $item) {
+                    $compromiso = CompromisosVisitaCrm::find($item['id']);
+                    $compromiso->titulo = isset($item['titulo']) ? $item['titulo'] : '';
+                    $compromiso->descripcion = isset($item['descripcion']) ? $item['descripcion'] : '';
+                    $compromiso->registro_id = $result->id;
+                    $compromiso->estado_cierre_id = isset($item['estado_cierre_id']) ? $item['estado_cierre_id'] : '';
+                    $fechaCierreFormatted = Carbon::parse($item['fecha_cierre'])->format('d-m-Y H:i:s');
+                    $compromiso->fecha_cierre = isset($fechaCierreFormatted) ? $fechaCierreFormatted : '';
+                    $compromiso->save();
+                }
+            }
           }
-
-          if (count($decodeCompromisos) > 0) {
-            foreach ($decodeCompromisos as $item) {
-                $compromiso = CompromisosVisitaCrm::find($item['id']);
-                $compromiso->titulo = isset($item['titulo']) ? $item['titulo'] : '';
-                $compromiso->descripcion = isset($item['descripcion']) ? $item['descripcion'] : '';
-                $compromiso->registro_id = $result->id;
-                $compromiso->estado_cierre_id = isset($item['estado_cierre_id']) ? $item['estado_cierre_id'] : '';
-                $fechaCierreFormatted = Carbon::parse($item['fecha_cierre'])->format('d-m-Y H:i:s');
-                $compromiso->fecha_cierre = isset($fechaCierreFormatted) ? $fechaCierreFormatted : '';
-                $compromiso->save();
+           if($request->temasPrincipales){
+            $decodeTemas= json_decode($request->temasPrincipales,true);
+            if (count($decodeTemas) > 0) {
+                foreach ($decodeTemas as $item) {
+                  $temaPrincipal = TemasVisitaCrm::find($item['id']);
+                    $temaPrincipal->titulo = isset($item['titulo']) ? $item['titulo'] : '';
+                    $temaPrincipal->descripcion = isset($item['descripcion']) ? $item['descripcion'] : '';
+                    $temaPrincipal->registro_id = $result->id;
+                    $temaPrincipal->save();
+                }
+            }}
+          
+         // Procesar temas principales
+          
+if($request->asistencia){
+    foreach ($request->asistencia as $item) {
+        for ($i = 0; $i < count($item); $i++) {
+            if ($i > 0) {
+                $asistencia = new AsistenciaVisitaCrm;
+                $decodeFirma= json_decode($item[0],true);
+            
+                $asistencia->nombre = $decodeFirma?$decodeFirma["nombre"]:"";
+                $asistencia->registro_id = $result->id;
+                $asistencia->cargo= $decodeFirma?$decodeFirma["cargo"]:""; 
+                $nombreArchivoOriginal = $item[$i]->getClientOriginalName();
+                $nuevoNombre = Carbon::now()->timestamp . "_" . $nombreArchivoOriginal;
+                $carpetaDestino = './upload/evidenciasCrm/';
+                $item[$i]->move($carpetaDestino, $nuevoNombre);
+                $asistencia->firma = ltrim($carpetaDestino, '.') . $nuevoNombre;
+                $asistencia ->save();
             }
         }
-          foreach ($request->asistencia as $item) {
-              for ($i = 0; $i < count($item); $i++) {
-                  if ($i > 0) {
-                      $asistencia = new AsistenciaVisitaCrm;
-                      $decodeFirma= json_decode($item[0],true);
-                  
-                      $asistencia->nombre = $decodeFirma?$decodeFirma["nombre"]:"";
-                      $asistencia->registro_id = $result->id;
-                      $asistencia->cargo= $decodeFirma?$decodeFirma["cargo"]:""; 
-                      $nombreArchivoOriginal = $item[$i]->getClientOriginalName();
-                      $nuevoNombre = Carbon::now()->timestamp . "_" . $nombreArchivoOriginal;
-                      $carpetaDestino = './upload/evidenciasCrm/';
-                      $item[$i]->move($carpetaDestino, $nuevoNombre);
-                      $asistencia->firma = ltrim($carpetaDestino, '.') . $nuevoNombre;
-                      $asistencia ->save();
-                  }
-              }
-          } 
+    } 
+}
+          
+        
   
         DB::commit();
         return response()->json(['status' => 'success', 'message' => 'Registro actualizado de manera exitosa', 'id' => $result->id]);
         } catch (\Throwable $th) {
+            return $th;
             DB::rollback();
             return response()->json(['status' => 'error', 'message' => 'Error al guardar el formulario, por favor intenta nuevamente']);
         }
