@@ -12,6 +12,7 @@ use App\Models\TemasVisitaCrm;
 use App\Models\CompromisosVisitaCrm;
 use App\Models\AsistenciaVisitaCrm;
 use TCPDF;
+use App\Models\AtencionInteraccion;
 class SeguimientoCrmController extends Controller
 {
     /**
@@ -474,6 +475,7 @@ class SeguimientoCrmController extends Controller
                     $compromiso->registro_id = $result->id;
                     $compromiso->estado_cierre_id = isset($item['estado_cierre_id']) ? $item['estado_cierre_id'] : '';
                     $fechaCierreFormatted = Carbon::parse($item['fecha_cierre'])->format('d-m-Y H:i:s');
+                    $compromiso->responsable = isset($item['responsable']) ? $item['responsable'] : '';
                     $compromiso->fecha_cierre = isset($fechaCierreFormatted) ? $fechaCierreFormatted : '';
                     $compromiso->save();
                 }
@@ -584,7 +586,17 @@ if($request->asistencia){
         public function generarPdfCrm($registro_id, $btnId)
         {$modulo = 46;
             // Obtener los datos del formulario
+            $atencionInteracion="";
             $formulario = $this->byid($registro_id)->getData();
+            if (isset($formulario->tipo_atencion_id)) {
+                
+                $atencionInteracion = DB::table('usr_app_atencion_interacion')
+                    ->where('id', $formulario->tipo_atencion_id)
+                    ->first();
+            } else {
+                // Manejar el caso donde tipo_atencion_id no exista
+                $atencionInteracion = null;
+            }
         
             // Inicializar TCPDF
             $pdf = new \TCPDF();
@@ -674,8 +686,10 @@ if($request->asistencia){
         <table>
         <tr>
           <td class="data-label">Ciudad:<br><span class="info"> ' . $formulario->sede . '</span></td>
+          <td class="data-label">Medio de atencion:<br><span class="info"> ' . $atencionInteracion->nombre . '</span></td>
+          ' . ($formulario->iteraccion == "Visita presencial" ? '
           <td class="data-label">Hora inicio:<br><span class="info"> ' . $formulario->hora_inicio . '</span></td>
-           <td class="data-label">Hora cierre:<br> <span class="info">' . $formulario->hora_cierre . '</span></td>
+           <td class="data-label">Hora cierre:<br> <span class="info">' . $formulario->hora_cierre . '</span></td>' : '') . '
        </tr>
 </table>
        <table>
@@ -688,6 +702,11 @@ if($request->asistencia){
              <td class="data-label">Teléfono:<br><span class="info"> ' . $formulario->telefono . '</span></td>
              <td class="data-label">Correo:<br><span class="info"> ' . $formulario->correo . '</span></td>
         </tr>
+         <tr>
+            <td class="data-label">Tipo PQRSF:<br><span class="info"> '. $formulario->pqrsf . '</span></td>
+            <td class="data-label">Responsable:<br><span class="info"> ' . $formulario->responsable. '</span></td>
+        </tr>
+        ' . ($formulario->iteraccion == "Visita presencial" ? '
         <tr>
             <td class="data-label">Visita realizada por:<br><span class="info"> '. $formulario->visitante . '</span></td>
             <td class="data-label">Cargo:<br><span class="info"> ' . $formulario->cargo_visitante . '</span></td>
@@ -696,6 +715,7 @@ if($request->asistencia){
             <td class="data-label">Visita atendida por:<br><span class="info"> '. $formulario->visitado . '</span></td>
             <td class="data-label">Cargo:<br><span class="info"> ' . $formulario->cargo_visitado . '</span></td>
         </tr>
+
         </table>
         <table>
         <tr>
@@ -704,15 +724,18 @@ if($request->asistencia){
        <tr>
         <td class="data-label">Alcance:<br><span class="info"> ' . $formulario->alcance . '</span></td>
         </tr>
+        </table>
         
-        <tr>
+        ' : '') . '
+        <table>
+    <tr>
             <td class="data-label">Observación:<br><span class="info"> ' . $formulario->observacion . '</span></td>
         </tr>
-    </table>
+        </table>
             ';
         
             // Mostrar evidencias en una tabla
-            $html .= '
+            if (!empty($formulario->temasPrincipales)) {$html .= '
                 <h2 class="section-title">Presentación y revision de temas</h2>
                 <table>';
                     foreach ($formulario->temasPrincipales as $tema) {
@@ -732,9 +755,11 @@ if($request->asistencia){
                         <td>' . $compromiso->descripcion . '</td>
                     </tr>';
             }
-            $html .= '</table>';
+            $html .= '</table>';}
+            
         
             // Mostrar asistencias
+            if ($formulario->iteraccion == "Visita presencial") {
             $html .= '
                 <h2 class="section-title">Asistencias</h2>
                 <table>
@@ -751,7 +776,7 @@ if($request->asistencia){
                         <td><img src="' . public_path($asistencia->firma) . '" class="signature" /></td>
                     </tr>';
             }
-            $html .= '</table>';
+            $html .= '</table>';}
         
             // Escribir el HTML en el PDF
             $pdf->writeHTML($html, true, false, true, false, '');
