@@ -611,7 +611,16 @@ if($request->asistencia){
         
             // Eliminar la cabecera y pie de página por defecto
             $pdf->setPrintHeader(false);
+           /*  function addMembrete(\TCPDF $pdf)
+            {
+                $url = public_path('/upload/MEMBRETE.png');
+                $pdf->Image($url, -0.5, 0, $pdf->getPageWidth() + 0.5, 30, '', '', '', false, 300, '', false, false, 0);
+            }
+         */
+            // Añadir la primera página
             $pdf->AddPage();
+           /*  addMembrete($pdf); */
+           /*  $pdf->AddPage(); */
           /*   $pdf->setPrintFooter(false);
             $pdf->setFooterMargin(0); */
         
@@ -620,7 +629,7 @@ if($request->asistencia){
             $pdf->SetMargins(0, 0, 0);
             $pdf->SetAutoPageBreak(false, 0);
             // Agregar imagen de fondo
-            $url = public_path('/upload/MEMBRETE.png');
+           $url = public_path('/upload/MEMBRETE.png');
             $pdf->Image($url, -0.5, 0, $pdf->getPageWidth() + 0.5, $pdf->getPageHeight(), '', '', '', false, 300, '', false, false, 0);
             // Colocar la imagen como fondo, cubriendo toda la página (A4 en este caso, 210x297 mm)
         
@@ -787,15 +796,31 @@ if($request->asistencia){
                     </tr>';
             }
             $html .= '</table>';}
-            $margen_izquierdo = 5;
-            $margen_derecho = 5;
-            $pdf->Image($url, -0.5, 0, $pdf->getPageWidth() + 0.5, $pdf->getPageHeight(), '', '', '', false, 300, '', false, false, 0);
-            $pdf->SetMargins($margen_izquierdo, 20, $margen_derecho);
+            $margen_izquierdo = 15;
+            $margen_derecho = 15;
+            $pdf->SetMargins($margen_izquierdo, 40, $margen_derecho);
             $pdf->SetAutoPageBreak(true, 30); // 10 mm de margen inferior
             // Escribir el HTML en el PDF
             $pdf->writeHTML($html, false, false, true, false, '');
-           
-
+            $totalPages=0;
+            if ($pdf->getNumPages() == 1) {
+                $totalPages = 1;
+            } else {
+                $totalPages = $pdf->getNumPages();
+            }
+        
+            // Agregar membrete en cada página después de la primera
+            for ($i = 2; $i <= $totalPages; $i++) {
+               
+                $pdf->SetMargins(0, 0, 0);
+            $pdf->SetAutoPageBreak(false, 30);
+            $url = public_path('/upload/MEMBRETE.png');
+            $pdf->Image($url, -0.5, 0, $pdf->getPageWidth() + 0.5, $pdf->getPageHeight(), '', '', '', false, 300, '', false, false, 0);
+            $pdf->SetMargins(0, 30, 0);
+          /*       addMembrete($pdf); */
+                // Reescribir el contenido en la nueva página si es necesario
+            }
+        
         
             // Opción 1: Descargar el PDF
             if($btnId==2){
