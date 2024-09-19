@@ -114,6 +114,7 @@ use App\Http\Controllers\ProcesosController;
 use App\Http\Controllers\ClienteInteraccionController;
 use App\Http\Controllers\ArchivosFormularioIngresoController;
 use App\Http\Controllers\AfpFormularioIngresoController;
+use App\Http\Controllers\CargosPlantaController;
 use App\Http\Controllers\formularioGestionIngresoController;
 use App\Http\Controllers\estadosIngresoController;
 use App\Http\Controllers\FormularioIngresoTipoServicioController;
@@ -295,6 +296,9 @@ Route::group([
 
   // Cargo
   Route::get('/cargo', [CargoController::class, 'index']);
+
+  //Cargos de planta
+  Route::get('/cargosPlanta', [CargosPlantaController::class, 'index']);
 
   // Modo liquidación
   Route::get('/modoliquidacion', [ModoLiquidacionController::class, 'index']);
