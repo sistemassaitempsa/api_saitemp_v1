@@ -251,7 +251,7 @@ class SeguimientoCrmController extends Controller
      */
     public function create(Request $request)
     {
-        
+         
             DB::beginTransaction();
             try {
                 $user = auth()->user();
@@ -412,6 +412,7 @@ class SeguimientoCrmController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
+    
     public function update(Request $request, $id)
     {
         DB::beginTransaction();
@@ -599,8 +600,8 @@ if($request->asistencia){
             }
         
             // Inicializar TCPDF
+            /* $pdf = new \TCPDF('P', 'mm', 'A4', true, 'UTF-8', false); */
             $pdf = new \TCPDF();
-        
             // Establecer los metadatos del documento
             $pdf->SetCreator(PDF_CREATOR);
             $pdf->SetAuthor('Saitemp');
@@ -610,30 +611,39 @@ if($request->asistencia){
         
             // Eliminar la cabecera y pie de página por defecto
             $pdf->setPrintHeader(false);
-            $pdf->setPrintFooter(false);
+            $pdf->AddPage();
+          /*   $pdf->setPrintFooter(false);
+            $pdf->setFooterMargin(0); */
         
             // Añadir una página
-            $pdf->AddPage();
-        
+            
+            $pdf->SetMargins(0, 0, 0);
+            $pdf->SetAutoPageBreak(false, 0);
             // Agregar imagen de fondo
             $url = public_path('/upload/MEMBRETE.png');
-            $pdf->Image($url, 0, 0, 210, 297, '', '', '', false, 300, '', false, false, 0);
+            $pdf->Image($url, -0.5, 0, $pdf->getPageWidth() + 0.5, $pdf->getPageHeight(), '', '', '', false, 300, '', false, false, 0);
             // Colocar la imagen como fondo, cubriendo toda la página (A4 en este caso, 210x297 mm)
         
             // Asegurarse de que el contenido no esté afectado por la imagen de fondo
-            $pdf->setPageMark(); // Esto asegura que cualquier contenido escrito después de esta línea quede encima de la imagen
-        
+            
+           /*  $pdf->SetMargins(5, 20, 5); */
             // Establecer fuente
             $pdf->SetFont('helvetica', '', 12);
         
             // Construir el contenido del PDF con las claves y valores del formulario y aplicando estilos
+
+
+            $pdf->Ln(20);
             $html = '
                 <style>
-            
+                    .divInit{
+                    height: 200px;
+                    color:transparent;
+                    }
                     h1 {
                         color: #043c69;
                         text-align: center;
-                        font-size: 24px;
+                        font-size: 16px;
                         margin-bottom: 20px;
                     }
                     .info {
@@ -657,6 +667,7 @@ if($request->asistencia){
                     }
                     table {
                         width: 100%;
+                        higth:100%
                         border-collapse: collapse;
                     }
                     td {
@@ -671,12 +682,14 @@ if($request->asistencia){
                         text-align: center;
                         vertical-align: middle;
                     }
-                        .asistencia_title{
-                        color: #043c69; }
+                    .asistencia_title{
+                        color: #043c69; 
+                    }
+                  
                 </style>
+                <div class="divInit">
          <h1> Registro de servicio </h1>
-
-
+         </div>
                 <table>
         <tr>
             <td class="data-label">Número Radicado:<br> <span class="info">' . $formulario->numero_radicado . '</span></td>
@@ -733,7 +746,7 @@ if($request->asistencia){
         </tr>
         </table>
             ';
-        
+
             // Mostrar evidencias en una tabla
             if (!empty($formulario->temasPrincipales)) {$html .= '
                 <h2 class="section-title">Presentación y revision de temas</h2>
@@ -756,9 +769,6 @@ if($request->asistencia){
                     </tr>';
             }
             $html .= '</table>';}
-            
-        
-            // Mostrar asistencias
             if ($formulario->iteraccion == "Visita presencial") {
             $html .= '
                 <h2 class="section-title">Asistencias</h2>
@@ -777,9 +787,15 @@ if($request->asistencia){
                     </tr>';
             }
             $html .= '</table>';}
-        
+            $margen_izquierdo = 5;
+            $margen_derecho = 5;
+            $pdf->Image($url, -0.5, 0, $pdf->getPageWidth() + 0.5, $pdf->getPageHeight(), '', '', '', false, 300, '', false, false, 0);
+            $pdf->SetMargins($margen_izquierdo, 20, $margen_derecho);
+            $pdf->SetAutoPageBreak(true, 30); // 10 mm de margen inferior
             // Escribir el HTML en el PDF
-            $pdf->writeHTML($html, true, false, true, false, '');
+            $pdf->writeHTML($html, false, false, true, false, '');
+           
+
         
             // Opción 1: Descargar el PDF
             if($btnId==2){
@@ -811,5 +827,14 @@ if($request->asistencia){
                 $result = $EnvioCorreoController->sendEmail($request);
                 return $result;}
            
+        }
+        private function addPageWithMembrete($pdf, $html) {
+            // Verifica si el contenido es lo suficientemente largo como para una nueva página
+            $pdf->AddPage();
+            $membreteUrl = public_path('/upload/MEMBRETE.png');
+            $pdf->Image($membreteUrl, -0.5, 0, $pdf->getPageWidth() + 0.5, 30, '', '', '', false, 300, '', false, false, 0);
+        
+            // Escribir el HTML en la nueva página
+            $pdf->writeHTML($html, false, false, true, false, '');
         }
 }
