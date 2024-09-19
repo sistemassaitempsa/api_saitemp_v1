@@ -22,7 +22,6 @@ class EstadoCierreCrmController extends Controller
         ->get();
         return response()->json($result);
     }
-    /* lider columna de usuarios */
 
     /**
      * Show the form for creating a new resource.
