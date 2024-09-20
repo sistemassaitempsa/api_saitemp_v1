@@ -53,6 +53,7 @@ class MatrizRiesgoController extends Controller
                 'usr_app_matriz_riesgo.nombre_responsable',
                 'usr_app_matriz_riesgo.created_at',
             )
+            ->orderby('id','desc')
             ->paginate($cantidad);
             $result = $this->colorCelda($result);
 

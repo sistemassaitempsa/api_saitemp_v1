@@ -10,6 +10,7 @@ class Evidencia extends Model
 {
     use HasFactory;
     protected $table = "usr_app_evidencia_crm";
+  
     public function fromDateTime($value)
     {
         return Carbon::parse(parent::fromDateTime($value))->format('Y-d-m');

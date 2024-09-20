@@ -2117,11 +2117,7 @@ class formularioGestionIngresoController extends Controller
             if ($request->variableX == 1) {
                 $result->nc_hora_cierre = 'Servicio no conforme';
             }
-
-            if ($request->n_servicio != null) {
-                $result->n_servicio = $request->n_servicio;
-            }
-
+            $result->n_servicio = $request->n_servicio == null ? null : $request->n_servicio;
             $result->save();
 
             $seguimiento = new FormularioIngresoSeguimiento;

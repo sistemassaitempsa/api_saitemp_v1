@@ -523,8 +523,7 @@ if($request->asistencia){
   
         DB::commit();
         return response()->json(['status' => 'success', 'message' => 'Registro actualizado de manera exitosa', 'id' => $result->id]);
-        } catch (\Throwable $th) {
-            return $th;
+        } catch (\Exception $e) {
             DB::rollback();
             return response()->json(['status' => 'error', 'message' => 'Error al guardar el formulario, por favor intenta nuevamente']);
         }
