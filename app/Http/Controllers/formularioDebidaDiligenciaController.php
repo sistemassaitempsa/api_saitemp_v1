@@ -58,7 +58,8 @@ class formularioDebidaDiligenciaController extends Controller
     {
         $result = cliente::select(
             'id',
-            'razon_social as nombre'
+            'razon_social as nombre',
+            'nit'
         )
             ->get();
         return response()->json($result);

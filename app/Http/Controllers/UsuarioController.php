@@ -70,7 +70,8 @@ class UsuarioController extends Controller
         $result = user::select(
             'id',
             DB::raw("CONCAT(nombres,' ',apellidos)  AS nombre"),
-            'email'
+            'email',
+            'lider',
         )
             ->get();
         return response()->json($result);
