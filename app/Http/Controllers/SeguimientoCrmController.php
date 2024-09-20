@@ -318,6 +318,7 @@ class SeguimientoCrmController extends Controller
                         $compromiso->registro_id = $result->id;
                         $compromiso->responsable = isset($item['responsable']) ? $item['responsable'] : '';
                         $compromiso->estado_cierre_id = isset($item['estado_cierre_id']) ? $item['estado_cierre_id'] : '';
+                        $compromiso->observacion = isset($item['observacion']) ? $item['observacion'] : '';
                 /*         $fechaCierreFormatted = Carbon::parse($item['fecha_cierre'])->format('d-m-Y H:i:s');
                         $compromiso->fecha_cierre = isset($fechaCierreFormatted) ? $fechaCierreFormatted : ''; */
                         $compromiso->save();
@@ -477,6 +478,7 @@ class SeguimientoCrmController extends Controller
                     $compromiso->estado_cierre_id = isset($item['estado_cierre_id']) ? $item['estado_cierre_id'] : '';
                     $fechaCierreFormatted = Carbon::parse($item['fecha_cierre'])->format('d-m-Y H:i:s');
                     $compromiso->responsable = isset($item['responsable']) ? $item['responsable'] : '';
+                    $compromiso->observacion = isset($item['observacion']) ? $item['observacion'] : '';
                     $compromiso->fecha_cierre = isset($fechaCierreFormatted) ? $fechaCierreFormatted : '';
                     $compromiso->save();
                 }
@@ -584,9 +586,12 @@ if($request->asistencia){
     }
 
     
-        public function generarPdfCrm($registro_id, $btnId)
-        {$modulo = 46;
+        public function generarPdfCrm(Request $request,$registro_id, $btnId)
+        {
+            $modulo = 46;
+          
             // Obtener los datos del formulario
+
             $atencionInteracion="";
             $formulario = $this->byid($registro_id)->getData();
             if (isset($formulario->tipo_atencion_id)) {
@@ -608,7 +613,18 @@ if($request->asistencia){
             $pdf->SetTitle('Reporte CRM');
             $pdf->SetSubject('Detalles del CRM');
             $pdf->SetKeywords('TCPDF, PDF, CRM, reporte');
-        
+            $horaInicioFormateada = '';
+            $horaCierreFormateada = '';
+            $fechaCreacionFromated='';
+            if (!empty($formulario->created_at)) {
+                $fechaCreacionFromated = Carbon::parse($formulario->created_at)->format('d-m-Y H:i:s');
+            }
+
+            if (!empty($formulario->hora_inicio)) {
+                $horaInicioFormateada = Carbon::parse($formulario->hora_inicio)->format('H:i');
+            }
+            if (!empty($formulario->hora_cierre)) {
+                $horaCierreFormateada = Carbon::parse($formulario->hora_cierre)->format('H:i');}
             // Eliminar la cabecera y pie de página por defecto
             $pdf->setPrintHeader(false);
            /*  function addMembrete(\TCPDF $pdf)
@@ -702,16 +718,16 @@ if($request->asistencia){
                 <table>
         <tr>
             <td class="data-label">Número Radicado:<br> <span class="info">' . $formulario->numero_radicado . '</span></td>
-             <td class="data-label">Fecha de Creación:<br><span class="info"> ' . $formulario->created_at . '</span></td>
+             <td class="data-label">Fecha de Creación:<br><span class="info"> ' . $fechaCreacionFromated. '</span></td>
         </tr>
         </table>
         <table>
         <tr>
-          <td class="data-label">Ciudad:<br><span class="info"> ' . $formulario->sede . '</span></td>
+          <td class="data-label">Sede:<br><span class="info"> ' . $formulario->sede . '</span></td>
           <td class="data-label">Medio de atencion:<br><span class="info"> ' . $atencionInteracion->nombre . '</span></td>
           ' . ($formulario->iteraccion == "Visita presencial" ? '
-          <td class="data-label">Hora inicio:<br><span class="info"> ' . $formulario->hora_inicio . '</span></td>
-           <td class="data-label">Hora cierre:<br> <span class="info">' . $formulario->hora_cierre . '</span></td>' : '') . '
+          <td class="data-label">Hora inicio:<br><span class="info"> ' .$horaInicioFormateada. '</span></td>
+           <td class="data-label">Hora cierre:<br> <span class="info">' . $horaCierreFormateada  . '</span></td>' : '') . '
        </tr>
 </table>
        <table>
@@ -817,8 +833,6 @@ if($request->asistencia){
             $url = public_path('/upload/MEMBRETE.png');
             $pdf->Image($url, -0.5, 0, $pdf->getPageWidth() + 0.5, $pdf->getPageHeight(), '', '', '', false, 300, '', false, false, 0);
             $pdf->SetMargins(0, 30, 0);
-          /*       addMembrete($pdf); */
-                // Reescribir el contenido en la nueva página si es necesario
             }
         
         
@@ -828,38 +842,67 @@ if($request->asistencia){
         
             // Opción 2: Mostrar el PDF en el navegador
             // $pdf->Output('formulario.pdf', 'I');
-            if($btnId==1){$pdfPath = storage_path('app/temp.pdf');
-                $pdf->Output($pdfPath, 'F');
-                if (!file_exists($pdfPath)) {
-                    return response()->json(['message' => 'Error al crear el PDF'], 500);}
-                $body = "Cordial saludo, esperamos se encuentren muy bien.\n\n Informamos que el registro de servicio ha sido creado satisfactoriamente, Cualquier información adicional podrá ser atendida en la línea Servisai de Saitemp S.A. marcando  al (604) 4485744, con gusto uno de nuestros facilitadores atenderá su llamada.\n\n simplificando conexiones, facilitando experiencias.";
-                $body = nl2br($body);
-                $subject = 'Confirmación registro de servicio  .';
-                $nomb_membrete='Informe de servicio';
-                $combinacion_correos= $formulario->correo;
-                $correo = [];
-                $correo['subject'] =  $subject;
-                $correo['body'] = $body;
-                $correo['formulario_ingreso'] = $pdfPath;
-                $correo['to'] = $combinacion_correos;
-                $correo['cc'] = '';
-                $correo['cco'] = '';
-                $correo['modulo'] = $modulo;
-                $correo['registro_id'] = $registro_id;
-                $correo['nom_membrete'] = $nomb_membrete;
-                $EnvioCorreoController = new EnvioCorreoController();
-                $request = Request::createFromBase(new Request($correo));
-                $result = $EnvioCorreoController->sendEmail($request);
-                return $result;}
+            try {
+                if($btnId==1){
+                    $pdfPath = storage_path('app/temp.pdf');
+                    $pdf->Output($pdfPath, 'F');
+                    if (!file_exists($pdfPath)) {
+                        return response()->json(['message' => 'Error al crear el PDF'], 500);
+                    }
+                    $this->enviarCorreo($formulario->correo, $formulario, $pdfPath, $registro_id, $modulo);
+                   
+                    // Enviar correos a cada uno en el request
+                        foreach ($request->correos as $correoData) {
+                             if ($correoData['correo'] !="") {
+                                $this->enviarCorreo($correoData['correo'], $formulario, $pdfPath, $registro_id, $modulo, $correoData['observacion']);
+                            } 
+                        }
+                  
+                        return response()->json(['status' => 'success', 'message' => 'Registro enviado de manera exitosa']);
+                }
+            } catch (\Throwable $th) {
+                return response()->json(['status' => 'error', 'message' => 'No fue posible enviar el registro verifique el correo de contacto']);
+            }
+          
            
         }
-        private function addPageWithMembrete($pdf, $html) {
-            // Verifica si el contenido es lo suficientemente largo como para una nueva página
-            $pdf->AddPage();
-            $membreteUrl = public_path('/upload/MEMBRETE.png');
-            $pdf->Image($membreteUrl, -0.5, 0, $pdf->getPageWidth() + 0.5, 30, '', '', '', false, 300, '', false, false, 0);
-        
-            // Escribir el HTML en la nueva página
-            $pdf->writeHTML($html, false, false, true, false, '');
-        }
+
+
+
+
+
+
+        private function enviarCorreo($destinatario, $formulario, $pdfPath, $registro_id, $modulo, $observacion = '')
+{
+    $body = "Cordial saludo, esperamos se encuentren muy bien.\n\n Informamos que el registro de servicio ha sido creado satisfactoriamente, Cualquier información adicional podrá ser atendida en la línea Servisai de Saitemp S.A. marcando  al (604) 4485744, con gusto uno de nuestros facilitadores atenderá su llamada.\n\n simplificando conexiones, facilitando experiencias.";
+    $body = nl2br($body);
+
+    if($observacion!=""){
+        $body= "Cordial saludo, tiene nuevos compromisos asignados en el radicado adjunto con las siguientes observaciones: $observacion";
+    }
+
+    
+    $subject = 'Confirmación registro de servicio.';
+    $nomb_membrete = 'Informe de servicio';
+
+    // Datos del correo
+    $correo = [
+        'subject' => $subject,
+        'body' => $body,
+        'formulario_ingreso' => $pdfPath,
+        'to' => $destinatario,
+        'cc' => '',
+        'cco' => '',
+        'modulo' => $modulo,
+        'registro_id' => $registro_id,
+        'nom_membrete' => $nomb_membrete
+    ];
+
+    // Instanciar el controlador de envío de correo
+    $EnvioCorreoController = new EnvioCorreoController();
+    $requestEmail = Request::createFromBase(new Request($correo));
+
+    // Enviar el correo
+    return $EnvioCorreoController->sendEmail($requestEmail);
+}
 }

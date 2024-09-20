@@ -19,14 +19,12 @@ class EnvioCorreoController extends Controller
     public function sendEmail(Request $request)
     {
 
-        // return $request->modulo;
-        // return $request['orden_servicio'];
         $user = auth()->user();
 
-        /* $nombreArchivo1 = pathinfo($user->imagen_firma_1, PATHINFO_BASENAME);
-        $nombreArchivo2 = pathinfo($user->imagen_firma_2, PATHINFO_BASENAME); */
-       /*  $rutaImagen1 = public_path($user->imagen_firma_1);
-        $rutaImagen2 = public_path($user->imagen_firma_2); */
+       $nombreArchivo1 = pathinfo($user->imagen_firma_1, PATHINFO_BASENAME);
+        $nombreArchivo2 = pathinfo($user->imagen_firma_2, PATHINFO_BASENAME); 
+        $rutaImagen1 = public_path($user->imagen_firma_1);
+        $rutaImagen2 = public_path($user->imagen_firma_2); 
         $adjuntos = [];
 
         $destinatarios = explode(',', $request->to);
