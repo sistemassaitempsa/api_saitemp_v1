@@ -16,7 +16,8 @@ class EstadoCierreCrmController extends Controller
     {
         $result = EstadoCierreCrm::select(
             'id',
-            'nombre'
+            'nombre',
+            'tipo_estado'
         )
         ->get();
         return response()->json($result);

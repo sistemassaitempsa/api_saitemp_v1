@@ -6,10 +6,10 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
 
-class Evidencia extends Model
+class CompromisosVisitaCrm extends Model
 {
     use HasFactory;
-    protected $table = "usr_app_evidencia_crm";
+    protected $table = "usr_app_compromisos_generales";
     public function fromDateTime($value)
     {
         return Carbon::parse(parent::fromDateTime($value))->format('Y-d-m');
