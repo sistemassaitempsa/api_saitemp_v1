@@ -471,6 +471,7 @@ class SeguimientoCrmController extends Controller
             $decodeCompromisos= json_decode($request->compromisos,true);
             if (count($decodeCompromisos) > 0) {
                 foreach ($decodeCompromisos as $item) {
+                    if($item['id']!=""){
                     $compromiso = CompromisosVisitaCrm::find($item['id']);
                     $compromiso->titulo = isset($item['titulo']) ? $item['titulo'] : '';
                     $compromiso->descripcion = isset($item['descripcion']) ? $item['descripcion'] : '';
@@ -481,19 +482,42 @@ class SeguimientoCrmController extends Controller
                     $compromiso->observacion = isset($item['observacion']) ? $item['observacion'] : '';
                     $compromiso->fecha_cierre = isset($fechaCierreFormatted) ? $fechaCierreFormatted : '';
                     $compromiso->save();
+                }else{
+                    $compromiso = new CompromisosVisitaCrm; 
+                        $compromiso->titulo = isset($item['titulo']) ? $item['titulo'] : '';
+                        $compromiso->descripcion = isset($item['descripcion']) ? $item['descripcion'] : '';
+                        $compromiso->registro_id = $result->id;
+                        $compromiso->responsable = isset($item['responsable']) ? $item['responsable'] : '';
+                        $compromiso->estado_cierre_id = isset($item['estado_cierre_id']) ? $item['estado_cierre_id'] : '';
+                        $compromiso->observacion = isset($item['observacion']) ? $item['observacion'] : '';
+                /*         $fechaCierreFormatted = Carbon::parse($item['fecha_cierre'])->format('d-m-Y H:i:s');
+                        $compromiso->fecha_cierre = isset($fechaCierreFormatted) ? $fechaCierreFormatted : ''; */
+                        $compromiso->save();
                 }
+
+            }
             }
           }
            if($request->temasPrincipales){
             $decodeTemas= json_decode($request->temasPrincipales,true);
             if (count($decodeTemas) > 0) {
                 foreach ($decodeTemas as $item) {
+                    if($item['id']!=""){
                   $temaPrincipal = TemasVisitaCrm::find($item['id']);
                     $temaPrincipal->titulo = isset($item['titulo']) ? $item['titulo'] : '';
                     $temaPrincipal->descripcion = isset($item['descripcion']) ? $item['descripcion'] : '';
                     $temaPrincipal->registro_id = $result->id;
                     $temaPrincipal->save();
                 }
+                else{
+                     
+                    $temaPrincipal = new TemasVisitaCrm;
+                    $temaPrincipal->titulo = isset($item['titulo']) ? $item['titulo'] : '';
+                    $temaPrincipal->descripcion = isset($item['descripcion']) ? $item['descripcion'] : '';
+                    $temaPrincipal->registro_id = $result->id;
+                    $temaPrincipal->save();
+                }
+            }
             }}
           
          // Procesar temas principales
@@ -524,6 +548,7 @@ if($request->asistencia){
         DB::commit();
         return response()->json(['status' => 'success', 'message' => 'Registro actualizado de manera exitosa', 'id' => $result->id]);
         } catch (\Exception $e) {
+            return $e;
             DB::rollback();
             return response()->json(['status' => 'error', 'message' => 'Error al guardar el formulario, por favor intenta nuevamente']);
         }
