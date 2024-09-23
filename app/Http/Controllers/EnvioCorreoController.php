@@ -74,7 +74,7 @@ class EnvioCorreoController extends Controller
             ->subject($request->subject)
             ->html($request->body);
 
-        /* if (file_exists($rutaImagen1)) {
+    if (file_exists($rutaImagen1)) {
             $email->attachFromPath($rutaImagen1, $nombreArchivo1);
         } else {
             return response()->json(['status' => 'error', 'message' => 'El correo electrónico no tiene configurada una firma.']);
@@ -82,7 +82,7 @@ class EnvioCorreoController extends Controller
 
         if (file_exists($rutaImagen2)) {
             $email->attachFromPath($rutaImagen2, $nombreArchivo2);
-        } */
+        }
 
         // Acá se valida si viene el formulario de supervisión de al instante en pdf y lo adjunta al correo
         if (file_exists($request->formulario_supervision)) {
