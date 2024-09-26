@@ -1,14 +1,14 @@
 <?php
 
 namespace App\Http\Controllers;
-use App\Models\TipoIdFormularioEmpleado;
+use App\Models\BancosFormularioEmpleado;
 use Illuminate\Http\Request;
 
-class TipoIdFormularioEmpleadoController extends Controller
+class BancosFormularioEmpleadoController extends Controller
 {
     public function index()
     {
-        $result = TipoIdFormularioEmpleado::whereIn('cod_tip', ['01', '02', '03', '08', '47'])->get();
+        $result = BancosFormularioEmpleado::whereIn('cod_ban', ['01', '07', '13', '19', '52'])->get();
     
         if ($result) {
             return response()->json($result);
