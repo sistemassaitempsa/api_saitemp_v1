@@ -11,7 +11,6 @@ use App\Models\Evidencia;
 use App\Models\TemasVisitaCrm;
 use App\Models\CompromisosVisitaCrm;
 use App\Models\AsistenciaVisitaCrm;
-use App\Models\ConsultaCedula;
 use TCPDF;
 use App\Models\AtencionInteraccion;
 class SeguimientoCrmController extends Controller
