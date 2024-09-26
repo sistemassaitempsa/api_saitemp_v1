@@ -146,6 +146,8 @@ use App\Http\Controllers\MatrizAmenazaController;
 use App\Http\Controllers\MatrizOportunidadController;
 use App\Http\Controllers\MatrizRiesgoController;
 use App\Http\Controllers\ClasificacionRiesgoController;
+use App\Http\Controllers\RecepcionEmpleadoController;
+use Doctrine\DBAL\Schema\Index;
 
 /*
 |--------------------------------------------------------------------------
@@ -835,6 +837,11 @@ Route::group([
   Route::post('/seguimientocrmpdf/{id}/{btnId}', [SeguimientoCrmController::class, 'generarPdfCrm']);
   Route::get('/seguimientocrmpdf/{id}/{btnId}', [SeguimientoCrmController::class, 'generarPdfCrm']);
   // Route::delete('/seguimientocrm', [SeguimientoCrmController::class, 'destroy']);
+  //Rutas para el formulario publico de recepcion de empleados
+  Route::get('/recepcionEmpleado', [RecepcionEmpleadoController::class, 'index']);
+  Route::post('/recepcionEmpleado', [RecepcionEmpleadoController::class, 'create']);
+
+
 
 
   //Indicadores SEIYA
