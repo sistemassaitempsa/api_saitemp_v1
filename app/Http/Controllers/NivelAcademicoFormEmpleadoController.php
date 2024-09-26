@@ -1,14 +1,14 @@
 <?php
 
 namespace App\Http\Controllers;
-use App\Models\BancosFormularioEmpleado;
+use App\Models\NivelAcademicoFormularioEmpleado;
 use Illuminate\Http\Request;
 
-class BancosFormularioEmpleadoController extends Controller
+class NivelAcademicoFormEmpleadoController extends Controller
 {
     public function index()
     {
-        $result = BancosFormularioEmpleado::whereIn('cod_ban', ['0','01', '07', '13', '19', '52'])->get();
+        $result = NivelAcademicoFormularioEmpleado::select()->get();
     
         if ($result) {
             return response()->json($result);
