@@ -6,20 +6,20 @@ use Illuminate\Http\Request;
 use App\Models\RecepcionEmpleado;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Carbon;
+use App\Models\ReferenciasModel;
 
 class RecepcionEmpleadoController extends Controller
 {
    
         public function index()
         {
-            // Aumentar el límite de memoria solo para esta solicitud
-            $result = RecepcionEmpleado::where('cod_emp', "123456789"  )->first();
+            $result = ReferenciasModel::where('cod_emp', "42822738"  )->first();
             if ($result) {
                 return response()->json($result);
             } else {
-                // Si no se encuentra el registro, devolver un mensaje de error
                 return response()->json(['message' => 'Registro no encontrado'], 404);
         }
+        
     }
 
 

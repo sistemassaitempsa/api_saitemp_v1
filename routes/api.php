@@ -3,6 +3,8 @@ use Illuminate\Support\Facades\Artisan;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\DepartamentosFormularioEmpleadoController;
+use App\Http\Controllers\CiudadesFormularioEmpleadoController;
 use App\Http\Controllers\MenuController;
 use App\Http\Controllers\EstadoUsuarioController;
 use App\Http\Controllers\RolController;
@@ -107,6 +109,7 @@ use App\Http\Controllers\RegistroCambioController;
 use App\Http\Controllers\ExamenPruebaController;
 use App\Http\Controllers\SeleccionModalController;
 use App\Http\Controllers\ContratacionModalController;
+use App\Http\Controllers\PaisesFormualrioEmpleadoController;
 use App\Http\Controllers\OtroSiController;
 use App\Http\Controllers\CiudadLaboratorioController;
 use App\Http\Controllers\AtencionInteraccionController;
@@ -837,9 +840,14 @@ Route::group([
   Route::post('/seguimientocrmpdf/{id}/{btnId}', [SeguimientoCrmController::class, 'generarPdfCrm']);
   Route::get('/seguimientocrmpdf/{id}/{btnId}', [SeguimientoCrmController::class, 'generarPdfCrm']);
   // Route::delete('/seguimientocrm', [SeguimientoCrmController::class, 'destroy']);
+  
   //Rutas para el formulario publico de recepcion de empleados
   Route::get('/recepcionEmpleado', [RecepcionEmpleadoController::class, 'index']);
   Route::post('/recepcionEmpleado', [RecepcionEmpleadoController::class, 'create']);
+  Route::get('/paisesFormularioEmpleado',[PaisesFormualrioEmpleadoController::class, 'index']);
+  Route::get('/ciudadesFormularioEmpleado',[CiudadesFormularioEmpleadoController::class, 'index']);
+  Route::get('/ciudadesFormularioEmpleado/{codPai}/{codDep}',[CiudadesFormularioEmpleadoController::class, 'byCodDep']);
+   Route::get('/departamentosFormularioEmpleado/{codPai}',[DepartamentosFormularioEmpleadoController::class, 'byCodPai']);
 
 
 
