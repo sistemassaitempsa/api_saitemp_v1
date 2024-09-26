@@ -1077,8 +1077,6 @@ class formularioDebidaDiligenciaController extends Controller
         try {
             $result = DocumentoCliente::where('cliente_id', '=', $id_cliente)
                 ->get();
-               
-           
             $documentos = $request->all();
             $value = '';
             $id = '';
@@ -1094,7 +1092,7 @@ class formularioDebidaDiligenciaController extends Controller
                     unlink($archivo);
                 }
             }
-             foreach ($result as $item) {
+            foreach ($result as $item) {
                 $archivo = DocumentoCliente::find($item->id);
                 $archivo->delete();
             }
