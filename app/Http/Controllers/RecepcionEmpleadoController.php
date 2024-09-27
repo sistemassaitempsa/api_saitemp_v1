@@ -100,13 +100,23 @@ class RecepcionEmpleadoController extends Controller
             DB::rollback();
             return response()->json(['status' => 'error', 'message' => 'Error al guardar el formulario, por favor intenta nuevamente']);
         }
-       
-
-      
-      
-
-
-     
-     
     }
+    
+public function searchByCodEmp($cod_emp)
+{
+    try {
+        $result = RecepcionEmpleado::where('cod_emp', $cod_emp)->first();
+        $referencias = ReferenciasFormularioEmpleado::where('cod_emp', $cod_emp)->get();
+        $result["referencias"]= $referencias;
+        $familiares = ReferenciasModel::where('cod_emp', $cod_emp)->get();
+        $result["familiares"]= $familiares;
+        if ($result) {
+            return response()->json(['status' => 'success', 'data' => $result]);
+        } else {
+            return response()->json(['status' => 'error', 'message' => 'Empleado no encontrado'], 404);
+        }
+    } catch (\Exception $e) {
+        return response()->json(['status' => 'error', 'message' => 'Error al buscar el empleado, por favor intenta nuevamente']);
+    }
+}
 }
