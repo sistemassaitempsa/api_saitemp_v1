@@ -2,6 +2,7 @@
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\GrupoEtnicoFormEmpleadoController;
 use App\Http\Controllers\NivelAcademicoFormEmpleadoController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BancosFormularioEmpleadoController;
@@ -854,6 +855,8 @@ Route::group([
   Route::get('/tipoIdFormularioEmpleado',[TipoIdFormularioEmpleadoController::class, 'index']);
   Route::get('/bancosFormularioEmpleado',[BancosFormularioEmpleadoController::class, 'index']);
   Route::get('/nivelAcademicoFormEmpleado',[NivelAcademicoFormEmpleadoController::class, 'index']);
+  Route::get('/grupoEtnicoEmpleado',[GrupoEtnicoFormEmpleadoController::class, 'index']);
+  
 
 
 

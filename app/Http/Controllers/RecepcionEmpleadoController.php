@@ -13,7 +13,7 @@ class RecepcionEmpleadoController extends Controller
    
         public function index()
         {
-            $result = RecepcionEmpleado::where('cod_emp', "1152203904"  )->first();
+            $result = RecepcionEmpleado::where('cod_emp', "7854654464"  )->first();
             if ($result) {
                 return response()->json($result);
             } else {
