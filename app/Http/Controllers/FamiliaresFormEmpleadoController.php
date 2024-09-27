@@ -1,15 +1,14 @@
 <?php
 
 namespace App\Http\Controllers;
-use App\Models\NivelAcademicoFormularioEmpleado;
-use Illuminate\Http\Request;
-use App\Models\ReferenciasFormularioEmpleado;
 
-class NivelAcademicoFormEmpleadoController extends Controller
+use Illuminate\Http\Request;
+use App\Models\ReferenciasModel;
+class FamiliaresFormEmpleadoController extends Controller
 {
     public function index()
     {
-        $result = NivelAcademicoFormularioEmpleado::select()->get();
+        $result = ReferenciasModel::select()->get();
     
         if ($result) {
             return response()->json($result);

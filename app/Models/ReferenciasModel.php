@@ -8,6 +8,7 @@ use Illuminate\Support\Carbon;
 
 class ReferenciasModel extends Model
 {
+    public $timestamps = false;
     use HasFactory;
     protected $table = "GTH_RptFamilia";
     public function fromDateTime($value)

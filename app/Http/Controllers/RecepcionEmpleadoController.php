@@ -7,6 +7,7 @@ use App\Models\RecepcionEmpleado;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Carbon;
 use App\Models\ReferenciasModel;
+use App\Models\ReferenciasFormularioEmpleado;
 
 class RecepcionEmpleadoController extends Controller
 {
@@ -65,7 +66,33 @@ class RecepcionEmpleadoController extends Controller
         $result-> ciu_res= $request-> ciu_res;
         $result-> est_soc= $request-> est_soc;
         $result-> num_ide= $request-> cod_emp;
-        $result->save();     
+        $result->save();
+        
+       foreach($request->referencias as $referencia){
+        $resultReferencia = new ReferenciasFormularioEmpleado;
+        $resultReferencia->cod_emp= $result->cod_emp;
+        $resultReferencia->num_ref= $referencia['num_ref'];
+        $resultReferencia->parent= $referencia['parent'];
+        $resultReferencia->cel_ref= $referencia['cel_ref'];
+        $resultReferencia->nom_ref= $referencia['nom_ref'];
+        $resultReferencia->tip_ref= $referencia['tip_ref'];
+        $resultReferencia->ocu_ref= 0;
+
+        $resultReferencia->save();
+       }
+       foreach($request->familiares as $referencia){
+        $resultReferencia = new ReferenciasModel;
+        if($referencia['ap1_fam']!=""){
+        $fechaNacimientoFormated = Carbon::parse($referencia['fec_nac'])->format('d-m-Y H:i:s');
+        $resultReferencia->cod_emp= $result->cod_emp;
+        $resultReferencia->ap1_fam= $referencia['ap1_fam'];
+        $resultReferencia->ap2_fam= $referencia['ap2_fam'];
+        $resultReferencia->nom_fam= $referencia['nom_fam'];
+        $resultReferencia->tip_fam= $referencia['tip_fam'];
+        $resultReferencia->fec_nac= $fechaNacimientoFormated;
+        $resultReferencia->ocu_fam= $referencia['ocu_fam'];
+        $resultReferencia->save();}
+       }
         DB::commit();
         return response()->json(['status' => 'success', 'message' => 'Registro guardado de manera exitosa', 'id' => $result]);
         } catch (\Exception $e) {

@@ -19,8 +19,7 @@ class CiudadesFormularioEmpleadoController extends Controller
 
     public function byCodDep($codPai, $codDep){
         $result = CiudadesFormularioEmpleado::where('cod_pai', $codPai)
-        ->where('cod_dep', $codDep)
-        ->get();
+        ->where('cod_dep', $codDep)->orderBy('nom_ciu', 'asc')->get();
         if ($result) {
             return response()->json($result);
         } else {
