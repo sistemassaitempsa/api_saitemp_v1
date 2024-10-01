@@ -240,15 +240,34 @@ public function updateByCodEmp(Request $request,$cod_emp){
                 ->where('ap1_fam', $referencia['ap1_fam'])
                 ->where('nom_fam', $referencia['nom_fam'])
                 ->first();
-                $fechaNacimientoFormated = Carbon::parse($requestFamiliares[$index]['fec_nac'])->format('d-m-Y H:i:s');
-                $resultReferencia->ap1_fam= $requestFamiliares[$index]['ap1_fam'];
-                $resultReferencia->ap2_fam= $requestFamiliares[$index]['ap2_fam'];
-                $resultReferencia->nom_fam= $requestFamiliares[$index]['nom_fam'];
-                $resultReferencia->tip_fam= $requestFamiliares[$index]['tip_fam'];
-                $resultReferencia->fec_nac= $fechaNacimientoFormated;
-                $resultReferencia->ocu_fam= $requestFamiliares[$index]['ocu_fam'];
-                $resultReferencia->save();
-            }
+                    $fechaNacimientoFormated = Carbon::parse($requestFamiliares[$index]['fec_nac'])->format('d-m-Y H:i:s');
+                    $resultReferencia->ap1_fam= $requestFamiliares[$index]['ap1_fam'];
+                    $resultReferencia->ap2_fam= $requestFamiliares[$index]['ap2_fam'];
+                    $resultReferencia->nom_fam= $requestFamiliares[$index]['nom_fam'];
+                    $resultReferencia->tip_fam= $requestFamiliares[$index]['tip_fam'];
+                    $resultReferencia->fec_nac= $fechaNacimientoFormated;
+                    $resultReferencia->ocu_fam= $requestFamiliares[$index]['ocu_fam'];
+                    $resultReferencia->save();
+                }
+              
+            
+           }
+           if(count($request->familiaresConsulta)<count($request->familiares)){
+                $tamanoInicial= count($request->familiaresConsulta);
+                for($i=$tamanoInicial;$i<count($request->familiares);$i++   ){
+                    $referencia= $request->familiares[$i];
+                    $resultReferencia = new ReferenciasModel;
+                    if($referencia['ap1_fam']!=""){
+                    $fechaNacimientoFormated = Carbon::parse($referencia['fec_nac'])->format('d-m-Y H:i:s');
+                    $resultReferencia->cod_emp= $result->cod_emp;
+                    $resultReferencia->ap1_fam= $referencia['ap1_fam'];
+                    $resultReferencia->ap2_fam= $referencia['ap2_fam'];
+                    $resultReferencia->nom_fam= $referencia['nom_fam'];
+                    $resultReferencia->tip_fam= $referencia['tip_fam'];
+                    $resultReferencia->fec_nac= $fechaNacimientoFormated;
+                    $resultReferencia->ocu_fam= $referencia['ocu_fam'];
+                    $resultReferencia->save();}
+                }
            }
            DB::commit();
            return response()->json(['status' => 'success', 'message' => 'Registro actualizado de manera exitosa', 'id' => $result->cod_emp]);

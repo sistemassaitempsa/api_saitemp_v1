@@ -155,7 +155,7 @@ use App\Http\Controllers\MatrizOportunidadController;
 use App\Http\Controllers\MatrizRiesgoController;
 use App\Http\Controllers\ClasificacionRiesgoController;
 use App\Http\Controllers\RecepcionEmpleadoController;
-use Doctrine\DBAL\Schema\Index;
+
 
 /*
 |--------------------------------------------------------------------------
