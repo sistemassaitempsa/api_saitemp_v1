@@ -2397,6 +2397,7 @@ class formularioGestionIngresoController extends Controller
         $seguimiento_estados = FormularioIngresoSeguimientoEstado::join('usr_app_estados_ingreso as ei', 'ei.id', '=', 'usr_app_formulario_ingreso_seguimiento_estado.estado_ingreso_inicial')
             ->join('usr_app_estados_ingreso as ef', 'ef.id', '=', 'usr_app_formulario_ingreso_seguimiento_estado.estado_ingreso_final')
             ->where('usr_app_formulario_ingreso_seguimiento_estado.estado_ingreso_final', $id)
+            ->whereDate('usr_app_formulario_ingreso_seguimiento_estado.created_at', Carbon::parse('2024-09-27'))
             ->select(
                 'usr_app_formulario_ingreso_seguimiento_estado.responsable_inicial',
                 'usr_app_formulario_ingreso_seguimiento_estado.responsable_final',
