@@ -6,12 +6,12 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
 
-class RecepcionEmpleado extends Model
+class ReferenciasFormularioEmpleado extends Model
 {
-    use HasFactory;
-    protected $table = "GTH_RptEmplea";
-    protected $primaryKey = 'cod_emp';
     public $timestamps = false;
+    use HasFactory;
+    protected $table = "GTH_RptReferencias";
+    protected $primaryKey = 'num_ref';
     public $incrementing = false;
     public function fromDateTime($value)
     {

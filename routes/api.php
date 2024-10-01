@@ -2,7 +2,14 @@
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\FamiliaresFormEmpleadoController;
+use App\Http\Controllers\GrupoEtnicoFormEmpleadoController;
+use App\Http\Controllers\NivelAcademicoFormEmpleadoController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\BancosFormularioEmpleadoController;
+use App\Http\Controllers\TipoIdFormularioEmpleadoController;
+use App\Http\Controllers\DepartamentosFormularioEmpleadoController;
+use App\Http\Controllers\CiudadesFormularioEmpleadoController;
 use App\Http\Controllers\MenuController;
 use App\Http\Controllers\EstadoUsuarioController;
 use App\Http\Controllers\RolController;
@@ -107,6 +114,7 @@ use App\Http\Controllers\RegistroCambioController;
 use App\Http\Controllers\ExamenPruebaController;
 use App\Http\Controllers\SeleccionModalController;
 use App\Http\Controllers\ContratacionModalController;
+use App\Http\Controllers\PaisesFormualrioEmpleadoController;
 use App\Http\Controllers\OtroSiController;
 use App\Http\Controllers\CiudadLaboratorioController;
 use App\Http\Controllers\AtencionInteraccionController;
@@ -837,9 +845,23 @@ Route::group([
   Route::post('/seguimientocrmpdf/{id}/{btnId}', [SeguimientoCrmController::class, 'generarPdfCrm']);
   Route::get('/seguimientocrmpdf/{id}/{btnId}', [SeguimientoCrmController::class, 'generarPdfCrm']);
   // Route::delete('/seguimientocrm', [SeguimientoCrmController::class, 'destroy']);
+  
   //Rutas para el formulario publico de recepcion de empleados
   Route::get('/recepcionEmpleado', [RecepcionEmpleadoController::class, 'index']);
   Route::post('/recepcionEmpleado', [RecepcionEmpleadoController::class, 'create']);
+  Route::put('/recepcionEmpleado/{cod_emp}', [RecepcionEmpleadoController::class, 'updateByCodEmp']);
+  Route::get('/recepcionEmpleado/{cod_emp}', [RecepcionEmpleadoController::class, 'searchByCodEmp']);
+  Route::get('/paisesFormularioEmpleado',[PaisesFormualrioEmpleadoController::class, 'index']);
+  Route::get('/ciudadesFormularioEmpleado',[CiudadesFormularioEmpleadoController::class, 'index']);
+  Route::get('/ciudadesFormularioEmpleado/{codPai}/{codDep}',[CiudadesFormularioEmpleadoController::class, 'byCodDep']);
+  Route::get('/departamentosFormularioEmpleado/{codPai}',[DepartamentosFormularioEmpleadoController::class, 'byCodPai']);
+  Route::get('/tipoIdFormularioEmpleado',[TipoIdFormularioEmpleadoController::class, 'index']);
+  Route::get('/bancosFormularioEmpleado',[BancosFormularioEmpleadoController::class, 'index']);
+  Route::get('/nivelAcademicoFormEmpleado',[NivelAcademicoFormEmpleadoController::class, 'index']);
+  Route::get('/grupoEtnicoEmpleado',[GrupoEtnicoFormEmpleadoController::class, 'index']);
+  Route::get('/familiaresFormularioEmpleado',[FamiliaresFormEmpleadoController::class, 'index']);
+  
+
 
 
 
