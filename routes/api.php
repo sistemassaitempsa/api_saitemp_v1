@@ -849,6 +849,7 @@ Route::group([
   //Rutas para el formulario publico de recepcion de empleados
   Route::get('/recepcionEmpleado', [RecepcionEmpleadoController::class, 'index']);
   Route::post('/recepcionEmpleado', [RecepcionEmpleadoController::class, 'create']);
+  Route::put('/recepcionEmpleado/{cod_emp}', [RecepcionEmpleadoController::class, 'updateByCodEmp']);
   Route::get('/recepcionEmpleado/{cod_emp}', [RecepcionEmpleadoController::class, 'searchByCodEmp']);
   Route::get('/paisesFormularioEmpleado',[PaisesFormualrioEmpleadoController::class, 'index']);
   Route::get('/ciudadesFormularioEmpleado',[CiudadesFormularioEmpleadoController::class, 'index']);

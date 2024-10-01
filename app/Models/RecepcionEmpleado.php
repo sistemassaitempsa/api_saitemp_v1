@@ -8,9 +8,11 @@ use Illuminate\Support\Carbon;
 
 class RecepcionEmpleado extends Model
 {
-    public $timestamps = false;
     use HasFactory;
     protected $table = "GTH_RptEmplea";
+    protected $primaryKey = 'cod_emp';
+    public $timestamps = false;
+    public $incrementing = false;
     public function fromDateTime($value)
     {
         return Carbon::parse(parent::fromDateTime($value))->format('Y-d-m');

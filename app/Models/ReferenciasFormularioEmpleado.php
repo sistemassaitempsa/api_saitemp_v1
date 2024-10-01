@@ -11,6 +11,8 @@ class ReferenciasFormularioEmpleado extends Model
     public $timestamps = false;
     use HasFactory;
     protected $table = "GTH_RptReferencias";
+    protected $primaryKey = 'num_ref';
+    public $incrementing = false;
     public function fromDateTime($value)
     {
         return Carbon::parse(parent::fromDateTime($value))->format('Y-d-m');
