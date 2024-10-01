@@ -154,8 +154,9 @@ use App\Http\Controllers\MatrizAmenazaController;
 use App\Http\Controllers\MatrizOportunidadController;
 use App\Http\Controllers\MatrizRiesgoController;
 use App\Http\Controllers\ClasificacionRiesgoController;
+use App\Http\Controllers\VersionTablasAndroidController;
 use App\Http\Controllers\RecepcionEmpleadoController;
-use Doctrine\DBAL\Schema\Index;
+
 
 /*
 |--------------------------------------------------------------------------
@@ -920,6 +921,8 @@ Route::group([
   Route::get('/buscarradicado/{radicado}', [MatrizRiesgoController::class, 'buscarradicado']);
   Route::get('/lideres', [MatrizRiesgoController::class, 'lideres']);
   Route::get('/clasificacionesriesgos', [ClasificacionRiesgoController::class, 'index']);
+
+  Route::get('/tablasandroid', [VersionTablasAndroidController::class, 'index']);
 
   Route::get('/clear-cache', function () {
     echo Artisan::call('config:clear');
