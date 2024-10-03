@@ -923,6 +923,19 @@ Route::group([
   Route::get('/clasificacionesriesgos', [ClasificacionRiesgoController::class, 'index']);
 
   Route::get('/tablasandroid', [VersionTablasAndroidController::class, 'index']);
+  Route::get('/tablasandroid2', [VersionTablasAndroidController::class, 'index2']);
+  Route::get('/tablasandroid_usr_app_tablas_android', [VersionTablasAndroidController::class, 'usr_app_tablas_android']);
+  Route::get('/tablasandroid_usr_app_sedes_saitemp', [VersionTablasAndroidController::class, 'usr_app_sedes_saitemp']);
+  Route::get('/tablasandroid_usr_app_procesos', [VersionTablasAndroidController::class, 'usr_app_procesos']);
+  Route::get('/tablasandroid_usr_app_solicitante_crm', [VersionTablasAndroidController::class, 'usr_app_solicitante_crm']);
+  Route::get('/tablasandroid_usr_app_atencion_interacion', [VersionTablasAndroidController::class, 'usr_app_atencion_interacion']);
+  Route::get('/tablasandroid_usr_app_usuarios_responsable', [VersionTablasAndroidController::class, 'usr_app_usuarios_responsable']);
+  Route::get('/tablasandroid_usr_app_usuarios_visitante', [VersionTablasAndroidController::class, 'usr_app_usuarios_visitante']);
+  Route::get('/tablasandroid_usr_app_cargos_crm', [VersionTablasAndroidController::class, 'usr_app_cargos_crm']);
+  Route::get('/tablasandroid_usr_app_estado_cierre_crm', [VersionTablasAndroidController::class, 'usr_app_estado_cierre_crm']);
+  Route::get('/tablasandroid_usr_app_estado_compromiso_crm', [VersionTablasAndroidController::class, 'usr_app_estado_compromiso_crm']);
+  Route::get('/tablasandroid_usr_app_pqrsf_crm', [VersionTablasAndroidController::class, 'usr_app_pqrsf_crm']);
+
 
   Route::get('/clear-cache', function () {
     echo Artisan::call('config:clear');
