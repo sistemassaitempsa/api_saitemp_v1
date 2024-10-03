@@ -799,7 +799,7 @@ if($request->asistencia){
             // Mostrar evidencias en una tabla
             if (!empty($formulario->temasPrincipales)) {$html .= '
                 <h2 class="section-title">Presentación y revision de temas</h2>
-                <table>';
+                <table >';
                     foreach ($formulario->temasPrincipales as $tema) {
                         $html .= '
                             <tr>
@@ -808,6 +808,7 @@ if($request->asistencia){
                             </tr>';
                     }
                     $html .= '
+                    </table>
                     <h2 class="section-title">Compromisos Generales</h2>
                     <table>';
             foreach ($formulario->compromisos as $compromiso) {
@@ -839,7 +840,7 @@ if($request->asistencia){
             $margen_izquierdo = 15;
             $margen_derecho = 15;
             $pdf->SetMargins($margen_izquierdo, 40, $margen_derecho);
-            $pdf->SetAutoPageBreak(true, 30); // 10 mm de margen inferior
+            $pdf->SetAutoPageBreak(true, 60); // 10 mm de margen inferior
             // Escribir el HTML en el PDF
             $pdf->writeHTML($html, false, false, true, false, '');
             $totalPages=0;
@@ -853,7 +854,7 @@ if($request->asistencia){
             for ($i = 2; $i <= $totalPages; $i++) {
                
                 $pdf->SetMargins(0, 0, 0);
-            $pdf->SetAutoPageBreak(false, 30);
+            $pdf->SetAutoPageBreak(false, 60);
             $url = public_path('/upload/MEMBRETE.png');
             $pdf->Image($url, -0.5, 0, $pdf->getPageWidth() + 0.5, $pdf->getPageHeight(), '', '', '', false, 300, '', false, false, 0);
             $pdf->SetMargins(0, 30, 0);
