@@ -21,10 +21,10 @@ class EnvioCorreoController extends Controller
 
         $user = auth()->user();
 //descomentar para produccion
-      /*  $nombreArchivo1 = pathinfo($user->imagen_firma_1, PATHINFO_BASENAME);
+    $nombreArchivo1 = pathinfo($user->imagen_firma_1, PATHINFO_BASENAME);
         $nombreArchivo2 = pathinfo($user->imagen_firma_2, PATHINFO_BASENAME); 
         $rutaImagen1 = public_path($user->imagen_firma_1);
-        $rutaImagen2 = public_path($user->imagen_firma_2);  */
+        $rutaImagen2 = public_path($user->imagen_firma_2);  
         $adjuntos = [];
 
         $destinatarios = explode(',', $request->to);
@@ -73,7 +73,7 @@ class EnvioCorreoController extends Controller
             ->from(new Address($user->usuario,  $nombres . ' ' . $apellidos))
             ->subject($request->subject)
             ->html($request->body);
-/*  descomentar para produccion
+
     if (file_exists($rutaImagen1)) {
             $email->attachFromPath($rutaImagen1, $nombreArchivo1);
         } else {
@@ -82,7 +82,7 @@ class EnvioCorreoController extends Controller
 
         if (file_exists($rutaImagen2)) {
             $email->attachFromPath($rutaImagen2, $nombreArchivo2);
-        } */
+        } 
 
         // Acá se valida si viene el formulario de supervisión de al instante en pdf y lo adjunta al correo
         if (file_exists($request->formulario_supervision)) {
