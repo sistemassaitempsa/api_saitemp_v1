@@ -610,12 +610,12 @@ if($request->asistencia){
     }
 
     
-        public function generarPdfCrm(Request $request,$registro_id, $btnId)
-        {
-            $modulo = 46;
+    public function generarPdfCrm(Request $request,$registro_id, $btnId)
+        { $modulo = 46;
           
             // Obtener los datos del formulario
 
+            $user = auth()->user();
             $atencionInteracion="";
             $formulario = $this->byid($registro_id)->getData();
             if (isset($formulario->tipo_atencion_id)) {
@@ -873,18 +873,21 @@ if($request->asistencia){
                     if (!file_exists($pdfPath)) {
                         return response()->json(['message' => 'Error al crear el PDF'], 500);
                     }
-                    $this->enviarCorreo($formulario->correo, $formulario, $pdfPath, $registro_id, $modulo);
+                    $resultCorreo=$this->enviarCorreo($formulario->correo, $formulario, $pdfPath, $registro_id, $modulo, $compromiso='', $user->usuario);
                    
                     // Enviar correos a cada uno en el request
                         foreach ($request->correos as $correoData) {
                              if ($correoData['correo'] !="") {
-                                $this->enviarCorreo($correoData['correo'], $formulario, $pdfPath, $registro_id, $modulo, $correoData['observacion']);
+                              $resultCorreo= $this->enviarCorreo($correoData['correo'], $formulario, $pdfPath, $registro_id, $modulo, $correoData['observacion'], $user->usuario);
+                              return $resultCorreo;
+
                             } 
                         }
-                  
+                        return $resultCorreo;
                         return response()->json(['status' => 'success', 'message' => 'Registro enviado de manera exitosa']);
                 }
-            } catch (\Throwable $th) {
+            } catch (\Exception $th) {
+                return $th;
                 return response()->json(['status' => 'error', 'message' => 'No fue posible enviar el registro verifique el correo de contacto']);
             }
           
@@ -896,7 +899,7 @@ if($request->asistencia){
 
 
 
-        private function enviarCorreo($destinatario, $formulario, $pdfPath, $registro_id, $modulo, $observacion = '')
+        private function enviarCorreo($destinatario, $formulario, $pdfPath, $registro_id, $modulo, $observacion = '', $user)
 {
     $body = "Cordial saludo, esperamos se encuentren muy bien.\n\n Informamos que el registro de servicio ha sido creado satisfactoriamente, Cualquier información adicional podrá ser atendida en la línea Servisai de Saitemp S.A. marcando  al (604) 4485744, con gusto uno de nuestros facilitadores atenderá su llamada.\n\n simplificando conexiones, facilitando experiencias.";
     $body = nl2br($body);
@@ -916,7 +919,7 @@ if($request->asistencia){
         'formulario_ingreso' => $pdfPath,
         'to' => $destinatario,
         'cc' => '',
-        'cco' => '',
+        'cco' => $user,
         'modulo' => $modulo,
         'registro_id' => $registro_id,
         'nom_membrete' => $nomb_membrete
