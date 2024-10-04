@@ -70,7 +70,7 @@ class UsuarioController extends Controller
         $result = user::select(
             'id',
             DB::raw("CONCAT(nombres,' ',apellidos)  AS nombre"),
-            'email',
+            'usuario AS email' ,
             'lider',
         )
             ->get();
@@ -256,6 +256,7 @@ class UsuarioController extends Controller
         }
 
         try {
+            return $user;
             $user->nombres = $request->nombres;
             $user->apellidos = $request->apellidos;
             $user->documento_identidad = $request->documento_identidad;
