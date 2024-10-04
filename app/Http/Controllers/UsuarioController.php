@@ -257,13 +257,13 @@ class UsuarioController extends Controller
 
         try {
          
-            $user->nombres = $request->nombres;
-            $user->apellidos = $request->apellidos;
-            $user->documento_identidad = $request->documento_identidad;
-            $user->usuario = $request->usuario;
-            $user->email = $request->email;
-            $user->estado_id = $request->estado_id;
-            $user->rol_id = $request->rol_id;
+            $user->nombres = $request->nombres !== "null" ? $request->nombres : null;
+            $user->apellidos = $request->apellidos !== "null" ? $request->apellidos : null;
+            $user->documento_identidad = $request->documento_identidad !== "null" ? $request->documento_identidad : null;
+            $user->usuario = $request->usuario !== "null" ? $request->usuario : null;
+            $user->email = $request->email !== "null" ? $request->email : null;
+            $user->estado_id = $request->estado_id !== "null" ? $request->estado_id : null;
+            $user->rol_id = $request->rol_id !== "null" ? $request->rol_id : null;
             if ($request->contrasena_correo != '') {
                 $user->contrasena_correo = Crypt::encryptString($request->contrasena_correo);
             }
