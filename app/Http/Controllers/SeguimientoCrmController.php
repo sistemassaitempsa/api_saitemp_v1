@@ -671,10 +671,7 @@ if($request->asistencia){
             // Agregar imagen de fondo
            $url = public_path('/upload/MEMBRETE.png');
             $pdf->Image($url, -0.5, 0, $pdf->getPageWidth() + 0.5, $pdf->getPageHeight(), '', '', '', false, 300, '', false, false, 0);
-            // Colocar la imagen como fondo, cubriendo toda la página (A4 en este caso, 210x297 mm)
-        
             // Asegurarse de que el contenido no esté afectado por la imagen de fondo
-            
            /*  $pdf->SetMargins(5, 20, 5); */
             // Establecer fuente
             $pdf->SetFont('helvetica', '', 12);
@@ -701,6 +698,7 @@ if($request->asistencia){
                         line-height: 1.5;
                         margin-bottom: 8px;
                         font-weight: normal;
+                        margin-top:20px;
                         
                         
                     }
@@ -749,7 +747,7 @@ if($request->asistencia){
         <tr>
           <td class="data-label">Sede:<br><span class="info"> ' . $formulario->sede . '</span></td>
           <td class="data-label">Medio de atencion:<br><span class="info"> ' . $atencionInteracion->nombre . '</span></td>
-          ' . ($formulario->iteraccion == "Visita presencial" ? '
+          ' . ($formulario->tipo_atencion_id == 5 || $formulario->tipo_atencion_id == 6  ? '
           <td class="data-label">Hora inicio:<br><span class="info"> ' .$horaInicioFormateada. '</span></td>
            <td class="data-label">Hora cierre:<br> <span class="info">' . $horaCierreFormateada  . '</span></td>' : '') . '
        </tr>
@@ -768,7 +766,9 @@ if($request->asistencia){
             <td class="data-label">Tipo PQRSF:<br><span class="info"> '. $formulario->pqrsf . '</span></td>
             <td class="data-label">Responsable:<br><span class="info"> ' . $formulario->responsable. '</span></td>
         </tr>
-        ' . ($formulario->iteraccion == "Visita presencial" ? '
+        </table>
+        ' . ($formulario->tipo_atencion_id == 5 ||$formulario->tipo_atencion_id == 6  ? '
+        <table>
         <tr>
             <td class="data-label">Visita realizada por:<br><span class="info"> '. $formulario->visitante . '</span></td>
             <td class="data-label">Cargo:<br><span class="info"> ' . $formulario->cargo_visitante . '</span></td>
@@ -799,27 +799,32 @@ if($request->asistencia){
             // Mostrar evidencias en una tabla
             if (!empty($formulario->temasPrincipales)) {$html .= '
                 <h2 class="section-title">Presentación y revision de temas</h2>
-                <table >';
+                ';
                     foreach ($formulario->temasPrincipales as $tema) {
                         $html .= '
                             <tr>
-                                <td>' . $tema->titulo . ':</td>
-                                <td>' . $tema->descripcion . '</td>
-                            </tr>';
+                                <h4>' . "Tema" . ':</h4>
+                                <p>' . $tema->descripcion . '</p>';
                     }
                     $html .= '
-                    </table>
-                    <h2 class="section-title">Compromisos Generales</h2>
-                    <table>';
+                    <h2 class="section-title">Compromisos Generales</h2>';
             foreach ($formulario->compromisos as $compromiso) {
-                $html .= '
-                    <tr>
-                        <td>' . $compromiso->titulo . ':</td>
-                        <td>' . $compromiso->descripcion . '</td>
-                    </tr>';
+                $tituloFormateado = preg_replace('/([a-zA-Z])([0-9])/', '$1 $2', $compromiso->titulo); 
+                $tituloFormateado = preg_replace('/([0-9])([a-zA-Z])/', '$1 $2', $tituloFormateado); 
+                $tituloFormateado = ucwords(strtolower($tituloFormateado)); 
+                $compromiso->descripcion != ""?  $html .= ' 
+                 
+                <h4>' . $tituloFormateado . ':</h4>
+                <p>' . $compromiso->descripcion . '</p>
+        ':"";
+              /*    $html .= ' 
+                 
+                        <h4>' . $tituloFormateado . ':</h4>
+                        <p>' . $compromiso->descripcion . '</p>
+                '; */
             }
-            $html .= '</table>';}
-            if ($formulario->iteraccion == "Visita presencial") {
+            }
+            if ($formulario->tipo_atencion_id == 5 ||$formulario->tipo_atencion_id == 6 ) {
             $html .= '
                 <h2 class="section-title">Asistencias</h2>
                 <table>
@@ -840,7 +845,7 @@ if($request->asistencia){
             $margen_izquierdo = 15;
             $margen_derecho = 15;
             $pdf->SetMargins($margen_izquierdo, 40, $margen_derecho);
-            $pdf->SetAutoPageBreak(true, 60); // 10 mm de margen inferior
+            $pdf->SetAutoPageBreak(true, 50); // 10 mm de margen inferior
             // Escribir el HTML en el PDF
             $pdf->writeHTML($html, false, false, true, false, '');
             $totalPages=0;
@@ -854,7 +859,7 @@ if($request->asistencia){
             for ($i = 2; $i <= $totalPages; $i++) {
                
                 $pdf->SetMargins(0, 0, 0);
-            $pdf->SetAutoPageBreak(false, 60);
+            $pdf->SetAutoPageBreak(false, 50);
             $url = public_path('/upload/MEMBRETE.png');
             $pdf->Image($url, -0.5, 0, $pdf->getPageWidth() + 0.5, $pdf->getPageHeight(), '', '', '', false, 300, '', false, false, 0);
             $pdf->SetMargins(0, 30, 0);
@@ -875,12 +880,11 @@ if($request->asistencia){
                         return response()->json(['message' => 'Error al crear el PDF'], 500);
                     }
                     $resultCorreo=$this->enviarCorreo($formulario->correo, $formulario, $pdfPath, $registro_id, $modulo, $compromiso='', $user->usuario);
-                   
+                    
                     // Enviar correos a cada uno en el request
                         foreach ($request->correos as $correoData) {
                              if ($correoData['correo'] !="") {
-                              $resultCorreo= $this->enviarCorreo($correoData['correo'], $formulario, $pdfPath, $registro_id, $modulo, $correoData['observacion'], $user->usuario);
-                              return $resultCorreo;
+                             $this->enviarCorreo($correoData['correo'], $formulario, $pdfPath, $registro_id, $modulo, $correoData['observacion'], $user->usuario);
 
                             } 
                         }
@@ -888,8 +892,7 @@ if($request->asistencia){
                         return response()->json(['status' => 'success', 'message' => 'Registro enviado de manera exitosa']);
                 }
             } catch (\Exception $th) {
-                return $th;
-                return response()->json(['status' => 'error', 'message' => 'No fue posible enviar el registro verifique el correo de contacto']);
+                return response()->json(['status' => 'error', 'message' => 'No fue posible enviar el registro verifique el correo de contacto o de los responsables']);
             }
           
            
