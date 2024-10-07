@@ -459,9 +459,11 @@ class SeguimientoCrmController extends Controller
                       $evidencia = new Evidencia;
                       $evidencia->descripcion = $item[0]?$item[0]:"";
                       $evidencia->registro_id = $result->id;
-
                       $nombreArchivoOriginal = $item[$i]->getClientOriginalName();
-                      $nuevoNombre = Carbon::now()->timestamp . "_" . $nombreArchivoOriginal;
+                      $nombreSinExtension = pathinfo($nombreArchivoOriginal, PATHINFO_FILENAME);
+                      $extension = pathinfo($nombreArchivoOriginal, PATHINFO_EXTENSION);
+                      $nombreLimpio = preg_replace('/[.\s]+/', '_', $nombreSinExtension) . '.' . $extension;
+                      $nuevoNombre = Carbon::now()->timestamp . "_" . $nombreLimpio;
 
                       $carpetaDestino = './upload/evidenciasCrm/';
                       $item[$i]->move($carpetaDestino, $nuevoNombre);
