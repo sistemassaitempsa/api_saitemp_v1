@@ -2,11 +2,8 @@
 
 namespace App\Http\Controllers;
 use App\Models\FormularioIngresoArchivos;
-use Illuminate\Http\Request;
-use Illuminate\Support\Carbon;
 use ZipArchive;
 use Illuminate\Support\Facades\File;
-use App\Models\cliente;
 
 class GenerarZipController extends Controller
 {
