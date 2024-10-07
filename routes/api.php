@@ -156,6 +156,7 @@ use App\Http\Controllers\MatrizRiesgoController;
 use App\Http\Controllers\ClasificacionRiesgoController;
 use App\Http\Controllers\VersionTablasAndroidController;
 use App\Http\Controllers\RecepcionEmpleadoController;
+use App\Http\Controllers\GenerarZipController;
 
 
 /*
@@ -862,6 +863,8 @@ Route::group([
   Route::get('/grupoEtnicoEmpleado',[GrupoEtnicoFormEmpleadoController::class, 'index']);
   Route::get('/familiaresFormularioEmpleado',[FamiliaresFormEmpleadoController::class, 'index']);
   
+  //ruta para generar el archivo zip de seiya
+  Route::get('/descargarZip/{idRadicado}/{idCliente}',[GenerarZipController::class, 'descargarArchivosById' ]);
 
 
 
