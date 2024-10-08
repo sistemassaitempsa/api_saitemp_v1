@@ -20,8 +20,7 @@ class EnvioCorreoController extends Controller
     {
 
         $user = auth()->user();
-//descomentar para produccion
-    $nombreArchivo1 = pathinfo($user->imagen_firma_1, PATHINFO_BASENAME);
+        $nombreArchivo1 = pathinfo($user->imagen_firma_1, PATHINFO_BASENAME);
         $nombreArchivo2 = pathinfo($user->imagen_firma_2, PATHINFO_BASENAME); 
         $rutaImagen1 = public_path($user->imagen_firma_1);
         $rutaImagen2 = public_path($user->imagen_firma_2);  
@@ -82,8 +81,9 @@ class EnvioCorreoController extends Controller
 
         if (file_exists($rutaImagen2)) {
             $email->attachFromPath($rutaImagen2, $nombreArchivo2);
-        } 
-
+        } else {
+            return response()->json(['status' => 'error', 'message' => 'El correo electrónico no tiene configurada una segunda firma.']);
+        }
         // Acá se valida si viene el formulario de supervisión de al instante en pdf y lo adjunta al correo
         if (file_exists($request->formulario_supervision)) {
             $email->attachFromPath($request->formulario_supervision, 'Formulario de supervisión');
@@ -125,8 +125,8 @@ class EnvioCorreoController extends Controller
                 array_push($adjuntos,$nombre_archivo);
             }
         }
-
-        $mailer->send($email);
+        try {
+            $mailer->send($email);
         if ($mailer) {
             $registroCorreosController = new RegistroCorreosController;
             $correo['remitente'] = $user->usuario;
@@ -146,9 +146,12 @@ class EnvioCorreoController extends Controller
             $registroCorreosController->create($correo);
 
             return response()->json(['status' => 'success', 'message' => 'El correo electrónico se ha enviado correctamente.']);
-        } else {
+        }
+        } catch (\Exception $th) {
+            //throw $th;
             return response()->json(['status' => 'error', 'message' => 'Hubo un error al enviar el correo electrónico.']);
         }
+           
     }
 
     public function authUser(Request $request)

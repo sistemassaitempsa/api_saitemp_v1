@@ -298,7 +298,10 @@ class SeguimientoCrmController extends Controller
                         $evidencia->registro_id = $result->id;
 
                         $nombreArchivoOriginal = $item[$i]->getClientOriginalName();
-                        $nuevoNombre = Carbon::now()->timestamp . "_" . $nombreArchivoOriginal;
+                        $nombreSinExtension = pathinfo($nombreArchivoOriginal, PATHINFO_FILENAME);
+                        $extension = pathinfo($nombreArchivoOriginal, PATHINFO_EXTENSION);
+                        $nombreLimpio = preg_replace('/[.\s]+/', '_', $nombreSinExtension) . '.' . $extension;
+                        $nuevoNombre = Carbon::now()->timestamp . "_" . $nombreLimpio;
 
                         $carpetaDestino = './upload/evidenciasCrm/';
                         $item[$i]->move($carpetaDestino, $nuevoNombre);
@@ -319,7 +322,7 @@ class SeguimientoCrmController extends Controller
                         $compromiso->responsable = isset($item['responsable']) ? $item['responsable'] : '';
                         $compromiso->estado_cierre_id = isset($item['estado_cierre_id']) ? $item['estado_cierre_id'] : '';
                         $compromiso->observacion = isset($item['observacion']) ? $item['observacion'] : '';
-                /*         $fechaCierreFormatted = Carbon::parse($item['fecha_cierre'])->format('d-m-Y H:i:s');
+                /*      $fechaCierreFormatted = Carbon::parse($item['fecha_cierre'])->format('d-m-Y H:i:s');
                         $compromiso->fecha_cierre = isset($fechaCierreFormatted) ? $fechaCierreFormatted : ''; */
                         $compromiso->save();
                     }
@@ -456,9 +459,11 @@ class SeguimientoCrmController extends Controller
                       $evidencia = new Evidencia;
                       $evidencia->descripcion = $item[0]?$item[0]:"";
                       $evidencia->registro_id = $result->id;
-
                       $nombreArchivoOriginal = $item[$i]->getClientOriginalName();
-                      $nuevoNombre = Carbon::now()->timestamp . "_" . $nombreArchivoOriginal;
+                      $nombreSinExtension = pathinfo($nombreArchivoOriginal, PATHINFO_FILENAME);
+                      $extension = pathinfo($nombreArchivoOriginal, PATHINFO_EXTENSION);
+                      $nombreLimpio = preg_replace('/[.\s]+/', '_', $nombreSinExtension) . '.' . $extension;
+                      $nuevoNombre = Carbon::now()->timestamp . "_" . $nombreLimpio;
 
                       $carpetaDestino = './upload/evidenciasCrm/';
                       $item[$i]->move($carpetaDestino, $nuevoNombre);
@@ -579,6 +584,16 @@ if($request->asistencia){
      */
     public function destroy($id)
     {
+        $result = SeguimientoCrm::find($id);
+        if (!$result) {
+            return response()->json(['message' => 'El radicado no existe.'], 404);}
+            try {
+                $result->delete();
+                return response()->json(['message' => 'Radicado eliminado con éxito.'], 200);
+            } catch (\Exception $e) {
+                return response()->json(['message' => 'Error al eliminar el radicado.', 'error' => $e->getMessage()], 500);
+            }
+
     }
     public function eliminararchivo($item, $id)
     {
