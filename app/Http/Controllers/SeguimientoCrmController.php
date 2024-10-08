@@ -322,7 +322,7 @@ class SeguimientoCrmController extends Controller
                         $compromiso->responsable = isset($item['responsable']) ? $item['responsable'] : '';
                         $compromiso->estado_cierre_id = isset($item['estado_cierre_id']) ? $item['estado_cierre_id'] : '';
                         $compromiso->observacion = isset($item['observacion']) ? $item['observacion'] : '';
-                /*         $fechaCierreFormatted = Carbon::parse($item['fecha_cierre'])->format('d-m-Y H:i:s');
+                /*      $fechaCierreFormatted = Carbon::parse($item['fecha_cierre'])->format('d-m-Y H:i:s');
                         $compromiso->fecha_cierre = isset($fechaCierreFormatted) ? $fechaCierreFormatted : ''; */
                         $compromiso->save();
                     }
