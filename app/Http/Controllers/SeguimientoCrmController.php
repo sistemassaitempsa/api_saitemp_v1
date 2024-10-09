@@ -103,11 +103,20 @@ class SeguimientoCrmController extends Controller
                 return $item;
                 });
                 $result["temasPrincipales"]= $temasPrincipales;
-                $compromisos =  CompromisosVisitaCrm::where('registro_id', $id)->get();
-                $compromisos->transform(function ($item) {
-                    $item->edit=false;
-                    return $item;
-                    });
+                $compromisos =  CompromisosVisitaCrm::join('usr_app_usuarios as usuario','usuario.id', 'usr_app_compromisos_generales.responsable_id')
+                ->where('registro_id', $id)
+                ->select('usuario.usuario as email',
+                'usr_app_compromisos_generales.titulo',
+                'usr_app_compromisos_generales.id',
+                'usr_app_compromisos_generales.descripcion',
+                'usr_app_compromisos_generales.estado_cierre_id',
+                'usr_app_compromisos_generales.fecha_cierre',
+                'usr_app_compromisos_generales.responsable',
+                'usr_app_compromisos_generales.observacion',
+                'usr_app_compromisos_generales.responsable_id',
+                )
+                ->get();
+              
                     $result["compromisos"]= $compromisos;
                     $asistencias =  AsistenciaVisitaCrm::where('registro_id', $id)->get();
                     $asistencias->transform(function ($item) {
@@ -316,15 +325,19 @@ class SeguimientoCrmController extends Controller
                 if (count($decodeCompromisos) > 0) {
                     foreach ($decodeCompromisos as $item) {
                         $compromiso = new CompromisosVisitaCrm; 
-                        $compromiso->titulo = isset($item['titulo']) ? $item['titulo'] : '';
-                        $compromiso->descripcion = isset($item['descripcion']) ? $item['descripcion'] : '';
-                        $compromiso->registro_id = $result->id;
-                        $compromiso->responsable = isset($item['responsable']) ? $item['responsable'] : '';
-                        $compromiso->estado_cierre_id = isset($item['estado_cierre_id']) ? $item['estado_cierre_id'] : '';
-                        $compromiso->observacion = isset($item['observacion']) ? $item['observacion'] : '';
-                /*      $fechaCierreFormatted = Carbon::parse($item['fecha_cierre'])->format('d-m-Y H:i:s');
-                        $compromiso->fecha_cierre = isset($fechaCierreFormatted) ? $fechaCierreFormatted : ''; */
-                        $compromiso->save();
+                        if(isset($item['descripcion']) &&  $item['descripcion'] !=""){
+                            $compromiso->titulo = isset($item['titulo']) ? $item['titulo'] : '';
+                            $compromiso->descripcion = isset($item['descripcion']) ? $item['descripcion'] : '';
+                            $compromiso->registro_id = $result->id;
+                            $compromiso->responsable = isset($item['responsable']) ? $item['responsable'] : '';
+                            $compromiso->estado_cierre_id = isset($item['estado_cierre_id']) ? $item['estado_cierre_id'] : '';
+                            $compromiso->observacion = isset($item['observacion']) ? $item['observacion'] : '';
+                            $compromiso->responsable_id = isset($item['responsable_id']) ? $item['responsable_id'] : '';
+                    /*      $fechaCierreFormatted = Carbon::parse($item['fecha_cierre'])->format('d-m-Y H:i:s');
+                            $compromiso->fecha_cierre = isset($fechaCierreFormatted) ? $fechaCierreFormatted : ''; */
+                            $compromiso->save();
+                        }
+                        
                     }
                 }
             }
@@ -474,6 +487,7 @@ class SeguimientoCrmController extends Controller
           }
           if($request->compromisos){
             $decodeCompromisos= json_decode($request->compromisos,true);
+            $compromisoCant="";
             if (count($decodeCompromisos) > 0) {
                 foreach ($decodeCompromisos as $item) {
                     if($item['id']!=""){
@@ -486,18 +500,24 @@ class SeguimientoCrmController extends Controller
                     $compromiso->responsable = isset($item['responsable']) ? $item['responsable'] : '';
                     $compromiso->observacion = isset($item['observacion']) ? $item['observacion'] : '';
                     $compromiso->fecha_cierre = isset($fechaCierreFormatted) ? $fechaCierreFormatted : '';
+                    $compromiso->responsable_id = isset($item['responsable_id']) ? $item['responsable_id'] : '';
                     $compromiso->save();
                 }else{
-                    $compromiso = new CompromisosVisitaCrm; 
+                    $compromiso = new CompromisosVisitaCrm;
+                    if(isset($item['descripcion']) &&  $item['descripcion'] !=""){
                         $compromiso->titulo = isset($item['titulo']) ? $item['titulo'] : '';
                         $compromiso->descripcion = isset($item['descripcion']) ? $item['descripcion'] : '';
                         $compromiso->registro_id = $result->id;
                         $compromiso->responsable = isset($item['responsable']) ? $item['responsable'] : '';
                         $compromiso->estado_cierre_id = isset($item['estado_cierre_id']) ? $item['estado_cierre_id'] : '';
                         $compromiso->observacion = isset($item['observacion']) ? $item['observacion'] : '';
+                        $compromiso->responsable_id = isset($item['responsable_id']) ? $item['responsable_id'] : '';
                 /*         $fechaCierreFormatted = Carbon::parse($item['fecha_cierre'])->format('d-m-Y H:i:s');
                         $compromiso->fecha_cierre = isset($fechaCierreFormatted) ? $fechaCierreFormatted : ''; */
                         $compromiso->save();
+                    
+                    } 
+                       
                 }
 
             }
@@ -950,5 +970,10 @@ if($request->asistencia){
 
     // Enviar el correo
     return $EnvioCorreoController->sendEmail($requestEmail);
+}
+
+public function getAllCompromisos(){
+    $result = CompromisosVisitaCrm::select()->get();
+    return response()->json($result);
 }
 }

@@ -1,6 +1,7 @@
 <?php
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Http\Request;
+use App\Http\Controllers\FiltroCrmController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\FamiliaresFormEmpleadoController;
 use App\Http\Controllers\GrupoEtnicoFormEmpleadoController;
@@ -848,6 +849,12 @@ Route::group([
   Route::get('/seguimientocrmpdf/{id}/{btnId}', [SeguimientoCrmController::class, 'generarPdfCrm']);
   // Route::delete('/seguimientocrm', [SeguimientoCrmController::class, 'destroy']);
   Route::delete('/seguimientocrmbyid/{id}', [SeguimientoCrmController::class, 'destroy']);
+  Route::get('/compromisosGenerales',[SeguimientoCrmController::class, 'getAllCompromisos']);
+
+  //Rutas para el dashBoard de CRM 
+  Route::get('/filtroCRM/{anio}', [FiltroCrmController::class, 'getRadicadosMes']);
+  Route::get('/filtroCRMMedios/{anio}', [FiltroCrmController::class, 'getRadicadosByMedio']);
+/*   Route::get('/filtroCRMCompromisos/{cedula}', [FiltroCrmController::class, 'getCompromisosByMes']); */
   
   //Rutas para el formulario publico de recepcion de empleados
   Route::get('/recepcionEmpleado', [RecepcionEmpleadoController::class, 'index']);
