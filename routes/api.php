@@ -194,6 +194,7 @@ Route::group([
   Route::delete('/user/{id}', [UsuarioController::class, 'destroy']);
   // Route::post('/user', [UsuarioController::class, 'create']); 
   Route::post('/user', [UsuarioController::class, 'update']);
+  Route::put('/updateUserVendedor/{id}',[UsuarioController::class, 'updateVendedorId']);
   // Route::get('/usuariosporcontrato', [UsuarioController::class, 'usuariosporcontrato']); 
   // Route::get('/usuariosporcontrato/{id}', [UsuarioController::class, 'usuariosporcontrato2']); 
 
@@ -614,7 +615,6 @@ Route::group([
   Route::get('/consultaformulariocliente/{cantidad}', [formularioDebidaDiligenciaController::class, 'consultacliente']);
   Route::get('/clientesactivos', [formularioDebidaDiligenciaController::class, 'clientesactivos']);
   Route::get('/consultaformularioclientefiltro/{cadena}', [formularioDebidaDiligenciaController::class, 'filtro']);
-
   Route::get('/contrato/{id}', [ContratoController::class, 'index']);
 
   // Tipos de documento de identidad

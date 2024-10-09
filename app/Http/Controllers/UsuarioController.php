@@ -28,6 +28,7 @@ class UsuarioController extends Controller
                 "usr_app_usuarios.email",
                 "usr_app_usuarios.id as id_user",
                 "usr_app_estados_usuario .nombre as estado",
+              
             )
             ->paginate($cantidad);
         return response()->json($users);
@@ -94,6 +95,7 @@ class UsuarioController extends Controller
                 "usr_app_roles.id",
                 'usr_app_usuarios.id as usuario_id',
                 "usr_app_estados_usuario.nombre as estado",
+                "usr_app_usuarios.vendedor_id",
             )
             ->get();
         if (count($users) == 0) {
@@ -136,6 +138,7 @@ class UsuarioController extends Controller
                 "usr_app_roles.id as id_rol",
                 "usr_app_estados_usuario.nombre as estado",
                 "usr_app_estados_usuario.id as id_estado",
+              
             )
             ->get();
         return response()->json($users);
@@ -298,5 +301,10 @@ class UsuarioController extends Controller
         } catch (\Exception $e) {
             return response()->json(['status' => 'error', 'message' => 'Error al eliminar el usuario']);
         }
+    }
+    public function updateVendedorId(Request $request, $id){
+        $result=user::find($id);
+        $result->vendedor_id = $request->vendedor_id;
+        $result->save();
     }
 }
