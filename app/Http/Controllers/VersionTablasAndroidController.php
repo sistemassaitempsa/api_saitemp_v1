@@ -12,6 +12,8 @@ use App\Models\SolicitanteCrm;
 use App\Models\Sede;
 use App\Models\Procesos;
 use App\Models\User;
+use App\Models\cliente;
+use Illuminate\Support\Facades\DB;
 
 
 class VersionTablasAndroidController extends Controller
@@ -41,6 +43,7 @@ class VersionTablasAndroidController extends Controller
         $estado_cierre = EstadoCierreCrm::select('id', 'nombre', 'tipo_estado')->where('tipo_estado', 2)->get();
         $estado_compromiso = EstadoCierreCrm::all()->where('tipo_estado', 1);
         $pqrsf = PqrsfCRM::all();
+        $clientes_debida_diligencia = cliente::select('id', DB::raw('COALESCE(nit, numero_identificacion) as nit'),'razon_social')->get();
         $tablas['usr_app_tablas_android'] = $result;
         $tablas['usr_app_sedes_saitemp'] = $sede;
         $tablas['usr_app_procesos'] = $proceso;
@@ -52,6 +55,7 @@ class VersionTablasAndroidController extends Controller
         $tablas['usr_app_estado_cierre_crm'] = $estado_cierre;
         $tablas['usr_app_estado_compromiso_crm'] = $estado_compromiso;
         $tablas['usr_app_pqrsf_crm'] = $pqrsf;
+        $tablas['usr_app_clientes'] = $clientes_debida_diligencia;
         return response()->json($tablas);
     }
 
