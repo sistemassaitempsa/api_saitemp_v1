@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\UsuarioPermiso;
 use App\Models\cliente;
 use App\Models\ActividadCiiu;
 use App\Models\Cargos;
@@ -64,13 +65,17 @@ class formularioDebidaDiligenciaController extends Controller
             ->get();
         return response()->json($result);
     }
-
-    public function consultacliente($cantidad)
-    {
+    public function consultacliente($cantidad){
+        $permisos = $this->validaPermiso();
+        
+        $user = auth()->user();
         $year_actual = date('Y');
         $result = cliente::join('gen_vendedor as ven', 'ven.cod_ven', '=', 'usr_app_clientes.vendedor_id')
             ->leftJoin('usr_app_estados_firma as estf', 'estf.id', '=', 'usr_app_clientes.estado_firma_id')
             ->whereYear('usr_app_clientes.created_at', $year_actual)
+             ->when(!in_array('39', $permisos), function ($query) use ($user) {
+                return $query->where('usr_app_clientes.vendedor_id', $user->vendedor_id);
+            }) 
             ->select(
                 'usr_app_clientes.id',
                 DB::raw('COALESCE(CONVERT(VARCHAR, usr_app_clientes.numero_radicado), CONVERT(VARCHAR, usr_app_clientes.id)) AS numero_radicado'),
@@ -1780,6 +1785,18 @@ class formularioDebidaDiligenciaController extends Controller
         return response()->json(['status' => 'error', 'message' => 'Error al actualizar registro.']);
     }
 
+    public function validaPermiso()
+    {
+        $user = auth()->user();
+        $responsable = UsuarioPermiso::where('usr_app_permisos_usuarios.usuario_id', '=', $user->id)
+            ->select(
+                'permiso_id'
+            )
+            ->get();
+        $array = $responsable->toArray();
+        $permisos = array_column($array, 'permiso_id');
+        return $permisos;
+    }
 
     public function versionformulario()
     {
