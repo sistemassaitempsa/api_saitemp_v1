@@ -915,12 +915,12 @@ if($request->asistencia){
                     if (!file_exists($pdfPath)) {
                         return response()->json(['message' => 'Error al crear el PDF'], 500);
                     }
-                    $resultCorreo=$this->enviarCorreo($formulario->correo, $formulario, $pdfPath, $registro_id, $modulo, $compromiso='', $user->usuario);
+        
                     
                     // Enviar correos a cada uno en el request
                         foreach ($request->correos as $correoData) {
                              if ($correoData['correo'] !="") {
-                             $this->enviarCorreo($correoData['correo'], $formulario, $pdfPath, $registro_id, $modulo, $correoData['observacion'], $user->usuario);
+                                $resultCorreo= $this->enviarCorreo($correoData['correo'], $formulario, $pdfPath, $registro_id, $modulo, $correoData['observacion'], $user->usuario);
 
                             } 
                         }
@@ -928,6 +928,7 @@ if($request->asistencia){
                         return response()->json(['status' => 'success', 'message' => 'Registro enviado de manera exitosa']);
                 }
             } catch (\Exception $th) {
+                return $th;
                 return response()->json(['status' => 'error', 'message' => 'No fue posible enviar el registro verifique el correo de contacto o de los responsables']);
             }
           

@@ -850,6 +850,7 @@ Route::group([
   // Route::delete('/seguimientocrm', [SeguimientoCrmController::class, 'destroy']);
   Route::delete('/seguimientocrmbyid/{id}', [SeguimientoCrmController::class, 'destroy']);
   Route::get('/compromisosGenerales',[SeguimientoCrmController::class, 'getAllCompromisos']);
+  Route::delete('/compromisosGenerales/{id}',[SeguimientoCrmController::class, 'getAllCompromisos']);
 
   //Rutas para el dashBoard de CRM 
   Route::get('/filtroCRM/{anio}', [FiltroCrmController::class, 'getRadicadosMes']);
