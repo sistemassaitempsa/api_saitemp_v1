@@ -192,8 +192,7 @@ class SeguimientoCrmController extends Controller
                         $query->where('inter.nombre', '=', $valor);
                     } else if ($campo == "pqrsf") {
                         $query->where('pqrsf.nombre', '=', $valor);
-                    }
-                    else if ($campo == "estado") {
+                    } else if ($campo == "estado") {
                         $query->where('cierre.nombre', '=', $valor);
                     } else if ($campo == "solicitante") {
                         $query->where('soli.nombre', '=', $valor);
