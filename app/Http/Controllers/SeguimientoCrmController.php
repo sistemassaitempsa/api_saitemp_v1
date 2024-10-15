@@ -26,6 +26,7 @@ class SeguimientoCrmController extends Controller
             ->join('usr_app_procesos as proces', 'proces.id', 'usr_app_seguimiento_crm.proceso_id')
             ->join('usr_app_atencion_interacion as inter', 'inter.id', 'usr_app_seguimiento_crm.tipo_atencion_id')
             ->join('usr_app_estado_cierre_crm as cierre', 'cierre.id', 'usr_app_seguimiento_crm.estado_id')
+            ->join('usr_app_pqrsf_crm as pqrsf', 'pqrsf.id', 'usr_app_seguimiento_crm.pqrsf_id')
             ->join('usr_app_solicitante_crm as soli', 'soli.id', 'usr_app_seguimiento_crm.solicitante_id')
             ->select(
                 'usr_app_seguimiento_crm.id',
@@ -35,6 +36,7 @@ class SeguimientoCrmController extends Controller
                 'soli.nombre as solicitante',
                 'usr_app_seguimiento_crm.nombre_contacto',
                 'inter.nombre as iteraccion',
+                'pqrsf.nombre as pqrsf',
                 'usr_app_seguimiento_crm.telefono',
                 'usr_app_seguimiento_crm.correo',
                 'cierre.nombre as estado',
@@ -145,6 +147,7 @@ class SeguimientoCrmController extends Controller
                 ->join('usr_app_procesos as proces', 'proces.id', 'usr_app_seguimiento_crm.proceso_id')
                 ->join('usr_app_atencion_interacion as inter', 'inter.id', 'usr_app_seguimiento_crm.tipo_atencion_id')
                 ->join('usr_app_estado_cierre_crm as cierre', 'cierre.id', 'usr_app_seguimiento_crm.estado_id')
+                ->join('usr_app_pqrsf_crm as pqrsf', 'pqrsf.id', 'usr_app_seguimiento_crm.pqrsf_id')
                 ->join('usr_app_solicitante_crm as soli', 'soli.id', 'usr_app_seguimiento_crm.solicitante_id')
                 ->select(
                     'usr_app_seguimiento_crm.id',
@@ -154,6 +157,7 @@ class SeguimientoCrmController extends Controller
                     'soli.nombre as solicitante',
                     'usr_app_seguimiento_crm.nombre_contacto',
                     'inter.nombre as iteraccion',
+                    'pqrsf.nombre as pqrsf',
                     'usr_app_seguimiento_crm.telefono',
                     'usr_app_seguimiento_crm.correo',
                     'cierre.nombre as estado',
@@ -169,6 +173,8 @@ class SeguimientoCrmController extends Controller
                         $query->where('proces.nombre', 'like', '%' . $valor . '%');
                     } else if ($campo == "iteraccion") {
                         $query->where('inter.nombre', 'like', '%' . $valor . '%');
+                    } else if ($campo == "pqrsf") {
+                        $query->where('pqrsf.nombre', 'like', '%' . $valor . '%');
                     } else if ($campo == "estado") {
                         $query->where('cierre.nombre', 'like', '%' . $valor . '%');
                     } else if ($campo == "solicitante") {
@@ -184,7 +190,10 @@ class SeguimientoCrmController extends Controller
                         $query->where('proces.nombre', '=', $valor);
                     } else if ($campo == "iteraccion") {
                         $query->where('inter.nombre', '=', $valor);
-                    } else if ($campo == "estado") {
+                    } else if ($campo == "pqrsf") {
+                        $query->where('pqrsf.nombre', '=', $valor);
+                    }
+                    else if ($campo == "estado") {
                         $query->where('cierre.nombre', '=', $valor);
                     } else if ($campo == "solicitante") {
                         $query->where('soli.nombre', '=', $valor);
