@@ -2,6 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use setasign\Fpdi\Fpdi;
+use setasign\Fpdi\PdfReader;
+use Intervention\Image\ImageManager;
+use Intervention\Image\Drivers\Gd\Driver;
 use Illuminate\Http\Request;
 use App\Models\SeguimientoCrm;
 use App\Models\SeguimientoCrmPendiente;
@@ -12,6 +16,7 @@ use App\Models\TemasVisitaCrm;
 use App\Models\CompromisosVisitaCrm;
 use App\Models\AsistenciaVisitaCrm;
 use TCPDF;
+use ZipArchive;
 use App\Models\AtencionInteraccion;
 class SeguimientoCrmController extends Controller
 {
@@ -306,28 +311,57 @@ class SeguimientoCrmController extends Controller
             }
     
             $result->save();
-            
+            $manager = new ImageManager(new Driver());
             foreach ($request->imagen as $item) {
                 for ($i = 0; $i < count($item); $i++) {
                     if ($i > 0) {
                         $evidencia = new Evidencia;
                         $evidencia->descripcion = $item[0]?$item[0]:"";
                         $evidencia->registro_id = $result->id;
-
+            
                         $nombreArchivoOriginal = $item[$i]->getClientOriginalName();
                         $nombreSinExtension = pathinfo($nombreArchivoOriginal, PATHINFO_FILENAME);
                         $extension = pathinfo($nombreArchivoOriginal, PATHINFO_EXTENSION);
                         $nombreLimpio = preg_replace('/[.\s]+/', '_', $nombreSinExtension) . '.' . $extension;
                         $nuevoNombre = Carbon::now()->timestamp . "_" . $nombreLimpio;
-
+            
                         $carpetaDestino = './upload/evidenciasCrm/';
-                        $item[$i]->move($carpetaDestino, $nuevoNombre);
+                        if (in_array($extension, ['jpg', 'jpeg', 'png'])) {
+                            $image = $manager->read($item[$i]->getPathname());
+                            $image->resizeDown(800, 600, function ($constraint) {
+                                $constraint->aspectRatio();
+                            })->save($carpetaDestino . $nuevoNombre, 70); 
+                        } elseif ($extension === 'pdf') {
+                            $pdf = new Fpdi();
+                            $pageCount = $pdf->setSourceFile($item[$i]->getPathname());
+                            for ($pageNo = 1; $pageNo <= $pageCount; $pageNo++) {
+                                $pdf->AddPage();
+                                $templateId = $pdf->importPage($pageNo);
+                                $pdf->useTemplate($templateId);
+                            }
+                            $pdf->Output($carpetaDestino . $nuevoNombre, 'F');
+                        } else if($extension === 'msg'){  
+                            $nombreGenerico= Carbon::now()->timestamp . "_" . $nombreSinExtension;
+                            $nombreZip=$nombreGenerico . ".zip";
+                            $nombreArchivo=$nombreGenerico . ".msg";
+                            $zip = new ZipArchive();
+                            $zipPath = $carpetaDestino . $nombreZip;
+                            if ($zip->open($zipPath, ZipArchive::CREATE) === true) {
+                                $zip->addFile($item[$i]->getPathname(), $nombreArchivo);
+                                $zip->close();
+                            } else {
+                                throw new \Exception('No se pudo crear el archivo ZIP');
+                            }
+                            $nuevoNombre = $nombreZip;
+                        }  else {
+                            $item[$i]->move($carpetaDestino, $nuevoNombre);
+                        }
+            
                         $evidencia->archivo = ltrim($carpetaDestino, '.') . $nuevoNombre;
                         $evidencia->save();
                     }
                 }
             }
-
             if($request->compromisos ){
                 $decodeCompromisos= json_decode($request->compromisos,true);
                 if (count($decodeCompromisos) > 0) {
@@ -474,26 +508,57 @@ class SeguimientoCrmController extends Controller
           }
   
           $result->save();
-          
+          $manager = new ImageManager(new Driver());
           foreach ($request->imagen as $item) {
-              for ($i = 0; $i < count($item); $i++) {
-                  if ($i > 0) {
-                      $evidencia = new Evidencia;
-                      $evidencia->descripcion = $item[0]?$item[0]:"";
-                      $evidencia->registro_id = $result->id;
-                      $nombreArchivoOriginal = $item[$i]->getClientOriginalName();
-                      $nombreSinExtension = pathinfo($nombreArchivoOriginal, PATHINFO_FILENAME);
-                      $extension = pathinfo($nombreArchivoOriginal, PATHINFO_EXTENSION);
-                      $nombreLimpio = preg_replace('/[.\s]+/', '_', $nombreSinExtension) . '.' . $extension;
-                      $nuevoNombre = Carbon::now()->timestamp . "_" . $nombreLimpio;
-
-                      $carpetaDestino = './upload/evidenciasCrm/';
-                      $item[$i]->move($carpetaDestino, $nuevoNombre);
-                      $evidencia->archivo = ltrim($carpetaDestino, '.') . $nuevoNombre;
-                      $evidencia->save();
-                  }
-              }
-          }
+            for ($i = 0; $i < count($item); $i++) {
+                if ($i > 0) {
+                    $evidencia = new Evidencia;
+                    $evidencia->descripcion = $item[0]?$item[0]:"";
+                    $evidencia->registro_id = $result->id;
+        
+                    $nombreArchivoOriginal = $item[$i]->getClientOriginalName();
+                    $nombreSinExtension = pathinfo($nombreArchivoOriginal, PATHINFO_FILENAME);
+                    $extension = pathinfo($nombreArchivoOriginal, PATHINFO_EXTENSION);
+                    $nombreLimpio = preg_replace('/[.\s]+/', '_', $nombreSinExtension) . '.' . $extension;
+                    $nuevoNombre = Carbon::now()->timestamp . "_" . $nombreLimpio;
+        
+                    $carpetaDestino = './upload/evidenciasCrm/';
+                    if (in_array($extension, ['jpg', 'jpeg', 'png'])) {
+                        $image = $manager->read($item[$i]->getPathname());
+                        $image->resizeDown(800, 600, function ($constraint) {
+                            $constraint->aspectRatio();
+                        })->save($carpetaDestino . $nuevoNombre, 70); 
+                    } elseif ($extension === 'pdf') {
+                        $pdf = new Fpdi();
+                        $pageCount = $pdf->setSourceFile($item[$i]->getPathname());
+                        for ($pageNo = 1; $pageNo <= $pageCount; $pageNo++) {
+                            $pdf->AddPage();
+                            $templateId = $pdf->importPage($pageNo);
+                            $pdf->useTemplate($templateId);
+                        }
+                        $pdf->Output($carpetaDestino . $nuevoNombre, 'F');
+                    } else if($extension === 'msg'){  
+                        $nombreGenerico= Carbon::now()->timestamp . "_" . $nombreSinExtension;
+                        $nombreZip=$nombreGenerico . ".zip";
+                        $nombreArchivo=$nombreGenerico . ".msg";
+                        $zip = new ZipArchive();
+                        $zipPath = $carpetaDestino . $nombreZip;
+                        if ($zip->open($zipPath, ZipArchive::CREATE) === true) {
+                            $zip->addFile($item[$i]->getPathname(), $nombreArchivo);
+                            $zip->close();
+                        } else {
+                            throw new \Exception('No se pudo crear el archivo ZIP');
+                        }
+                        $nuevoNombre = $nombreZip;
+                    }  else {
+                        $item[$i]->move($carpetaDestino, $nuevoNombre);
+                    }
+        
+                    $evidencia->archivo = ltrim($carpetaDestino, '.') . $nuevoNombre;
+                    $evidencia->save();
+                }
+            }
+        }
           if($request->compromisos){
             $decodeCompromisos= json_decode($request->compromisos,true);
             $compromisoCant="";
@@ -985,5 +1050,49 @@ if($request->asistencia){
 public function getAllCompromisos(){
     $result = CompromisosVisitaCrm::select()->get();
     return response()->json($result);
+}
+
+public function verEvidencia($id){
+    $evidencia = Evidencia::find($id);
+
+    if (!$evidencia) {
+        return response()->json(['error' => 'Archivo no encontrado']);
+    }
+
+    $rutaArchivo = public_path($evidencia->archivo);  
+    $extension = pathinfo($rutaArchivo, PATHINFO_EXTENSION);
+    $nombreSinExtension = pathinfo($rutaArchivo, PATHINFO_FILENAME);
+    // Verificar si es un archivo ZIP
+    if ($extension === 'zip') {
+        $zip = new ZipArchive;
+        $res = $zip->open($rutaArchivo);
+
+        if ($res === true) {
+            // Extraer el contenido del archivo ZIP
+            $zip->extractTo(public_path('/upload/tmp/'));  
+            $zip->close();
+
+            // Buscar el archivo .msg extraído
+            $archivoExtraido = glob(public_path('/upload/tmp/' .$nombreSinExtension .'.msg'));
+            if (count($archivoExtraido) > 0) {
+                $archivoMsg = $archivoExtraido[0];
+                return response()->download($archivoMsg, basename($archivoMsg))->deleteFileAfterSend(true);
+            } else {
+                return response()->json(['error' => 'No se encontró archivo .msg dentro del ZIP'], 404);
+            }
+        } else {
+            return response()->json(['error' => 'No se pudo abrir el archivo ZIP'], 500);
+        }
+    }
+    $mimeType = mime_content_type($rutaArchivo);
+
+    // Para tipos de archivo como imágenes o PDFs, enviar el archivo para visualizarlo en el navegador
+    if (in_array($mimeType, ['image/jpeg', 'image/png', 'application/pdf'])) {
+        return response()->file($rutaArchivo, [
+            'Content-Type' => $mimeType,
+            'Content-Disposition' => 'inline; filename="'.basename($rutaArchivo).'"'
+        ]);
+    }
+    return response()->download($rutaArchivo);
 }
 }
