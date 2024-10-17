@@ -96,6 +96,7 @@ class SeguimientoCrmController extends Controller
                 'usr_app_seguimiento_crm.visitante',
                 'usr_app_seguimiento_crm.latitud',
                 'usr_app_seguimiento_crm.longitud',
+                'usr_app_seguimiento_crm.responsable_id',
             )
             ->first();
             $evidencias = Evidencia::where('registro_id', $id)->get();
@@ -292,6 +293,7 @@ class SeguimientoCrmController extends Controller
                 $result->creacion_pqrsf = $user->nombres . ' ' . $user->apellidos;
                 $result->cierre_pqrsf = $request->cierre_pqrsf;
                 $result->responsable = $request->responsable;
+                $result->responsable_id = $request->responsable_id;
             //campos agregados para el formulario de visita
             $result->visitante= $request->visitante;
             $result->visitado= $request->visitado; 
@@ -491,6 +493,7 @@ class SeguimientoCrmController extends Controller
         $result->cierre_pqrsf = $request->cierre_pqrsf;
         $result->responsable = $request->responsable;
         $result->pqrsf_id = $request->pqrsf_id;
+        $result->responsable_id = $request->responsable_id;
           //campos agregados para el formulario de visita
           $result->visitante= $request->visitante;
           $result->visitado= $request->visitado; 
