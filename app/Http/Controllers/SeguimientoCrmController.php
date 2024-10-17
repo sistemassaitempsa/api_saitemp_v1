@@ -959,7 +959,7 @@ if($request->asistencia){
             $margen_izquierdo = 15;
             $margen_derecho = 15;
             $pdf->SetMargins($margen_izquierdo, 40, $margen_derecho);
-            $pdf->SetAutoPageBreak(true, 50); // 10 mm de margen inferior
+            $pdf->SetAutoPageBreak(true, 50); 
             // Escribir el HTML en el PDF
             $pdf->writeHTML($html, false, false, true, false, '');
             $totalPages=0;
@@ -985,7 +985,6 @@ if($request->asistencia){
             $pdf->Output('formulario.pdf', 'D');};  
         
             // Opción 2: Mostrar el PDF en el navegador
-            // $pdf->Output('formulario.pdf', 'I');
             try {
                 if($btnId==1){
                     $pdfPath = storage_path('app/temp.pdf');
