@@ -60,8 +60,10 @@ class SeguimientoCrmController extends Controller
             ->join('usr_app_estado_cierre_crm as cierre', 'cierre.id', 'usr_app_seguimiento_crm.estado_id')
             ->join('usr_app_solicitante_crm as soli', 'soli.id', 'usr_app_seguimiento_crm.solicitante_id')
             ->join('usr_app_pqrsf_crm as pqrsf', 'pqrsf.id', 'usr_app_seguimiento_crm.pqrsf_id')
+            ->join('usr_app_usuarios as usuario_responsable', 'usuario_responsable.id', 'usr_app_seguimiento_crm.responsable_id')
             ->where('usr_app_seguimiento_crm.id', '=', $id)
             ->select(
+                'usuario_responsable.usuario as responsable_email',
                 'usr_app_seguimiento_crm.id',
                 'usr_app_seguimiento_crm.numero_radicado',
                 'usr_app_seguimiento_crm.created_at',
@@ -1018,11 +1020,23 @@ if($request->asistencia){
 
         private function enviarCorreo($destinatario, $formulario, $pdfPath, $registro_id, $modulo, $observacion = '', $user)
 {
-    $body = "Cordial saludo, esperamos se encuentren muy bien.\n\n Informamos que el registro de servicio ha sido creado satisfactoriamente, Cualquier información adicional podrá ser atendida en la línea Servisai de Saitemp S.A. marcando  al (604) 4485744, con gusto uno de nuestros facilitadores atenderá su llamada.\n\n simplificando conexiones, facilitando experiencias.";
+    $numeroRadicado= $formulario->numero_radicado;
+    $tipo_atencion_id=$formulario->tipo_atencion_id;
+    if($tipo_atencion_id == 5 || $tipo_atencion_id == 6 ){
+        $body = "Cordial saludo, esperamos se encuentren muy bien.\n\n Informamos que el registro de visita ha sido creado satisfactoriamente con número de radicado: <b><i>$numeroRadicado</i></b>, Cualquier información adicional puede comunicarse con:
+        Katerin Andrea Nuno: (+57) 311-437-0207
+        William Hernán Hernandez: (+57) 311-586-4835
+        o a nuestra línea de atención general (604) 4485744, con gusto uno de nuestros facilitadores atenderá su llamada.\n\n simplificando conexiones, facilitando experiencias.";
+        
+    }
+    else{
+        $body = "Cordial saludo, esperamos se encuentren muy bien.\n\n Informamos que el registro de servicio ha sido creado satisfactoriamente con número de radicado: <b><i>$numeroRadicado</i></b>, Cualquier información adicional podrá ser atendida en la línea Servisai de Saitemp S.A. marcando  al (604) 4485744, con gusto uno de nuestros facilitadores atenderá su llamada.\n\n simplificando conexiones, facilitando experiencias.";
+    }
+   
     $body = nl2br($body);
 
     if($observacion!=""){
-        $body= "Cordial saludo, tiene nuevos compromisos asignados en el radicado adjunto con las siguientes observaciones: $observacion";
+        $body= "Cordial saludo, tiene nuevos compromisos asignados en el radicado CRM número: <b><i>$numeroRadicado</i></b> adjunto con las siguientes observaciones: $observacion";
     }
 
     
