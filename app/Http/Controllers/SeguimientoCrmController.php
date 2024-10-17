@@ -993,12 +993,12 @@ if($request->asistencia){
                     if (!file_exists($pdfPath)) {
                         return response()->json(['message' => 'Error al crear el PDF'], 500);
                     }
-        
+                    $rutaImagen1 = public_path($user->imagen_firma_1);
                     
                     // Enviar correos a cada uno en el request
                         foreach ($request->correos as $correoData) {
                              if ($correoData['correo'] !="") {
-                                $resultCorreo= $this->enviarCorreo($correoData['correo'], $formulario, $pdfPath, $registro_id, $modulo, $correoData['observacion'], $user->usuario);
+                                $resultCorreo= $this->enviarCorreo($correoData['correo'], $formulario, $pdfPath, $registro_id, $modulo, $correoData['observacion'], $user->usuario,$rutaImagen1);
 
                             } 
                         }
@@ -1018,8 +1018,10 @@ if($request->asistencia){
 
 
 
-        private function enviarCorreo($destinatario, $formulario, $pdfPath, $registro_id, $modulo, $observacion = '', $user)
+        private function enviarCorreo($destinatario, $formulario, $pdfPath, $registro_id, $modulo, $observacion = '', $user, $rutaImagen1)
 {
+    
+   
     $numeroRadicado= $formulario->numero_radicado;
     $tipo_atencion_id=$formulario->tipo_atencion_id;
     if($tipo_atencion_id == 5 || $tipo_atencion_id == 6 ){
@@ -1027,7 +1029,7 @@ if($request->asistencia){
         Katerin Andrea Nuno: (+57) 311-437-0207
         William Hernán Hernandez: (+57) 311-586-4835
         o a nuestra línea de atención general (604) 4485744, con gusto uno de nuestros facilitadores atenderá su llamada.\n\n simplificando conexiones, facilitando experiencias.";
-        
+       
     }
     else{
         $body = "Cordial saludo, esperamos se encuentren muy bien.\n\n Informamos que el registro de servicio ha sido creado satisfactoriamente con número de radicado: <b><i>$numeroRadicado</i></b>, Cualquier información adicional podrá ser atendida en la línea Servisai de Saitemp S.A. marcando  al (604) 4485744, con gusto uno de nuestros facilitadores atenderá su llamada.\n\n simplificando conexiones, facilitando experiencias.";
