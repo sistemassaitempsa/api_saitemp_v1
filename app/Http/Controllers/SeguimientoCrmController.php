@@ -1024,7 +1024,8 @@ if($request->asistencia){
         $body = "Cordial saludo, esperamos se encuentren muy bien.\n\n Informamos que el registro de visita ha sido creado satisfactoriamente con número de radicado: <b><i>$numeroRadicado</i></b>, Cualquier información adicional puede comunicarse con:
         Katerin Andrea Nuno: (+57) 311-437-0207
         William Hernán Hernandez: (+57) 311-586-4835
-        o a nuestra línea de atención general (604) 4485744, con gusto uno de nuestros facilitadores atenderá su llamada.\n\n simplificando conexiones, facilitando experiencias.";
+        o a nuestra línea de atención general (604) 4485744, con gusto uno de nuestros facilitadores atenderá su llamada.\n\n simplificando conexiones, facilitando experiencias.
+        \n\n Atentamente:";
        
     }
     else{
@@ -1034,7 +1035,8 @@ if($request->asistencia){
     $body = nl2br($body);
 
     if($booleanCompromiso == true){
-        $body= "Cordial saludo, tiene nuevos compromisos asignados en el radicado CRM número: <b><i>$numeroRadicado</i></b> adjunto con las siguientes observaciones: $observacion";
+        $body= "Cordial saludo, tiene nuevos compromisos asignados en el radicado CRM número: <b><i>$numeroRadicado</i></b> adjunto con las siguientes observaciones: $observacion.
+        \n\n Atentamente:";
     }
 
     
