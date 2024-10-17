@@ -998,7 +998,7 @@ if($request->asistencia){
                     // Enviar correos a cada uno en el request
                         foreach ($request->correos as $correoData) {
                              if ($correoData['correo'] !="") {
-                                $resultCorreo= $this->enviarCorreo($correoData['correo'], $formulario, $pdfPath, $registro_id, $modulo, $correoData['observacion'], $user->usuario,$rutaImagen1);
+                                $resultCorreo= $this->enviarCorreo($correoData['correo'], $formulario, $pdfPath, $registro_id, $modulo, $correoData['observacion'], $user->usuario, $correoData['compromiso']);
 
                             } 
                         }
@@ -1014,11 +1014,7 @@ if($request->asistencia){
         }
 
 
-
-
-
-
-        private function enviarCorreo($destinatario, $formulario, $pdfPath, $registro_id, $modulo, $observacion = '', $user, $rutaImagen1)
+        private function enviarCorreo($destinatario, $formulario, $pdfPath, $registro_id, $modulo, $observacion = '', $user, $booleanCompromiso)
 {
     
    
@@ -1037,7 +1033,7 @@ if($request->asistencia){
    
     $body = nl2br($body);
 
-    if($observacion!=""){
+    if($booleanCompromiso == true){
         $body= "Cordial saludo, tiene nuevos compromisos asignados en el radicado CRM número: <b><i>$numeroRadicado</i></b> adjunto con las siguientes observaciones: $observacion";
     }
 
