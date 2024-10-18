@@ -959,7 +959,7 @@ if($request->asistencia){
             $margen_izquierdo = 15;
             $margen_derecho = 15;
             $pdf->SetMargins($margen_izquierdo, 40, $margen_derecho);
-            $pdf->SetAutoPageBreak(true, 50); // 10 mm de margen inferior
+            $pdf->SetAutoPageBreak(true, 50); 
             // Escribir el HTML en el PDF
             $pdf->writeHTML($html, false, false, true, false, '');
             $totalPages=0;
@@ -985,7 +985,6 @@ if($request->asistencia){
             $pdf->Output('formulario.pdf', 'D');};  
         
             // Opción 2: Mostrar el PDF en el navegador
-            // $pdf->Output('formulario.pdf', 'I');
             try {
                 if($btnId==1){
                     $pdfPath = storage_path('app/temp.pdf');
@@ -998,7 +997,7 @@ if($request->asistencia){
                     // Enviar correos a cada uno en el request
                         foreach ($request->correos as $correoData) {
                              if ($correoData['correo'] !="") {
-                                $resultCorreo= $this->enviarCorreo($correoData['correo'], $formulario, $pdfPath, $registro_id, $modulo, $correoData['observacion'], $user->usuario,$rutaImagen1);
+                                $resultCorreo= $this->enviarCorreo($correoData['correo'], $formulario, $pdfPath, $registro_id, $modulo, $correoData['observacion'], $user->usuario, $correoData['compromiso']);
 
                             } 
                         }
@@ -1014,11 +1013,7 @@ if($request->asistencia){
         }
 
 
-
-
-
-
-        private function enviarCorreo($destinatario, $formulario, $pdfPath, $registro_id, $modulo, $observacion = '', $user, $rutaImagen1)
+        private function enviarCorreo($destinatario, $formulario, $pdfPath, $registro_id, $modulo, $observacion = '', $user, $booleanCompromiso)
 {
     
    
@@ -1028,7 +1023,8 @@ if($request->asistencia){
         $body = "Cordial saludo, esperamos se encuentren muy bien.\n\n Informamos que el registro de visita ha sido creado satisfactoriamente con número de radicado: <b><i>$numeroRadicado</i></b>, Cualquier información adicional puede comunicarse con:
         Katerin Andrea Nuno: (+57) 311-437-0207
         William Hernán Hernandez: (+57) 311-586-4835
-        o a nuestra línea de atención general (604) 4485744, con gusto uno de nuestros facilitadores atenderá su llamada.\n\n simplificando conexiones, facilitando experiencias.";
+        o a nuestra línea de atención general (604) 4485744, con gusto uno de nuestros facilitadores atenderá su llamada.\n\n simplificando conexiones, facilitando experiencias.
+        \n\n Atentamente:";
        
     }
     else{
@@ -1037,8 +1033,9 @@ if($request->asistencia){
    
     $body = nl2br($body);
 
-    if($observacion!=""){
-        $body= "Cordial saludo, tiene nuevos compromisos asignados en el radicado CRM número: <b><i>$numeroRadicado</i></b> adjunto con las siguientes observaciones: $observacion";
+    if($booleanCompromiso == true){
+        $body= "Cordial saludo, tiene nuevos compromisos asignados en el radicado CRM número: <b><i>$numeroRadicado</i></b> adjunto con las siguientes observaciones: $observacion.
+        \n\n Atentamente:";
     }
 
     
