@@ -903,11 +903,9 @@ if($request->asistencia){
         </table>
         
         ' : '') . '
-        <table>
-    <tr>
-            <td class="data-label">Observación:<br><span class="info"> ' . $formulario->observacion . '</span></td>
-        </tr>
-        </table>
+    
+            <div class="data-label">Observación:<span class="info"> ' . $formulario->observacion . '</span></div>
+       
             ';
 
             // Mostrar evidencias en una tabla
@@ -970,13 +968,21 @@ if($request->asistencia){
             }
         
             // Agregar membrete en cada página después de la primera
-            for ($i = 2; $i <= $totalPages; $i++) {
-               
+            for ($i = 1; $i <= $totalPages; $i++) {
+                // Cambiar a la página correspondiente
+                $pdf->setPage($i);
+            
+                // Ajustar los márgenes para que el membrete no interfiera con el contenido
                 $pdf->SetMargins(0, 0, 0);
-            $pdf->SetAutoPageBreak(false, 50);
-            $url = public_path('/upload/MEMBRETE.png');
-            $pdf->Image($url, -0.5, 0, $pdf->getPageWidth() + 0.5, $pdf->getPageHeight(), '', '', '', false, 300, '', false, false, 0);
-            $pdf->SetMargins(0, 30, 0);
+                $pdf->SetAutoPageBreak(false, 0);
+            
+                // Agregar la imagen del membrete
+                $url = public_path('/upload/MEMBRETE.png');
+                $pdf->Image($url, -0.5, 0, $pdf->getPageWidth() + 0.5, $pdf->getPageHeight(), '', '', '', false, 300, '', false, false, 0);
+            
+                // Restaurar los márgenes para el contenido
+                $pdf->SetMargins(15, 40, 15);
+                $pdf->SetAutoPageBreak(true, 50);
             }
         
         
