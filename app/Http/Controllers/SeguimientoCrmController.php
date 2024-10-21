@@ -776,9 +776,6 @@ class SeguimientoCrmController extends Controller
                 }
             }
             }}
-          
-         // Procesar temas principales
-          
 if($request->asistencia){
     foreach ($request->asistencia as $item) {
         for ($i = 0; $i < count($item); $i++) {
@@ -799,9 +796,6 @@ if($request->asistencia){
         }
     } 
 }
-          
-        
-  
         DB::commit();
         return response()->json(['status' => 'success', 'message' => 'Registro actualizado de manera exitosa', 'id' => $result->id]);
         } catch (\Exception $e) {
@@ -809,9 +803,6 @@ if($request->asistencia){
             DB::rollback();
             return response()->json(['status' => 'error', 'message' => 'Error al guardar el formulario, por favor intenta nuevamente']);
         }
-       
-       
-        
     }
 
     public function borradomasivo(Request $request)
