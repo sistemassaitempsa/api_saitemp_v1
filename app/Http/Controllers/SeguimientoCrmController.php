@@ -268,6 +268,21 @@ class SeguimientoCrmController extends Controller
         return response()->json($result);
     }
 
+    public function create2(Request $request)
+    {
+		
+		 // Validar y recibir el JSON
+    $datosFormulario = $request->json()->all();
+
+    // Retornar los datos tal cual o procesarlos según sea necesario
+    return response()->json([
+        'status' => 'success',
+        'formulario' => $datosFormulario
+    ]);
+		//return response()->json(["status"=>"succes","formulario"=>$request->request]);
+
+	}
+
 
     /**
      * Show the form for creating a new resource.
