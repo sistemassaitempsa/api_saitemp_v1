@@ -158,7 +158,7 @@ use App\Http\Controllers\ClasificacionRiesgoController;
 use App\Http\Controllers\VersionTablasAndroidController;
 use App\Http\Controllers\RecepcionEmpleadoController;
 use App\Http\Controllers\GenerarZipController;
-
+use App\Http\Controllers\limitesCrmController;
 
 /*
 |--------------------------------------------------------------------------
@@ -818,6 +818,7 @@ Route::group([
   Route::post('/asignacionmasivaformularioingreso/{id_estado}/{id_encargado}', [formularioGestionIngresoController::class, 'asignacionmasiva']);
 
   Route::get('/observacionestado', [ObservacionEstadoFormIngresoController::class, 'index']);
+  Route::get('/limitesCrm',[limitesCrmController::class,'getLimitesCrm']);
 
   Route::get('/estadosingresos', [estadosIngresoController::class, 'index']);
   Route::get('/actualizaestadoingreso/{item}/{estado}', [formularioGestionIngresoController::class, 'actualizaestadoingreso']);
