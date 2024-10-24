@@ -99,8 +99,11 @@ class SeguimientoCrmController extends Controller
                 'usr_app_seguimiento_crm.latitud',
                 'usr_app_seguimiento_crm.longitud',
                 'usr_app_seguimiento_crm.responsable_id',
+                'usr_app_seguimiento_crm.observacion2'
             )
             ->first();
+            $result->observacion = $result->observacion.$result->observacion2;
+
             $evidencias = Evidencia::where('registro_id', $id)->get();
             $evidencias->transform(function ($item) {
             $item->edit=false;
@@ -304,7 +307,7 @@ class SeguimientoCrmController extends Controller
                 $result->telefono = $request->telefono;
                 $result->correo = $request->correo;
                 $result->estado_id = $request->estado_id;
-                $result->observacion = $request->observacion;
+            /*     $result->observacion = $request->observacion; */
                 $result->nit_documento = $request->nit_documento;
                 $result->pqrsf_id = $request->pqrsf_id;
                 $result->creacion_pqrsf = $user->nombres . ' ' . $user->apellidos;
@@ -322,6 +325,12 @@ class SeguimientoCrmController extends Controller
             $result-> alcance = $request->alcance_visita;
             $result-> latitud = $request->latitud;
             $result-> longitud = $request->longitud;
+
+            $observacionFragmentada= str_split($request->observacion,4000);  
+            $result->observacion= $observacionFragmentada[0];
+            if(isset($observacionFragmentada[1])){
+                $result->observacion2= $observacionFragmentada[1];
+            }
 
             
             if ($request->estado_id == 2) {
@@ -410,52 +419,6 @@ class SeguimientoCrmController extends Controller
                     /*     $evidencia->archivo = ltrim($carpetaDestino, '.') . $nuevoNombre; */
                         $evidencia->save();
                     }
-                /*     if ($i > 0) {
-                        $evidencia = new Evidencia;
-                        $evidencia->descripcion = $item[0]?$item[0]:"";
-                        $evidencia->registro_id = $result->id;
-            
-                        $nombreArchivoOriginal = $item[$i]->getClientOriginalName();
-                        $nombreSinExtension = pathinfo($nombreArchivoOriginal, PATHINFO_FILENAME);
-                        $extension = pathinfo($nombreArchivoOriginal, PATHINFO_EXTENSION);
-                        $nombreLimpio = preg_replace('/[.\s]+/', '_', $nombreSinExtension) . '.' . $extension;
-                        $nuevoNombre = Carbon::now()->timestamp . "_" . $nombreLimpio;
-            
-                        $carpetaDestino = './upload/evidenciasCrm/';
-                        if (in_array($extension, ['jpg', 'jpeg', 'png'])) {
-                            $image = $manager->read($item[$i]->getPathname());
-                            $image->resizeDown(800, 600, function ($constraint) {
-                                $constraint->aspectRatio();
-                            })->save($carpetaDestino . $nuevoNombre, 70); 
-                        } elseif ($extension === 'pdf') {
-                            $pdf = new Fpdi();
-                            $pageCount = $pdf->setSourceFile($item[$i]->getPathname());
-                            for ($pageNo = 1; $pageNo <= $pageCount; $pageNo++) {
-                                $pdf->AddPage();
-                                $templateId = $pdf->importPage($pageNo);
-                                $pdf->useTemplate($templateId);
-                            }
-                            $pdf->Output($carpetaDestino . $nuevoNombre, 'F');
-                        } else if($extension === 'msg'){  
-                            $nombreGenerico= Carbon::now()->timestamp . "_" . $nombreSinExtension;
-                            $nombreZip=$nombreGenerico . ".zip";
-                            $nombreArchivo=$nombreGenerico . ".msg";
-                            $zip = new ZipArchive();
-                            $zipPath = $carpetaDestino . $nombreZip;
-                            if ($zip->open($zipPath, ZipArchive::CREATE) === true) {
-                                $zip->addFile($item[$i]->getPathname(), $nombreArchivo);
-                                $zip->close();
-                            } else {
-                                throw new \Exception('No se pudo crear el archivo ZIP');
-                            }
-                            $nuevoNombre = $nombreZip;
-                        }  else {
-                            $item[$i]->move($carpetaDestino, $nuevoNombre);
-                        }
-            
-                        $evidencia->archivo = ltrim($carpetaDestino, '.') . $nuevoNombre;
-                        $evidencia->save();
-                    } */
                 }
             }
             if($request->compromisos ){
@@ -582,7 +545,6 @@ class SeguimientoCrmController extends Controller
         $result->telefono = $request->telefono;
         $result->correo = $request->correo;
         $result->estado_id = $request->estado_id;
-        $result->observacion = $request->observacion;
         $result->nit_documento = $request->nit_documento;
         $result->cierre_pqrsf = $request->cierre_pqrsf;
         $result->responsable = $request->responsable;
@@ -598,7 +560,11 @@ class SeguimientoCrmController extends Controller
           $result-> objetivo = $request->objetivo_visita;
           $result-> alcance = $request->alcance_visita;
 
-          
+          $observacionFragmentada= str_split($request->observacion,4000);  
+          $result->observacion= $observacionFragmentada[0];
+          if(isset($observacionFragmentada[1])){
+              $result->observacion2= $observacionFragmentada[1];
+          }
           if ($request->estado_id == 3) {
               $fechaHoraActual = Carbon::now();
               $result->fecha_cerrado = $fechaHoraActual->format('d-m-Y H:i:s');
@@ -1105,11 +1071,6 @@ if($request->asistencia){
                 <h4>' . $tituloFormateado . ':</h4>
                 <p>' . $compromiso->descripcion . '</p>
         ':"";
-              /*    $html .= ' 
-                 
-                        <h4>' . $tituloFormateado . ':</h4>
-                        <p>' . $compromiso->descripcion . '</p>
-                '; */
             }
             }
             if ($formulario->tipo_atencion_id == 5 ||$formulario->tipo_atencion_id == 6 ) {
@@ -1290,5 +1251,39 @@ public function getAllCompromisos(){
             }
         }
 
+    }
+    public function recortarObservacion(){
+        DB::beginTransaction();
+    try {
+        // Obtener todos los registros del modelo SeguimientoCrm
+        $registros = SeguimientoCrm::all();
+
+        foreach ($registros as $registro) {
+            // Verificar si el campo 'observacion' tiene contenido
+            if ($registro->observacion) {
+                // Dividir el contenido de 'observacion' en partes de 4000 caracteres
+                $observacionFragmentada = str_split($registro->observacion, 4000);
+
+                // Guardar la primera parte en el campo 'observacion'
+                $registro->observacion = $observacionFragmentada[0];
+
+                // Si hay una segunda parte, guardarla en el campo 'observacion2'
+                if (isset($observacionFragmentada[1])) {
+                    $registro->observacion2 = $observacionFragmentada[1];
+                }
+
+                // Guardar los cambios
+                $registro->save();
+            }
+        }
+
+        // Confirmar la transacción
+        DB::commit();
+        return response()->json(['status' => 'success', 'message' => 'Observaciones divididas correctamente.']);
+    } catch (\Exception $e) {
+        // En caso de error, revertir la transacción
+        DB::rollback();
+        return response()->json(['status' => 'error', 'message' => 'Error al dividir las observaciones: ' . $e->getMessage()]);
+    }
     }
 }
