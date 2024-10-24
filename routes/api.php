@@ -159,6 +159,7 @@ use App\Http\Controllers\VersionTablasAndroidController;
 use App\Http\Controllers\RecepcionEmpleadoController;
 use App\Http\Controllers\GenerarZipController;
 use App\Http\Controllers\limitesCrmController;
+use App\Models\SeguimientoCrm;
 
 /*
 |--------------------------------------------------------------------------
@@ -819,6 +820,7 @@ Route::group([
 
   Route::get('/observacionestado', [ObservacionEstadoFormIngresoController::class, 'index']);
   Route::get('/limitesCrm',[limitesCrmController::class,'getLimitesCrm']);
+  Route::get('/recortarObservacion',[SeguimientoCrmController::class,'recortarObservacion']);
 
   Route::get('/estadosingresos', [estadosIngresoController::class, 'index']);
   Route::get('/actualizaestadoingreso/{item}/{estado}', [formularioGestionIngresoController::class, 'actualizaestadoingreso']);
