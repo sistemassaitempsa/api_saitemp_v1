@@ -476,7 +476,6 @@ class SeguimientoCrmController extends Controller
             return response()->json(['status' => 'success', 'message' => 'Registro guardado de manera exitosa', 'id' => $result->id]);
         }
         catch (\Exception $e) {
-            return $e;
             DB::rollback();
             return response()->json(['status' => 'error', 'message' => 'Error al guardar el formulario, por favor intenta nuevamente']);
         }
@@ -774,7 +773,6 @@ if($request->asistencia){
         DB::commit();
         return response()->json(['status' => 'success', 'message' => 'Registro actualizado de manera exitosa', 'id' => $result->id]);
         } catch (\Exception $e) {
-            return $e;
             DB::rollback();
             return response()->json(['status' => 'error', 'message' => 'Error al guardar el formulario, por favor intenta nuevamente']);
         }
