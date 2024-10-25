@@ -311,11 +311,17 @@ class SeguimientoCrmController extends Controller
             $result-> latitud = $request->latitud;
             $result-> longitud = $request->longitud;
 
-            $observacionFragmentada= str_split($request->observacion,4000);  
-            $result->observacion= $observacionFragmentada[0];
-            if(isset($observacionFragmentada[1])){
-                $result->observacion2= $observacionFragmentada[1];
-            }
+            if($request->observacion!=""){
+                $observacionFragmentada= str_split($request->observacion,4000);  
+                $result->observacion= $observacionFragmentada[0];
+                if(isset($observacionFragmentada[1])){
+                    $result->observacion2= $observacionFragmentada[1];
+                }
+                if ($request->estado_id == 3) {
+                    $fechaHoraActual = Carbon::now();
+                    $result->fecha_cerrado = $fechaHoraActual->format('d-m-Y H:i:s');
+                }
+              }
 
             
             if ($request->estado_id == 2) {
@@ -545,15 +551,18 @@ class SeguimientoCrmController extends Controller
           $result-> objetivo = $request->objetivo_visita;
           $result-> alcance = $request->alcance_visita;
 
-          $observacionFragmentada= str_split($request->observacion,4000);  
-          $result->observacion= $observacionFragmentada[0];
-          if(isset($observacionFragmentada[1])){
-              $result->observacion2= $observacionFragmentada[1];
+          if($request->observacion!=""){
+            $observacionFragmentada= str_split($request->observacion,4000);  
+            $result->observacion= $observacionFragmentada[0];
+            if(isset($observacionFragmentada[1])){
+                $result->observacion2= $observacionFragmentada[1];
+            }
+            if ($request->estado_id == 3) {
+                $fechaHoraActual = Carbon::now();
+                $result->fecha_cerrado = $fechaHoraActual->format('d-m-Y H:i:s');
+            }
           }
-          if ($request->estado_id == 3) {
-              $fechaHoraActual = Carbon::now();
-              $result->fecha_cerrado = $fechaHoraActual->format('d-m-Y H:i:s');
-          }
+         
   
           $result->save();
           $manager = new ImageManager(new Driver());
