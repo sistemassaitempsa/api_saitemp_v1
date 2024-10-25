@@ -643,52 +643,6 @@ class SeguimientoCrmController extends Controller
                       $evidencia->archivo = ltrim($carpetaDestino, '.') .$zipNombre. '_'. $nuevoNombre;
                       $evidencia->save();
                   }
-              /*     if ($i > 0) {
-                      $evidencia = new Evidencia;
-                      $evidencia->descripcion = $item[0]?$item[0]:"";
-                      $evidencia->registro_id = $result->id;
-          
-                      $nombreArchivoOriginal = $item[$i]->getClientOriginalName();
-                      $nombreSinExtension = pathinfo($nombreArchivoOriginal, PATHINFO_FILENAME);
-                      $extension = pathinfo($nombreArchivoOriginal, PATHINFO_EXTENSION);
-                      $nombreLimpio = preg_replace('/[.\s]+/', '_', $nombreSinExtension) . '.' . $extension;
-                      $nuevoNombre = Carbon::now()->timestamp . "_" . $nombreLimpio;
-          
-                      $carpetaDestino = './upload/evidenciasCrm/';
-                      if (in_array($extension, ['jpg', 'jpeg', 'png'])) {
-                          $image = $manager->read($item[$i]->getPathname());
-                          $image->resizeDown(800, 600, function ($constraint) {
-                              $constraint->aspectRatio();
-                          })->save($carpetaDestino . $nuevoNombre, 70); 
-                      } elseif ($extension === 'pdf') {
-                          $pdf = new Fpdi();
-                          $pageCount = $pdf->setSourceFile($item[$i]->getPathname());
-                          for ($pageNo = 1; $pageNo <= $pageCount; $pageNo++) {
-                              $pdf->AddPage();
-                              $templateId = $pdf->importPage($pageNo);
-                              $pdf->useTemplate($templateId);
-                          }
-                          $pdf->Output($carpetaDestino . $nuevoNombre, 'F');
-                      } else if($extension === 'msg'){  
-                          $nombreGenerico= Carbon::now()->timestamp . "_" . $nombreSinExtension;
-                          $nombreZip=$nombreGenerico . ".zip";
-                          $nombreArchivo=$nombreGenerico . ".msg";
-                          $zip = new ZipArchive();
-                          $zipPath = $carpetaDestino . $nombreZip;
-                          if ($zip->open($zipPath, ZipArchive::CREATE) === true) {
-                              $zip->addFile($item[$i]->getPathname(), $nombreArchivo);
-                              $zip->close();
-                          } else {
-                              throw new \Exception('No se pudo crear el archivo ZIP');
-                          }
-                          $nuevoNombre = $nombreZip;
-                      }  else {
-                          $item[$i]->move($carpetaDestino, $nuevoNombre);
-                      }
-          
-                      $evidencia->archivo = ltrim($carpetaDestino, '.') . $nuevoNombre;
-                      $evidencia->save();
-                  } */
               }
           }
           if($request->compromisos){
