@@ -536,6 +536,7 @@ if($request->asistencia){
                 $result->creacion_pqrsf = $user->nombres . ' ' . $user->apellidos;
                 $result->responsable = $request->responsable;
                 $result->responsable_id = $request->responsable_id;
+                
             //campos agregados para el formulario de visita
             $result->visitante= $request->visitante;
             $result->visitado= $request->visitado; 
@@ -560,6 +561,7 @@ if($request->asistencia){
             if ($request->estado_id == 3) {
 				 $result->cierre_pqrsf = $request->cierre_pqrsf;
                 $result->fecha_cerrado = $fechaHoraActual->format('d-m-Y H:i:s');
+                $result->usuario_guarda_cierre= $user->nombres . ' ' . $user->apellidos;
             }
     
             $result->save();
@@ -660,6 +662,10 @@ if($request->asistencia){
                             $compromiso->responsable_id = isset($item['responsable_id']) ? $item['responsable_id'] : '';
                     /*      $fechaCierreFormatted = Carbon::parse($item['fecha_cierre'])->format('d-m-Y H:i:s');
                             $compromiso->fecha_cierre = isset($fechaCierreFormatted) ? $fechaCierreFormatted : ''; */
+                            if(isset($item['estado_cierre_id'])&&$item['estado_cierre_id'] !="" ){
+                                $fechaCierreFormatted = $fechaHoraActual->format('d-m-Y H:i:s');;
+                                $compromiso->fecha_cierre = isset($fechaCierreFormatted) ? $fechaCierreFormatted : '';
+                            }
                             $compromiso->save();
                         }
                         
@@ -775,6 +781,7 @@ if($request->asistencia){
         $result->responsable = $request->responsable;
         $result->pqrsf_id = $request->pqrsf_id;
         $result->responsable_id = $request->responsable_id;
+        
           //campos agregados para el formulario de visita
           $result->visitante= $request->visitante;
           $result->visitado= $request->visitado; 
@@ -796,6 +803,7 @@ if($request->asistencia){
 		   if ($request->estado_id == 3) {
 			    $result->cierre_pqrsf = $request->cierre_pqrsf;
                 $result->fecha_cerrado = $fechaHoraActual->format('d-m-Y H:i:s');
+                $result->usuario_guarda_cierre= $user->nombres . ' ' . $user->apellidos;
             }
          
   
@@ -938,11 +946,15 @@ if($request->asistencia){
                     $compromiso->descripcion = isset($item['descripcion']) ? $item['descripcion'] : '';
                     $compromiso->registro_id = $result->id;
                     $compromiso->estado_cierre_id = isset($item['estado_cierre_id']) ? $item['estado_cierre_id'] : '';
-                    $fechaCierreFormatted = Carbon::parse($item['fecha_cierre'])->format('d-m-Y H:i:s');
+                    /* $fechaCierreFormatted = Carbon::parse($item['fecha_cierre'])->format('d-m-Y H:i:s'); */
                     $compromiso->responsable = isset($item['responsable']) ? $item['responsable'] : '';
                     $compromiso->observacion = isset($item['observacion']) ? $item['observacion'] : '';
-                    $compromiso->fecha_cierre = isset($fechaCierreFormatted) ? $fechaCierreFormatted : '';
+                    /* $compromiso->fecha_cierre = isset($fechaCierreFormatted) ? $fechaCierreFormatted : ''; */
                     $compromiso->responsable_id = isset($item['responsable_id']) ? $item['responsable_id'] : '';
+                    if(isset($item['estado_cierre_id'])&&$item['estado_cierre_id'] !="" ){
+                        $fechaCierreFormatted = $fechaHoraActual->format('d-m-Y H:i:s');;
+                        $compromiso->fecha_cierre = isset($fechaCierreFormatted) ? $fechaCierreFormatted : '';
+                    }
                     $compromiso->save();
                 }else{
                     $compromiso = new CompromisosVisitaCrm;
@@ -956,6 +968,10 @@ if($request->asistencia){
                         $compromiso->responsable_id = isset($item['responsable_id']) ? $item['responsable_id'] : '';
                 /*         $fechaCierreFormatted = Carbon::parse($item['fecha_cierre'])->format('d-m-Y H:i:s');
                         $compromiso->fecha_cierre = isset($fechaCierreFormatted) ? $fechaCierreFormatted : ''; */
+                        if(isset($item['estado_cierre_id'])&&$item['estado_cierre_id'] !="" ){
+                            $fechaCierreFormatted = $fechaHoraActual->format('d-m-Y H:i:s');;
+                            $compromiso->fecha_cierre = isset($fechaCierreFormatted) ? $fechaCierreFormatted : '';
+                        }
                         $compromiso->save();
                     
                     } 
