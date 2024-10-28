@@ -36,7 +36,7 @@ class EstadosFirmaController extends Controller
             $estadosFirma= new EstadosFirma;
             $estadosFirma->nombre= $request->nombre;
             $estadosFirma->color= $request->color;
-            $estadosFirma->horas_requeridas= $request->horas_requeridas;
+            /* $estadosFirma->horas_requeridas= $request->horas_requeridas; */
             $estadosFirma->save();
             DB::commit();
             return response()->json(['status' => 'success', 'message' => 'Registro guardado de manera exitosa', 'id' => $estadosFirma->id]);
@@ -94,7 +94,7 @@ class EstadosFirmaController extends Controller
             $result = EstadosFirma::find($id);
             $result->nombre= $request->nombre;
             $result->color= $request->color;
-            $result->horas_requeridas= $request->horas_requeridas;
+            /* $result->horas_requeridas= $request->horas_requeridas; */
             $result->save();
             DB::commit();
             return response()->json(['status' => 'success', 'message' => 'Registro actualizado de manera exitosa', 'id' => $result->id]);
