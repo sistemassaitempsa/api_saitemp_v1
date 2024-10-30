@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\EstadosFirma;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Carbon;
 
 class EstadosFirmaController extends Controller
 {
@@ -15,6 +16,10 @@ class EstadosFirmaController extends Controller
      */
     public function index()
     {
+        /* $hoy = Carbon::now();
+        $diaSemana = $hoy->dayName;
+        formatoFechaCarbon= 2024-10-28T20:06:44.820417Z; */
+
         $result = EstadosFirma::select(
             'id',
             'nombre',
