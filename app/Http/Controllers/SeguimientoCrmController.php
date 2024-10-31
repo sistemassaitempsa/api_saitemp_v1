@@ -1364,11 +1364,15 @@ class SeguimientoCrmController extends Controller
         $numeroRadicado = $formulario->numero_radicado;
         $tipo_atencion_id = $formulario->tipo_atencion_id;
         if ($tipo_atencion_id == 5 || $tipo_atencion_id == 6) {
-            $body = "Cordial saludo, esperamos se encuentren muy bien.\n\n Informamos que el registro de visita ha sido creado satisfactoriamente con número de radicado: <b><i>$numeroRadicado</i></b>, Cualquier información adicional puede comunicarse con:
-        Katerin Andrea Nuno: (+57) 311-437-0207
-        William Hernán Hernandez: (+57) 311-586-4835
-        o a nuestra línea de atención general (604) 4485744, con gusto uno de nuestros facilitadores atenderá su llamada.\n\n simplificando conexiones, facilitando experiencias.
-        \n\n Atentamente:";
+            if ((($formulario->nit_documento == "900032514" || $formulario->nit_documento == "811025401") && $formulario->correo == $destinatario) || (($formulario->nit_documento == "900032514" || $formulario->nit_documento == "811025401") && $booleanCompromiso == false)) {
+                $body = "Coordial saludo, Informamos que el acta de la reunion interna ha sido creado satisfactoriamente con radicado:  <b><i>$numeroRadicado</i></b>";
+            } else {
+                $body = "Cordial saludo, esperamos se encuentren muy bien.\n\n Informamos que el registro de visita ha sido creado satisfactoriamente con número de radicado: <b><i>$numeroRadicado</i></b>, Cualquier información adicional puede comunicarse con:
+                    Katerin Andrea Nuno: (+57) 311-437-0207
+                    William Hernán Hernandez: (+57) 311-586-4835
+                    o a nuestra línea de atención general (604) 4485744, con gusto uno de nuestros facilitadores atenderá su llamada.\n\n simplificando conexiones, facilitando experiencias.
+                    \n\n Atentamente:";
+            }
         } else {
             $body = "Cordial saludo, esperamos se encuentren muy bien.\n\n Informamos que el registro de servicio ha sido creado satisfactoriamente con número de radicado: <b><i>$numeroRadicado</i></b>, Cualquier información adicional podrá ser atendida en la línea Servisai de Saitemp S.A. marcando  al (604) 4485744, con gusto uno de nuestros facilitadores atenderá su llamada.\n\n simplificando conexiones, facilitando experiencias.";
         }
