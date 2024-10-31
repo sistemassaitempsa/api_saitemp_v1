@@ -19,7 +19,6 @@ use TCPDF;
 use ZipArchive;
 use App\Models\AtencionInteraccion;
 
-
 class SeguimientoCrmController extends Controller
 {
     /**
@@ -49,11 +48,9 @@ class SeguimientoCrmController extends Controller
                 'cierre.nombre as estado',
             )
             ->orderby('usr_app_seguimiento_crm.id', 'DESC')
-            ->orderby('usr_app_seguimiento_crm.id', 'DESC')
             ->paginate($cantidad);
         return response()->json($result);
     }
-
 
 
     public function byid($id)
@@ -107,27 +104,11 @@ class SeguimientoCrmController extends Controller
             )
             ->first();
         $result->observacion = $result->observacion . $result->observacion2;
-        $result->observacion = $result->observacion . $result->observacion2;
 
         $evidencias = Evidencia::where('registro_id', $id)->get();
         $evidencias->transform(function ($item) {
             $item->edit = false;
-        $evidencias = Evidencia::where('registro_id', $id)->get();
-        $evidencias->transform(function ($item) {
-            $item->edit = false;
             return $item;
-        });
-        $result["Evidencias"] = $evidencias;
-        $temasPrincipales =  TemasVisitaCrm::where('registro_id', $id)->get();
-        $temasPrincipales->transform(function ($item) {
-            $item->edit = false;
-            return $item;
-        });
-        $result["temasPrincipales"] = $temasPrincipales;
-        $compromisos =  CompromisosVisitaCrm::join('usr_app_usuarios as usuario', 'usuario.id', 'usr_app_compromisos_generales.responsable_id')
-            ->where('registro_id', $id)
-            ->select(
-                'usuario.usuario as email',
         });
         $result["Evidencias"] = $evidencias;
         $temasPrincipales =  TemasVisitaCrm::where('registro_id', $id)->get();
@@ -148,16 +129,6 @@ class SeguimientoCrmController extends Controller
                 'usr_app_compromisos_generales.responsable',
                 'usr_app_compromisos_generales.observacion',
                 'usr_app_compromisos_generales.responsable_id',
-            )
-            ->get();
-
-        $result["compromisos"] = $compromisos;
-        $asistencias =  AsistenciaVisitaCrm::where('registro_id', $id)->get();
-        $asistencias->transform(function ($item) {
-            $item->edit = false;
-            return $item;
-        });
-        $result["asistencias"] = $asistencias;
             )
             ->get();
 
@@ -307,16 +278,227 @@ class SeguimientoCrmController extends Controller
 
         // Validar y recibir el JSON
         $datosFormulario = $request->json()->all();
+        $user = auth()->user();
 
         // Retornar los datos tal cual o procesarlos según sea necesario
-        return response()->json([
-            'status' => 'success',
-            'formulario' => $datosFormulario
-        ]);
+        // return response()->json(['status' => 'success','formulario' => $datosFormulario]);
         //return response()->json(["status"=>"succes","formulario"=>$request->request]);
+        // DB::beginTransaction();
+        try {
+            $fechaHoraActual = Carbon::now();
+            $result = SeguimientoCrm::find("94");
+            $result->sede_id = $request->sede_id;
+            $result->proceso_id = $request->proceso_id;
+            $result->solicitante_id = $request->solicitante_id;
+            $result->nombre_contacto = $request->razon_social;
+            $result->tipo_atencion_id = $request->medio_atencion_id;
+            $result->telefono = $request->telefono;
+            $result->correo = $request->correo;
+            $result->estado_id = $request->estado_id;
+            $result->nit_documento = $request->nit;
+            if ($request->estado_id == 3) {
+                $result->cierre_pqrsf = $user->nombres . " " . $user->apellidos;
+                $result->fecha_cerrado = $fechaHoraActual->format('d-m-Y H:i:s');
+            }
+            $result->usuario_guarda_cierre = $user->nombres . " " . $user->apellidos;
+            $result->responsable = $request->responsable;
+            $result->pqrsf_id = $request->pqrsf_id;
+            $result->responsable_id = $request->responsable_id;
+            $result->visitante = $request->visitante;
+            $result->visitado = $request->visitado;
+            $result->hora_inicio = $request->hora_inicio; //// falta este campo en el front android
+            $result->cargo_visitante = $request->cargo_visitante;
+            $result->cargo_visitado = $request->cargo_atendio;
+            $result->objetivo = $request->objetivo;
+            $result->alcance = $request->alcance;
+            $result->save();
+            // return response()->json(['status' => 'success', 'message' => 'Registro actualizado de manera exitosa', 'id' => $result->id]);
+            return response()->json(['status' => 'success', 'formulario' => $datosFormulario]);
 
 
 
+
+
+
+            //campos agregados para el formulario de visita
+
+
+
+
+            if ($request->observacion != "") {
+                $observacionFragmentada = str_split($request->observacion, 4000);
+                $result->observacion = $observacionFragmentada[0];
+                if (isset($observacionFragmentada[1])) {
+                    $result->observacion2 = $observacionFragmentada[1];
+                }
+                if ($request->estado_id == 3) {
+                    $fechaHoraActual = Carbon::now();
+                    $result->fecha_cerrado = $fechaHoraActual->format('d-m-Y H:i:s');
+                }
+            }
+
+
+            $result->save();
+            $manager = new ImageManager(new Driver());
+            $zipNombre = $result->numero_radicado . '.zip';
+            $zipGeneral = public_path('./upload/evidenciasCrm/' . $zipNombre);
+            $zipCoincidencia = glob($zipGeneral);
+            foreach ($request->imagen as $item) {
+                for ($i = 0; $i < count($item); $i++) {
+                    if ($i > 0) {
+                        $evidencia = new Evidencia;
+                        $evidencia->descripcion = $item[0] ? $item[0] : "";
+                        $evidencia->registro_id = $result->id;
+                        $nombreArchivoOriginal = $item[$i]->getClientOriginalName();
+                        $nombreSinExtension = pathinfo($nombreArchivoOriginal, PATHINFO_FILENAME);
+                        $extension = pathinfo($nombreArchivoOriginal, PATHINFO_EXTENSION);
+                        $nombreLimpio = preg_replace('/[.\s]+/', '_', $nombreSinExtension) . '.' . $extension;
+                        $nuevoNombre = Carbon::now()->timestamp . "_" . $nombreLimpio;
+                        $carpetaDestino = './upload/evidenciasCrm/';
+                        $zipPath = $carpetaDestino . $zipNombre;
+                        if (in_array($extension, ['jpg', 'jpeg', 'png', 'pdf'])) {
+                            if (in_array($extension, ['jpg', 'jpeg', 'png'])) {
+                                $image = $manager->read($item[$i]->getPathname());
+                                $image->resizeDown(800, 600, function ($constraint) {
+                                    $constraint->aspectRatio();
+                                })->save($carpetaDestino . $nuevoNombre, 70);
+                            } elseif ($extension === 'pdf') {
+                                $pdf = new Fpdi();
+                                $pageCount = $pdf->setSourceFile($item[$i]->getPathname());
+                                for ($pageNo = 1; $pageNo <= $pageCount; $pageNo++) {
+                                    $pdf->AddPage();
+                                    $templateId = $pdf->importPage($pageNo);
+                                    $pdf->useTemplate($templateId);
+                                }
+                                $pdf->Output($carpetaDestino . $nuevoNombre, 'F');
+                            }
+                            if (count($zipCoincidencia) > 0) {
+                                $zip = new ZipArchive;
+                                $res = $zip->open($zipGeneral);
+                                if ($res === true) {
+                                    $zip->addFile($carpetaDestino . $nuevoNombre, $nuevoNombre);
+                                    $zip->close();
+                                } else {
+                                    throw new \Exception('No se pudo acceder al ZIP');
+                                }
+                            } else {
+                                $zip = new ZipArchive();
+                                if ($zip->open($zipPath, ZipArchive::CREATE) === true) {
+                                    $zip->addFile($carpetaDestino . $nuevoNombre, $nuevoNombre);
+                                    $zip->close();
+                                }
+                            }
+                            if (file_exists($carpetaDestino . $nuevoNombre)) {
+                                unlink($carpetaDestino . $nuevoNombre);
+                            }
+                        } else {
+                            if (count($zipCoincidencia) > 0) {
+                                $zip = new ZipArchive;
+                                $res = $zip->open($zipGeneral);
+                                if ($res === true) {
+                                    $zip->addFile($item[$i]->getPathname(), $nuevoNombre);
+                                    $zip->close();
+                                } else {
+                                    throw new \Exception('No se pudo acceder al ZIP');
+                                }
+                                $nuevoNombre = $zipNombre . $nuevoNombre;
+                            } else {
+                                $zip = new ZipArchive();
+                                if ($zip->open($zipPath, ZipArchive::CREATE) === true) {
+                                    $zip->addFile($item[$i]->getPathname(), $nuevoNombre);
+                                    $zip->close();
+                                }
+                            }
+                        }
+
+                        $evidencia->archivo = ltrim($carpetaDestino, '.') . $zipNombre . '_' . $nuevoNombre;
+                        $evidencia->save();
+                    }
+                }
+            }
+            if ($request->compromisos) {
+                $decodeCompromisos = json_decode($request->compromisos, true);
+                $compromisoCant = "";
+                if (count($decodeCompromisos) > 0) {
+                    foreach ($decodeCompromisos as $item) {
+                        if ($item['id'] != "") {
+                            $compromiso = CompromisosVisitaCrm::find($item['id']);
+                            $compromiso->titulo = isset($item['titulo']) ? $item['titulo'] : '';
+                            $compromiso->descripcion = isset($item['descripcion']) ? $item['descripcion'] : '';
+                            $compromiso->registro_id = $result->id;
+                            $compromiso->estado_cierre_id = isset($item['estado_cierre_id']) ? $item['estado_cierre_id'] : '';
+                            $fechaCierreFormatted = Carbon::parse($item['fecha_cierre'])->format('d-m-Y H:i:s');
+                            $compromiso->responsable = isset($item['responsable']) ? $item['responsable'] : '';
+                            $compromiso->observacion = isset($item['observacion']) ? $item['observacion'] : '';
+                            $compromiso->fecha_cierre = isset($fechaCierreFormatted) ? $fechaCierreFormatted : '';
+                            $compromiso->responsable_id = isset($item['responsable_id']) ? $item['responsable_id'] : '';
+                            $compromiso->save();
+                        } else {
+                            $compromiso = new CompromisosVisitaCrm;
+                            if (isset($item['descripcion']) &&  $item['descripcion'] != "") {
+                                $compromiso->titulo = isset($item['titulo']) ? $item['titulo'] : '';
+                                $compromiso->descripcion = isset($item['descripcion']) ? $item['descripcion'] : '';
+                                $compromiso->registro_id = $result->id;
+                                $compromiso->responsable = isset($item['responsable']) ? $item['responsable'] : '';
+                                $compromiso->estado_cierre_id = isset($item['estado_cierre_id']) ? $item['estado_cierre_id'] : '';
+                                $compromiso->observacion = isset($item['observacion']) ? $item['observacion'] : '';
+                                $compromiso->responsable_id = isset($item['responsable_id']) ? $item['responsable_id'] : '';
+                                /*         $fechaCierreFormatted = Carbon::parse($item['fecha_cierre'])->format('d-m-Y H:i:s');
+                        $compromiso->fecha_cierre = isset($fechaCierreFormatted) ? $fechaCierreFormatted : ''; */
+                                $compromiso->save();
+                            }
+                        }
+                    }
+                }
+            }
+            if ($request->temasPrincipales) {
+                $decodeTemas = json_decode($request->temasPrincipales, true);
+                if (count($decodeTemas) > 0) {
+                    foreach ($decodeTemas as $item) {
+                        if ($item['id'] != "") {
+                            $temaPrincipal = TemasVisitaCrm::find($item['id']);
+                            $temaPrincipal->titulo = isset($item['titulo']) ? $item['titulo'] : '';
+                            $temaPrincipal->descripcion = isset($item['descripcion']) ? $item['descripcion'] : '';
+                            $temaPrincipal->registro_id = $result->id;
+                            $temaPrincipal->save();
+                        } else {
+
+                            $temaPrincipal = new TemasVisitaCrm;
+                            $temaPrincipal->titulo = isset($item['titulo']) ? $item['titulo'] : '';
+                            $temaPrincipal->descripcion = isset($item['descripcion']) ? $item['descripcion'] : '';
+                            $temaPrincipal->registro_id = $result->id;
+                            $temaPrincipal->save();
+                        }
+                    }
+                }
+            }
+            if ($request->asistencia) {
+                foreach ($request->asistencia as $item) {
+                    for ($i = 0; $i < count($item); $i++) {
+                        if ($i > 0) {
+                            $asistencia = new AsistenciaVisitaCrm;
+                            $decodeFirma = json_decode($item[0], true);
+
+                            $asistencia->nombre = $decodeFirma ? $decodeFirma["nombre"] : "";
+                            $asistencia->registro_id = $result->id;
+                            $asistencia->cargo = $decodeFirma ? $decodeFirma["cargo"] : "";
+                            $nombreArchivoOriginal = $item[$i]->getClientOriginalName();
+                            $nuevoNombre = Carbon::now()->timestamp . "_" . $nombreArchivoOriginal;
+                            $carpetaDestino = './upload/evidenciasCrm/';
+                            $item[$i]->move($carpetaDestino, $nuevoNombre);
+                            $asistencia->firma = ltrim($carpetaDestino, '.') . $nuevoNombre;
+                            $asistencia->save();
+                        }
+                    }
+                }
+            }
+            // DB::commit();
+            return response()->json(['status' => 'success', 'message' => 'Registro actualizado de manera exitosa', 'id' => $result->id]);
+        } catch (\Exception $e) {
+            return $e;
+            DB::rollback();
+            return response()->json(['status' => 'error', 'message' => 'Error al guardar el formulario, por favor intenta nuevamente']);
+        }
     }
 
 
@@ -359,22 +541,7 @@ class SeguimientoCrmController extends Controller
             $result->alcance = $request->alcance_visita;
             $result->latitud = $request->latitud;
             $result->longitud = $request->longitud;
-            $result->visitante = $request->visitante;
-            $result->visitado = $request->visitado;
-            $result->hora_inicio = $request->hora_inicio;
-            $result->hora_cierre = $request->hora_cierre;
-            $result->cargo_visitante = $request->cargo_visitante;
-            $result->cargo_visitado = $request->cargo_atendio;
-            $result->objetivo = $request->objetivo_visita;
-            $result->alcance = $request->alcance_visita;
-            $result->latitud = $request->latitud;
-            $result->longitud = $request->longitud;
 
-            if ($request->observacion != "") {
-                $observacionFragmentada = str_split($request->observacion, 4000);
-                $result->observacion = $observacionFragmentada[0];
-                if (isset($observacionFragmentada[1])) {
-                    $result->observacion2 = $observacionFragmentada[1];
             if ($request->observacion != "") {
                 $observacionFragmentada = str_split($request->observacion, 4000);
                 $result->observacion = $observacionFragmentada[0];
@@ -390,7 +557,6 @@ class SeguimientoCrmController extends Controller
                 $result->usuario_guarda_cierre = $user->nombres . ' ' . $user->apellidos;
             }
 
-
             $result->save();
             /*    $manager = new ImageManager(new Driver());
             $zipNombre = $result->numero_radicado . '.zip';
@@ -399,9 +565,7 @@ class SeguimientoCrmController extends Controller
             foreach ($request->imagen as $item) {
                 for ($i = 0; $i < count($item); $i++) {
                     if ($i > 0) {
-                    if ($i > 0) {
                         $evidencia = new Evidencia;
-                        $evidencia->descripcion = $item[0] ? $item[0] : "";
                         $evidencia->descripcion = $item[0] ? $item[0] : "";
                         $evidencia->registro_id = $result->id;
                         /*  $nombreArchivoOriginal = $item[$i]->getClientOriginalName();
@@ -411,13 +575,6 @@ class SeguimientoCrmController extends Controller
                         $nuevoNombre = Carbon::now()->timestamp . "_" . $nombreLimpio;
                         $carpetaDestino = './upload/evidenciasCrm/';
                         $zipPath = $carpetaDestino . $zipNombre;
-                        if (in_array($extension, ['jpg', 'jpeg', 'png', 'pdf'])) {
-                            if (in_array($extension, ['jpg', 'jpeg', 'png'])) {
-                                $image = $manager->read($item[$i]->getPathname());
-                                $image->resizeDown(800, 600, function ($constraint) {
-                                    $constraint->aspectRatio();
-                                })->save($carpetaDestino . $nuevoNombre, 70);
-                            } elseif ($extension === 'pdf') {
                         if (in_array($extension, ['jpg', 'jpeg', 'png', 'pdf'])) {
                             if (in_array($extension, ['jpg', 'jpeg', 'png'])) {
                                 $image = $manager->read($item[$i]->getPathname());
@@ -435,29 +592,8 @@ class SeguimientoCrmController extends Controller
                                 $pdf->Output($carpetaDestino . $nuevoNombre, 'F');
                             }
                             if (count($zipCoincidencia) > 0) {
-                            }
-                            if (count($zipCoincidencia) > 0) {
                                 $zip = new ZipArchive;
                                 $res = $zip->open($zipGeneral);
-                                if ($res === true) {
-                                    $zip->addFile($carpetaDestino . $nuevoNombre, $nuevoNombre);
-                                    $zip->close();
-                                } else {
-                                    throw new \Exception('No se pudo acceder al ZIP');
-                                }
-                                $nuevoNombre = $zipNombre . $nuevoNombre;
-                            } else {
-                                $zip = new ZipArchive();
-                                if ($zip->open($zipPath, ZipArchive::CREATE) === true) {
-                                    $zip->addFile($carpetaDestino . $nuevoNombre, $nuevoNombre);
-                                    $zip->close();
-                                }
-                            }
-                            if (file_exists($carpetaDestino . $nuevoNombre)) {
-                                unlink($carpetaDestino . $nuevoNombre);
-                            }
-                        } else {
-                            if (count($zipCoincidencia) > 0) {
                                 if ($res === true) {
                                     $zip->addFile($carpetaDestino . $nuevoNombre, $nuevoNombre);
                                     $zip->close();
@@ -504,12 +640,8 @@ class SeguimientoCrmController extends Controller
             }
             if ($request->compromisos) {
                 $decodeCompromisos = json_decode($request->compromisos, true);
-            if ($request->compromisos) {
-                $decodeCompromisos = json_decode($request->compromisos, true);
                 if (count($decodeCompromisos) > 0) {
                     foreach ($decodeCompromisos as $item) {
-                        $compromiso = new CompromisosVisitaCrm;
-                        if (isset($item['descripcion']) &&  $item['descripcion'] != "") {
                         $compromiso = new CompromisosVisitaCrm;
                         if (isset($item['descripcion']) &&  $item['descripcion'] != "") {
                             $compromiso->titulo = isset($item['titulo']) ? $item['titulo'] : '';
@@ -519,7 +651,6 @@ class SeguimientoCrmController extends Controller
                             $compromiso->estado_cierre_id = isset($item['estado_cierre_id']) ? $item['estado_cierre_id'] : '';
                             $compromiso->observacion = isset($item['observacion']) ? $item['observacion'] : '';
                             $compromiso->responsable_id = isset($item['responsable_id']) ? $item['responsable_id'] : '';
-                            /*      $fechaCierreFormatted = Carbon::parse($item['fecha_cierre'])->format('d-m-Y H:i:s');
                             /*      $fechaCierreFormatted = Carbon::parse($item['fecha_cierre'])->format('d-m-Y H:i:s');
                             $compromiso->fecha_cierre = isset($fechaCierreFormatted) ? $fechaCierreFormatted : ''; */
                             if (isset($item['estado_cierre_id']) && $item['estado_cierre_id'] != "") {
@@ -533,11 +664,8 @@ class SeguimientoCrmController extends Controller
             }
             if ($request->temasPrincipales) {
                 $decodeTemas = json_decode($request->temasPrincipales, true);
-            if ($request->temasPrincipales) {
-                $decodeTemas = json_decode($request->temasPrincipales, true);
                 if (count($decodeTemas) > 0) {
                     foreach ($decodeTemas as $item) {
-
 
                         $temaPrincipal = new TemasVisitaCrm;
                         $temaPrincipal->titulo = isset($item['titulo']) ? $item['titulo'] : '';
@@ -546,10 +674,6 @@ class SeguimientoCrmController extends Controller
                         $temaPrincipal->save();
                     }
                 }
-            }
-
-            // Procesar temas principales
-
             }
 
             // Procesar temas principales
@@ -580,7 +704,6 @@ class SeguimientoCrmController extends Controller
 
             DB::commit();
             return response()->json(['status' => 'success', 'message' => 'Registro guardado de manera exitosa', 'id' => $result->id]);
-        } catch (\Exception $e) {
         } catch (\Exception $e) {
             return $e;
             DB::rollback();
@@ -629,10 +752,8 @@ class SeguimientoCrmController extends Controller
      * @return \Illuminate\Http\Response
      */
 
-
     public function update(Request $request, $id)
     {
-        $user = auth()->user();
         $user = auth()->user();
         DB::beginTransaction();
         try {
@@ -660,14 +781,6 @@ class SeguimientoCrmController extends Controller
             $result->cargo_visitado = $request->cargo_atendio;
             $result->objetivo = $request->objetivo_visita;
             $result->alcance = $request->alcance_visita;
-
-            if ($request->observacion != "") {
-                $observacionFragmentada = str_split($request->observacion, 4000);
-                $result->observacion = $observacionFragmentada[0];
-                if (isset($observacionFragmentada[1])) {
-                    $result->observacion2 = $observacionFragmentada[1];
-                }
-            }
 
             if ($request->observacion != "") {
                 $observacionFragmentada = str_split($request->observacion, 4000);
@@ -898,30 +1011,18 @@ class SeguimientoCrmController extends Controller
         } catch (\Exception $e) {
             return response()->json(['message' => 'Error al eliminar el radicado.', 'error' => $e->getMessage()], 500);
         }
-            return response()->json(['message' => 'El radicado no existe.'], 404);
-        }
-        try {
-            $result->delete();
-            return response()->json(['message' => 'Radicado eliminado con éxito.'], 200);
-        } catch (\Exception $e) {
-            return response()->json(['message' => 'Error al eliminar el radicado.', 'error' => $e->getMessage()], 500);
-        }
     }
     public function eliminararchivo($item, $id)
     {
-
 
         $result = Evidencia::where('usr_app_evidencia_crm.registro_id', '=', $item)
             ->where('usr_app_evidencia_crm.id', '=', $id)
             ->first();
         $registro = Evidencia::find($result->id);
         $rutaArchivo = $registro->archivo;
-        $rutaArchivo = $registro->archivo;
         $pos = strpos($rutaArchivo, '_');
         $nombreZip = substr($rutaArchivo, 0, $pos);
         $extension = pathinfo($nombreZip, PATHINFO_EXTENSION);
-        $ultimoCaracter = strlen($rutaArchivo) - 1;
-        $nombreArchivo = substr($rutaArchivo, $pos + 1, $ultimoCaracter);
         $ultimoCaracter = strlen($rutaArchivo) - 1;
         $nombreArchivo = substr($rutaArchivo, $pos + 1, $ultimoCaracter);
         if ($registro->archivo != null) {
@@ -944,22 +1045,9 @@ class SeguimientoCrmController extends Controller
                 return response()->json(['status' => 'error', 'message' => 'El archivo no se encuentra dentro del ZIP']);
             }
         } else {
-                }
-                if ($registro->delete()) {
-                    return response()->json(['status' => 'success', 'message' => 'Registro eliminado con Exito']);
-                } else {
-                    return response()->json(['status' => 'error', 'message' => 'Error al eliminar registro']);
-                }
-            } else {
-                return response()->json(['status' => 'error', 'message' => 'El archivo no se encuentra dentro del ZIP']);
-            }
-        } else {
             return response()->json(['status' => 'error', 'message' => 'No se encontró el archivo']);
         }
     }
-    public function updateEvidencia(Request $request, $id)
-    {
-        $result = Evidencia::find($id);
     public function updateEvidencia(Request $request, $id)
     {
         $result = Evidencia::find($id);
@@ -978,40 +1066,6 @@ class SeguimientoCrmController extends Controller
 
         // Obtener los datos del formulario
 
-    public function generarPdfCrm(Request $request, $registro_id, $btnId)
-    {
-        $modulo = 46;
-
-        // Obtener los datos del formulario
-
-        $user = auth()->user();
-        $atencionInteracion = "";
-        $formulario = $this->byid($registro_id)->getData();
-        if (isset($formulario->tipo_atencion_id)) {
-
-            $atencionInteracion = DB::table('usr_app_atencion_interacion')
-                ->where('id', $formulario->tipo_atencion_id)
-                ->first();
-        } else {
-            // Manejar el caso donde tipo_atencion_id no exista
-            $atencionInteracion = null;
-        }
-
-        // Inicializar TCPDF
-        /* $pdf = new \TCPDF('P', 'mm', 'A4', true, 'UTF-8', false); */
-        $pdf = new \TCPDF();
-        // Establecer los metadatos del documento
-        $pdf->SetCreator(PDF_CREATOR);
-        $pdf->SetAuthor('Saitemp');
-        $pdf->SetTitle('Reporte CRM');
-        $pdf->SetSubject('Detalles del CRM');
-        $pdf->SetKeywords('TCPDF, PDF, CRM, reporte');
-        $horaInicioFormateada = '';
-        $horaCierreFormateada = '';
-        $fechaCreacionFromated = '';
-        if (!empty($formulario->created_at)) {
-            $fechaCreacionFromated = Carbon::parse($formulario->created_at)->format('d-m-Y H:i:s');
-        }
         $user = auth()->user();
         $atencionInteracion = "";
         $formulario = $this->byid($registro_id)->getData();
@@ -1041,15 +1095,6 @@ class SeguimientoCrmController extends Controller
             $fechaCreacionFromated = Carbon::parse($formulario->created_at)->format('d-m-Y H:i:s');
         }
 
-        if (!empty($formulario->hora_inicio)) {
-            $horaInicioFormateada = Carbon::parse($formulario->hora_inicio)->format('H:i');
-        }
-        if (!empty($formulario->hora_cierre)) {
-            $horaCierreFormateada = Carbon::parse($formulario->hora_cierre)->format('H:i');
-        }
-        // Eliminar la cabecera y pie de página por defecto
-        $pdf->setPrintHeader(false);
-        /*  function addMembrete(\TCPDF $pdf)
         if (!empty($formulario->hora_inicio)) {
             $horaInicioFormateada = Carbon::parse($formulario->hora_inicio)->format('H:i');
         }
@@ -1064,11 +1109,6 @@ class SeguimientoCrmController extends Controller
                 $pdf->Image($url, -0.5, 0, $pdf->getPageWidth() + 0.5, 30, '', '', '', false, 300, '', false, false, 0);
             }
          */
-        // Añadir la primera página
-        $pdf->AddPage();
-        /*  addMembrete($pdf); */
-        /*  $pdf->AddPage(); */
-        /*   $pdf->setPrintFooter(false);
         // Añadir la primera página
         $pdf->AddPage();
         /*  addMembrete($pdf); */
@@ -1090,23 +1130,7 @@ class SeguimientoCrmController extends Controller
 
         // Construir el contenido del PDF con las claves y valores del formulario y aplicando estilos
 
-        // Añadir una página
 
-        $pdf->SetMargins(0, 0, 0);
-        $pdf->SetAutoPageBreak(false, 0);
-        // Agregar imagen de fondo
-        $url = public_path('/upload/MEMBRETE.png');
-        $pdf->Image($url, -0.5, 0, $pdf->getPageWidth() + 0.5, $pdf->getPageHeight(), '', '', '', false, 300, '', false, false, 0);
-        // Asegurarse de que el contenido no esté afectado por la imagen de fondo
-        /*  $pdf->SetMargins(5, 20, 5); */
-        // Establecer fuente
-        $pdf->SetFont('helvetica', '', 12);
-
-        // Construir el contenido del PDF con las claves y valores del formulario y aplicando estilos
-
-
-        $pdf->Ln(20);
-        $html = '
         $pdf->Ln(20);
         $html = '
                 <style>
@@ -1169,7 +1193,6 @@ class SeguimientoCrmController extends Controller
         <tr>
             <td class="data-label">Número Radicado:<br> <span class="info">' . $formulario->numero_radicado . '</span></td>
              <td class="data-label">Fecha de Creación:<br><span class="info"> ' . $fechaCreacionFromated . '</span></td>
-             <td class="data-label">Fecha de Creación:<br><span class="info"> ' . $fechaCreacionFromated . '</span></td>
         </tr>
         </table>
         <table>
@@ -1178,14 +1201,12 @@ class SeguimientoCrmController extends Controller
           <td class="data-label">Medio de atencion:<br><span class="info"> ' . $atencionInteracion->nombre . '</span></td>
           ' . ($formulario->tipo_atencion_id == 5 || $formulario->tipo_atencion_id == 6  ? '
           <td class="data-label">Hora inicio:<br><span class="info"> ' . $horaInicioFormateada . '</span></td>
-          <td class="data-label">Hora inicio:<br><span class="info"> ' . $horaInicioFormateada . '</span></td>
            <td class="data-label">Hora cierre:<br> <span class="info">' . $horaCierreFormateada  . '</span></td>' : '') . '
        </tr>
 </table>
        <table>
         <tr>
             <td class="data-label">Empresa usuaria:<br><span class="info"> ' . $formulario->nombre_contacto . '</span></td>
-            <td class="data-label">Nit:<br><span class="info"> ' . $formulario->nit_documento . '</span></td>
             <td class="data-label">Nit:<br><span class="info"> ' . $formulario->nit_documento . '</span></td>
             
         </tr>
@@ -1196,20 +1217,15 @@ class SeguimientoCrmController extends Controller
          <tr>
             <td class="data-label">Tipo PQRSF:<br><span class="info"> ' . $formulario->pqrsf . '</span></td>
             <td class="data-label">Responsable:<br><span class="info"> ' . $formulario->responsable . '</span></td>
-            <td class="data-label">Tipo PQRSF:<br><span class="info"> ' . $formulario->pqrsf . '</span></td>
-            <td class="data-label">Responsable:<br><span class="info"> ' . $formulario->responsable . '</span></td>
         </tr>
         </table>
-        ' . ($formulario->tipo_atencion_id == 5 || $formulario->tipo_atencion_id == 6  ? '
         ' . ($formulario->tipo_atencion_id == 5 || $formulario->tipo_atencion_id == 6  ? '
         <table>
         <tr>
             <td class="data-label">Visita realizada por:<br><span class="info"> ' . $formulario->visitante . '</span></td>
-            <td class="data-label">Visita realizada por:<br><span class="info"> ' . $formulario->visitante . '</span></td>
             <td class="data-label">Cargo:<br><span class="info"> ' . $formulario->cargo_visitante . '</span></td>
         </tr>
          <tr>
-            <td class="data-label">Visita atendida por:<br><span class="info"> ' . $formulario->visitado . '</span></td>
             <td class="data-label">Visita atendida por:<br><span class="info"> ' . $formulario->visitado . '</span></td>
             <td class="data-label">Cargo:<br><span class="info"> ' . $formulario->cargo_visitado . '</span></td>
         </tr>
@@ -1233,20 +1249,13 @@ class SeguimientoCrmController extends Controller
         // Mostrar evidencias en una tabla
         if (!empty($formulario->temasPrincipales)) {
             $html .= '
-        // Mostrar evidencias en una tabla
-        if (!empty($formulario->temasPrincipales)) {
-            $html .= '
                 <h2 class="section-title">Presentación y revision de temas</h2>
                 ';
-            foreach ($formulario->temasPrincipales as $tema) {
-                $html .= '
             foreach ($formulario->temasPrincipales as $tema) {
                 $html .= '
                             <tr>
                                 <h4>' . "Tema" . ':</h4>
                                 <p>' . $tema->descripcion . '</p>';
-            }
-            $html .= '
             }
             $html .= '
                     <h2 class="section-title">Compromisos Generales</h2>';
@@ -1259,10 +1268,7 @@ class SeguimientoCrmController extends Controller
                 <h4>' . $tituloFormateado . ':</h4>
                 <p>' . $compromiso->descripcion . '</p>
         ' : "";
-        ' : "";
             }
-        }
-        if ($formulario->tipo_atencion_id == 5 || $formulario->tipo_atencion_id == 6) {
         }
         if ($formulario->tipo_atencion_id == 5 || $formulario->tipo_atencion_id == 6) {
             $html .= '
@@ -1375,15 +1381,9 @@ class SeguimientoCrmController extends Controller
 
         if ($booleanCompromiso == true) {
             $body = "Cordial saludo, tiene nuevos compromisos asignados en el radicado CRM número: <b><i>$numeroRadicado</i></b> adjunto con las siguientes observaciones: $observacion.
-        if ($booleanCompromiso == true) {
-            $body = "Cordial saludo, tiene nuevos compromisos asignados en el radicado CRM número: <b><i>$numeroRadicado</i></b> adjunto con las siguientes observaciones: $observacion.
         \n\n Atentamente:";
         }
-        }
 
-
-        $subject = 'Confirmación registro de servicio.';
-        $nomb_membrete = 'Informe de servicio';
 
         $subject = 'Confirmación registro de servicio.';
         $nomb_membrete = 'Informe de servicio';
@@ -1400,29 +1400,11 @@ class SeguimientoCrmController extends Controller
             'registro_id' => $registro_id,
             'nom_membrete' => $nomb_membrete
         ];
-        // Datos del correo
-        $correo = [
-            'subject' => $subject,
-            'body' => $body,
-            'formulario_ingreso' => $pdfPath,
-            'to' => $destinatario,
-            'cc' => '',
-            'cco' => $user,
-            'modulo' => $modulo,
-            'registro_id' => $registro_id,
-            'nom_membrete' => $nomb_membrete
-        ];
 
         // Instanciar el controlador de envío de correo
         $EnvioCorreoController = new EnvioCorreoController();
         $requestEmail = Request::createFromBase(new Request($correo));
-        // Instanciar el controlador de envío de correo
-        $EnvioCorreoController = new EnvioCorreoController();
-        $requestEmail = Request::createFromBase(new Request($correo));
 
-        // Enviar el correo
-        return $EnvioCorreoController->sendEmail($requestEmail);
-    }
         // Enviar el correo
         return $EnvioCorreoController->sendEmail($requestEmail);
     }
@@ -1432,14 +1414,7 @@ class SeguimientoCrmController extends Controller
         $result = CompromisosVisitaCrm::select()->get();
         return response()->json($result);
     }
-    public function getAllCompromisos()
-    {
-        $result = CompromisosVisitaCrm::select()->get();
-        return response()->json($result);
-    }
 
-    public function verEvidencia($id)
-    {
     public function verEvidencia($id)
     {
         $evidencia = Evidencia::find($id);
@@ -1456,8 +1431,6 @@ class SeguimientoCrmController extends Controller
         $extension = pathinfo($nombreZip, PATHINFO_EXTENSION);
         $ultimoCaracter = strlen($rutaArchivo) - 1;
         $nombreArchivo = substr($rutaArchivo, $pos + 1, $ultimoCaracter);
-        $ultimoCaracter = strlen($rutaArchivo) - 1;
-        $nombreArchivo = substr($rutaArchivo, $pos + 1, $ultimoCaracter);
         // Verificar si es un archivo ZIP
         if ($extension === 'zip') {
             $zip = new ZipArchive;
@@ -1465,10 +1438,7 @@ class SeguimientoCrmController extends Controller
             if ($res === true) {
                 // Extraer el contenido del archivo ZIP
                 $zip->extractTo(public_path('/upload/tmp/'), $nombreArchivo);
-                $zip->extractTo(public_path('/upload/tmp/'), $nombreArchivo);
                 $zip->close();
-                $archivoExtraido = glob(public_path('/upload/tmp/' . $nombreArchivo));
-
                 $archivoExtraido = glob(public_path('/upload/tmp/' . $nombreArchivo));
 
                 if (count($archivoExtraido) > 0) {
@@ -1476,8 +1446,6 @@ class SeguimientoCrmController extends Controller
                     $extensionArchivoExtraido = pathinfo($archivoMsg, PATHINFO_EXTENSION);
                     /* return response()->download($archivoMsg, basename($archivoMsg))->deleteFileAfterSend(true); */
                     if ($extensionArchivoExtraido === 'msg') {
-                        return response()->download($archivoMsg, basename($archivoMsg))->deleteFileAfterSend(true);
-                    }
                         return response()->download($archivoMsg, basename($archivoMsg))->deleteFileAfterSend(true);
                     }
                     return response()->file($archivoMsg)->deleteFileAfterSend(true);
@@ -1491,21 +1459,11 @@ class SeguimientoCrmController extends Controller
     }
     public function recortarObservacion()
     {
-    public function recortarObservacion()
-    {
         DB::beginTransaction();
         try {
             // Obtener todos los registros del modelo SeguimientoCrm
             $registros = SeguimientoCrm::all();
-        try {
-            // Obtener todos los registros del modelo SeguimientoCrm
-            $registros = SeguimientoCrm::all();
 
-            foreach ($registros as $registro) {
-                // Verificar si el campo 'observacion' tiene contenido
-                if ($registro->observacion) {
-                    // Dividir el contenido de 'observacion' en partes de 4000 caracteres
-                    $observacionFragmentada = str_split($registro->observacion, 4000);
             foreach ($registros as $registro) {
                 // Verificar si el campo 'observacion' tiene contenido
                 if ($registro->observacion) {
@@ -1514,13 +1472,7 @@ class SeguimientoCrmController extends Controller
 
                     // Guardar la primera parte en el campo 'observacion'
                     $registro->observacion = $observacionFragmentada[0];
-                    // Guardar la primera parte en el campo 'observacion'
-                    $registro->observacion = $observacionFragmentada[0];
 
-                    // Si hay una segunda parte, guardarla en el campo 'observacion2'
-                    if (isset($observacionFragmentada[1])) {
-                        $registro->observacion2 = $observacionFragmentada[1];
-                    }
                     // Si hay una segunda parte, guardarla en el campo 'observacion2'
                     if (isset($observacionFragmentada[1])) {
                         $registro->observacion2 = $observacionFragmentada[1];
@@ -1530,19 +1482,7 @@ class SeguimientoCrmController extends Controller
                     $registro->save();
                 }
             }
-                    // Guardar los cambios
-                    $registro->save();
-                }
-            }
 
-            // Confirmar la transacción
-            DB::commit();
-            return response()->json(['status' => 'success', 'message' => 'Observaciones divididas correctamente.']);
-        } catch (\Exception $e) {
-            // En caso de error, revertir la transacción
-            DB::rollback();
-            return response()->json(['status' => 'error', 'message' => 'Error al dividir las observaciones: ' . $e->getMessage()]);
-        }
             // Confirmar la transacción
             DB::commit();
             return response()->json(['status' => 'success', 'message' => 'Observaciones divididas correctamente.']);
