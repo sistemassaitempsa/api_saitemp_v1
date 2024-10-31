@@ -70,6 +70,7 @@ class EnvioCorreoController extends Controller
         // Adjuntar imágenes de la firma como recursos embebidos
         if (file_exists($rutaImagen1)) {
             $email->embed(fopen($rutaImagen1, 'r'), 'logo_firma1');
+            
         } else {
             return response()->json(['status' => 'error', 'message' => 'El correo electrónico no tiene configurada una firma.']);
         }
