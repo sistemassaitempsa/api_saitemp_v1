@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\ClientesSeguimientoGuardado;
+use App\Models\ClientesSeguimientoEstado;
 use App\Models\UsuarioPermiso;
 use App\Models\cliente;
 use App\Models\ActividadCiiu;
@@ -65,17 +67,18 @@ class formularioDebidaDiligenciaController extends Controller
             ->get();
         return response()->json($result);
     }
-    public function consultacliente($cantidad){
+    public function consultacliente($cantidad)
+    {
         $permisos = $this->validaPermiso();
-        
+
         $user = auth()->user();
         $year_actual = date('Y');
         $result = cliente::join('gen_vendedor as ven', 'ven.cod_ven', '=', 'usr_app_clientes.vendedor_id')
             ->leftJoin('usr_app_estados_firma as estf', 'estf.id', '=', 'usr_app_clientes.estado_firma_id')
             ->whereYear('usr_app_clientes.created_at', $year_actual)
-             ->when(!in_array('39', $permisos), function ($query) use ($user) {
+            ->when(!in_array('39', $permisos), function ($query) use ($user) {
                 return $query->where('usr_app_clientes.vendedor_id', $user->vendedor_id);
-            }) 
+            })
             ->select(
                 'usr_app_clientes.id',
                 DB::raw('COALESCE(CONVERT(VARCHAR, usr_app_clientes.numero_radicado), CONVERT(VARCHAR, usr_app_clientes.id)) AS numero_radicado'),
@@ -86,7 +89,10 @@ class formularioDebidaDiligenciaController extends Controller
                 'usr_app_clientes.telefono_empresa',
                 'usr_app_clientes.created_at',
                 'estf.nombre as nombre_estado_firma',
-                'estf.color as color_estado_firma'
+                'estf.color as color_estado_firma',
+                'estf.id as estado_firma_id',
+                'usr_app_clientes.responsable'
+
             )
             ->orderby('usr_app_clientes.numero_radicado', 'DESC')
             ->paginate($cantidad);
@@ -1784,6 +1790,52 @@ class formularioDebidaDiligenciaController extends Controller
         }
         return response()->json(['status' => 'error', 'message' => 'Error al actualizar registro.']);
     }
+
+    public function actualizaResponsableCliente($item_id, $responsable_id, $nombre_responsable)
+    {
+        DB::beginTransaction();
+        try {
+            $user = auth()->user();
+            $registro_ingreso = cliente::where('usr_app_clientes.id', '=', $item_id)
+                ->first();
+
+            $permisos = $this->validaPermiso();
+
+
+            if ($registro_ingreso->responsable_id != null && $registro_ingreso->responsable_id != $user->id && !in_array('31', $permisos)) {
+                return response()->json(['status' => 'error', 'message' => 'Solo el responsable puede realizar esta acción.']);
+            }
+
+            $seguimiento_estado = new ClientesSeguimientoEstado;
+            $seguimiento_estado->responsable_inicial =  $registro_ingreso->responsable;
+            $seguimiento_estado->responsable_final = $nombre_responsable;
+            $seguimiento_estado->estados_firma_inicial =  $registro_ingreso->estado_ingreso_id;
+            $seguimiento_estado->estados_firma_final =  $registro_ingreso->estado_ingreso_id;
+            $seguimiento_estado->cliente_id =  $item_id;
+            $seguimiento_estado->actualiza_registro =   $user->nombres . ' ' .  $user->apellidos;
+
+            $seguimiento_estado->save();
+
+            $registro_ingreso->responsable_anterior = $registro_ingreso->responsable;
+            $registro_ingreso->responsable = $nombre_responsable;
+            $registro_ingreso->responsable_id = $responsable_id;
+            $registro_ingreso->save();
+            $seguimiento = new ClientesSeguimientoGuardado;
+            $seguimiento->estado_firma_id = $registro_ingreso->estado_firma_id;
+            $seguimiento->usuario = $user->nombres . ' ' .  $user->apellidos; //Preguntar con Andres si debe ser el ususario
+            $seguimiento->cliente_id = $item_id;
+            $seguimiento->save();
+            DB::commit();
+            return response()->json(['status' => 'success', 'message' => 'Registro actualizado de manera exitosa.']);
+        } catch (\Exception $e) {
+
+            DB::rollback();
+            return $e;
+            return response()->json(['status' => 'error', 'message' => 'Error al actualizar registro.']);
+        }
+    }
+
+
 
     public function validaPermiso()
     {

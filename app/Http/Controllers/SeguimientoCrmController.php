@@ -1060,7 +1060,7 @@ class SeguimientoCrmController extends Controller
     }
 
 
-    public function generarPdfCrm(Request $request, $registro_id, $btnId)
+    public function generarPdfCrm(Request $request, $registro_id, $btnId = 1)
     {
         $modulo = 46;
 
@@ -1171,7 +1171,6 @@ class SeguimientoCrmController extends Controller
                     }
                     td {
                         border: 1px solid #ddd;
-                        padding: 8px;
                         font-size: 12px;
                     }
                     .signature {
@@ -1184,7 +1183,10 @@ class SeguimientoCrmController extends Controller
                     .asistencia_title{
                         color: #043c69; 
                     }
-                  
+                    .divImg{
+                    
+                
+    }
                 </style>
                 <div class="divInit">
          <h1> Registro de servicio </h1>
@@ -1284,7 +1286,7 @@ class SeguimientoCrmController extends Controller
                     <tr>
                         <td>' . $asistencia->nombre . '</td>
                         <td>' . $asistencia->cargo . '</td>
-                        <td><img src="' . public_path($asistencia->firma) . '" class="signature" /></td>
+                        <td><div class="divImg"><img src="' . public_path($asistencia->firma) . '" class="signature" /></div></td>
                     </tr>';
             }
             $html .= '</table>';
