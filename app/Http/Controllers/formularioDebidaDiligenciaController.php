@@ -156,6 +156,7 @@ class formularioDebidaDiligenciaController extends Controller
                 ->leftJoin('usr_app_tipo_operaciones_internacionales as topi', 'topi.id', '=', 'opi.tipo_operaciones_id')
                 ->leftJoin('usr_app_tipo_proveedor as tpro', 'tpro.id', '=', 'usr_app_clientes.tipo_proveedor_id')
                 ->leftJoin('usr_app_tipo_cliente as tcli', 'tcli.id', '=', 'usr_app_clientes.tipo_cliente_id')
+                ->leftJoin('usr_app_estados_firma as estf', 'estf.id', '=', 'usr_app_clientes.estado_firma_id')
                 ->select(
                     DB::raw('COALESCE(CONVERT(VARCHAR, usr_app_clientes.numero_radicado), CONVERT(VARCHAR, usr_app_clientes.id)) AS numero_radicado'),
                     'ac.codigo_actividad as codigo_actividad_ciiu',
@@ -284,6 +285,11 @@ class formularioDebidaDiligenciaController extends Controller
                     'usr_app_clientes.contratacion_carnet_corporativo',
                     'usr_app_clientes.contratacion_pagos_31',
                     'usr_app_clientes.contratacion_observacion',
+                    'usr_app_clientes.responsable_id',
+                    'usr_app_clientes.responsable',
+                    'usr_app_clientes.estado_firma_id',
+                    'estf.nombre as nombre_estado_firma'
+
                 )
                 ->where('usr_app_clientes.id', '=', $id)
                 ->first();
@@ -753,6 +759,7 @@ class formularioDebidaDiligenciaController extends Controller
      */
     public function create(Request $request)
     {
+        $user = auth()->user();
         DB::beginTransaction();
 
         try {
@@ -843,7 +850,13 @@ class formularioDebidaDiligenciaController extends Controller
             $cliente->contratacion_pago_efectivo = $request['contratacion_pago_efectivo'];
             $cliente->contratacion_carnet_corporativo = $request['contratacion_carnet_corporativo'];
             $cliente->contratacion_pagos_31 = $request['contratacion_pagos_31'];
-            $cliente->estado_firma_id = 1;
+            if ($request->estado_id == '') {
+                $cliente->estado_firma_id = 1;
+            } else {
+                $cliente->estado_firma_id = $request->estado_id;
+            }
+            $cliente->responsable = $request->responsable;
+            $cliente->responsable_id = $request->responsable_id;
             $cliente->contratacion_observacion = $request['contratacion_observacion'];
             $cliente->save();
 
