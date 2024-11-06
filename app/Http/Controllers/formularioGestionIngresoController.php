@@ -1229,11 +1229,17 @@ class formularioGestionIngresoController extends Controller
                 $pdf->Cell(95, 10, 'Cargo:', 0, 0, 'L');
                 $pdf->SetFont('helveticaI', '', 10);
 
-                $pdf->Ln(10);
+                $pdf->SetX(100);
+                $pdf->SetFont('helveticaI', 'B', 10);
+                $pdf->Cell(95, 10, 'Salario:', 0, 1, 'L');
+
+                $pdf->SetFont('helveticaI', '', 10);
                 $pdf->SetX(10);
                 $ancho_texto = $pdf->GetStringWidth($cargo);
-
-                $pdf->MultiCell($ancho_texto + 7, 7, $cargo != null ? $cargo : 'Sin datos', 0, 'L');
+                $pdf->MultiCell($ancho_texto + 7, 1, $cargo != null ? $cargo : 'Sin datos', 0, 'L', false, 0);
+                $pdf->SetFont('helveticaI', '', 10);
+                $pdf->SetX(100);
+                $pdf->Cell(10, 1, $formulario->salario != null ? $formulario->salario : 'Sin datos', 0, 1, 'L');
             } else {
                 $pdf->SetFont('helveticaI', 'B', 10);
                 $pdf->SetX(10);
@@ -1248,9 +1254,26 @@ class formularioGestionIngresoController extends Controller
                     $pdf->SetX(10);
                     $pdf->MultiCell($ancho_texto + 7, 7, $linea, 0, 'L');
                 }
+                $pdf->SetFont('helveticaI', 'B', 10);
+                $pdf->SetX(10);
+                $pdf->Cell(95, 10, 'Salario:', 0, 0, 'L');
+                $pdf->Ln(10);
+                $pdf->SetFont('helveticaI', '', 10);
+                $pdf->SetX(10);
+                $pdf->Cell(10, 1, $formulario->salario != null ? $formulario->salario : 'Sin datos', 0, 1, 'L');
             }
-
+            /*   $pdf->SetX(100);
             $pdf->SetFont('helveticaI', 'B', 10);
+            $pdf->Cell(95, 10, 'Salario:', 0, 1, 'L');
+
+
+
+            $pdf->SetFont('helveticaI', '', 10);
+            $pdf->SetX(100);
+            $pdf->Cell(10, 1, $formulario->salario != null ? $formulario->salario : 'Sin datos', 0, 1, 'L'); */
+
+
+            /*  $pdf->SetFont('helveticaI', 'B', 10);
             $pdf->SetX(10);
             $pdf->Cell(95, 10, 'Departamento de prestación de servicios:', 0, 0, 'L');
 
@@ -1263,7 +1286,7 @@ class formularioGestionIngresoController extends Controller
 
             $pdf->SetX(100);
             $pdf->Cell(65, 1, $municipio, 0, 1, 'L');
-            $pdf->Ln(2);
+            $pdf->Ln(2); */
 
             if (isset($formulario->laboratorios[0])) {
 
@@ -1346,7 +1369,7 @@ class formularioGestionIngresoController extends Controller
                     $pdf->MultiCell($ancho_texto + 7, 7, $linea, 0, 'L');
                 }
             }
-            $pdf->SetFont('helveticaI', 'B', 10);
+            /*  $pdf->SetFont('helveticaI', 'B', 10);
             $pdf->SetX(10);
             $pdf->Cell(95, 10, 'Exámenes:', 0, 0, 'L');
             $pdf->SetFont('helveticaI', '', 10);
@@ -1364,7 +1387,7 @@ class formularioGestionIngresoController extends Controller
                 $ancho_texto = $pdf->GetStringWidth($linea);
                 $pdf->SetX(10);
                 $pdf->MultiCell($ancho_texto + 7, 7, $linea, 0, 'L');
-            }
+            } */
             $pdf->SetFont('helveticaI', 'B', 10);
             $pdf->SetX(10);
             $pdf->Cell(95, 10, 'Recomendaciones exámenes:', 0, 0, 'L');
