@@ -214,11 +214,11 @@ class SeguimientoCrmController extends Controller
                     }
                     break;
                 case 'Igual a fecha':
-                    $query->whereDate($campo, '=', $valor);
+                    $query->whereDate('usr_app_clientes.' . $campo, '=', $valor);
                     break;
                 case 'Entre':
-                    $query->whereDate($campo, '>=', $valor)
-                        ->whereDate($campo, '<=', $valor2);
+                    $query->whereDate('usr_app_clientes.' . $campo, '>=', $valor)
+                        ->whereDate('usr_app_clientes.' . $campo, '<=', $valor2);
                     break;
             }
 
