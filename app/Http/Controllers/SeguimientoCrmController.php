@@ -273,280 +273,57 @@ class SeguimientoCrmController extends Controller
         return response()->json($result);
     }
 
-
-    /**
-     * Show the form for creating a new resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function create(Request $request)
+    public function create2(Request $request)
     {
 
-        DB::beginTransaction();
+        // Validar y recibir el JSON
+        $datosFormulario = $request->json()->all();
+        $user = auth()->user();
+
+        // Retornar los datos tal cual o procesarlos según sea necesario
+        // return response()->json(['status' => 'success','formulario' => $datosFormulario]);
+        //return response()->json(["status"=>"succes","formulario"=>$request->request]);
+        // DB::beginTransaction();
         try {
-            $user = auth()->user();
-            $result = new SeguimientoCrm;
+            $fechaHoraActual = Carbon::now();
+            $result = SeguimientoCrm::find("94");
             $result->sede_id = $request->sede_id;
             $result->proceso_id = $request->proceso_id;
             $result->solicitante_id = $request->solicitante_id;
-            $result->nombre_contacto = $request->nombre_contacto;
-            $result->tipo_atencion_id = $request->tipo_atencion_id;
+            $result->nombre_contacto = $request->razon_social;
+            $result->tipo_atencion_id = $request->medio_atencion_id;
             $result->telefono = $request->telefono;
             $result->correo = $request->correo;
             $result->estado_id = $request->estado_id;
-            /*     $result->observacion = $request->observacion; */
-            $result->nit_documento = $request->nit_documento;
-            $result->pqrsf_id = $request->pqrsf_id;
-            $result->creacion_pqrsf = $user->nombres . ' ' . $user->apellidos;
-            $result->cierre_pqrsf = $request->cierre_pqrsf;
-            $result->responsable = $request->responsable;
-            $result->responsable_id = $request->responsable_id;
-            //campos agregados para el formulario de visita
-            $result->visitante = $request->visitante;
-            $result->visitado = $request->visitado;
-            $result->hora_inicio = $request->hora_inicio;
-            $result->hora_cierre = $request->hora_cierre;
-            $result->cargo_visitante = $request->cargo_visitante;
-            $result->cargo_visitado = $request->cargo_atendio;
-            $result->objetivo = $request->objetivo_visita;
-            $result->alcance = $request->alcance_visita;
-            $result->latitud = $request->latitud;
-            $result->longitud = $request->longitud;
-
-            if ($request->observacion != "") {
-                $observacionFragmentada = str_split($request->observacion, 4000);
-                $result->observacion = $observacionFragmentada[0];
-                if (isset($observacionFragmentada[1])) {
-                    $result->observacion2 = $observacionFragmentada[1];
-                }
-                if ($request->estado_id == 3) {
-                    $fechaHoraActual = Carbon::now();
-                    $result->fecha_cerrado = $fechaHoraActual->format('d-m-Y H:i:s');
-                }
-            }
-
-
-            if ($request->estado_id == 2) {
-                $fechaHoraActual = Carbon::now();
+            $result->nit_documento = $request->nit;
+            if ($request->estado_id == 3) {
+                $result->cierre_pqrsf = $user->nombres . " " . $user->apellidos;
                 $result->fecha_cerrado = $fechaHoraActual->format('d-m-Y H:i:s');
             }
-
-            $result->save();
-            $manager = new ImageManager(new Driver());
-            $zipNombre = $result->numero_radicado . '.zip';
-            $zipGeneral = public_path('./upload/evidenciasCrm/' . $zipNombre);
-            $zipCoincidencia = glob($zipGeneral);
-            foreach ($request->imagen as $item) {
-                for ($i = 0; $i < count($item); $i++) {
-                    if ($i > 0) {
-                        $evidencia = new Evidencia;
-                        $evidencia->descripcion = $item[0] ? $item[0] : "";
-                        $evidencia->registro_id = $result->id;
-                        $nombreArchivoOriginal = $item[$i]->getClientOriginalName();
-                        $nombreSinExtension = pathinfo($nombreArchivoOriginal, PATHINFO_FILENAME);
-                        $extension = pathinfo($nombreArchivoOriginal, PATHINFO_EXTENSION);
-                        $nombreLimpio = preg_replace('/[.\s]+/', '_', $nombreSinExtension) . '.' . $extension;
-                        $nuevoNombre = Carbon::now()->timestamp . "_" . $nombreLimpio;
-                        $carpetaDestino = './upload/evidenciasCrm/';
-                        $zipPath = $carpetaDestino . $zipNombre;
-                        if (in_array($extension, ['jpg', 'jpeg', 'png', 'pdf'])) {
-                            if (in_array($extension, ['jpg', 'jpeg', 'png'])) {
-                                $image = $manager->read($item[$i]->getPathname());
-                                $image->resizeDown(800, 600, function ($constraint) {
-                                    $constraint->aspectRatio();
-                                })->save($carpetaDestino . $nuevoNombre, 70);
-                            } elseif ($extension === 'pdf') {
-                                $pdf = new Fpdi();
-                                $pageCount = $pdf->setSourceFile($item[$i]->getPathname());
-                                for ($pageNo = 1; $pageNo <= $pageCount; $pageNo++) {
-                                    $pdf->AddPage();
-                                    $templateId = $pdf->importPage($pageNo);
-                                    $pdf->useTemplate($templateId);
-                                }
-                                $pdf->Output($carpetaDestino . $nuevoNombre, 'F');
-                            }
-                            if (count($zipCoincidencia) > 0) {
-                                $zip = new ZipArchive;
-                                $res = $zip->open($zipGeneral);
-                                if ($res === true) {
-                                    $zip->addFile($carpetaDestino . $nuevoNombre, $nuevoNombre);
-                                    $zip->close();
-                                } else {
-                                    throw new \Exception('No se pudo acceder al ZIP');
-                                }
-                                $nuevoNombre = $zipNombre . $nuevoNombre;
-                            } else {
-                                $zip = new ZipArchive();
-                                if ($zip->open($zipPath, ZipArchive::CREATE) === true) {
-                                    $zip->addFile($carpetaDestino . $nuevoNombre, $nuevoNombre);
-                                    $zip->close();
-                                }
-                            }
-                            if (file_exists($carpetaDestino . $nuevoNombre)) {
-                                unlink($carpetaDestino . $nuevoNombre);
-                            }
-                        } else {
-                            if (count($zipCoincidencia) > 0) {
-                                $zip = new ZipArchive;
-                                $res = $zip->open($zipGeneral);
-                                if ($res === true) {
-                                    $zip->addFile($item[$i]->getPathname(), $nuevoNombre);
-                                    $zip->close();
-                                } else {
-                                    throw new \Exception('No se pudo acceder al ZIP');
-                                }
-                                $nuevoNombre = $zipNombre . $nuevoNombre;
-                            } else {
-                                $zip = new ZipArchive();
-                                if ($zip->open($zipPath, ZipArchive::CREATE) === true) {
-                                    $zip->addFile($item[$i]->getPathname(), $nuevoNombre);
-                                    $zip->close();
-                                }
-                            }
-                        }
-
-                        $evidencia->archivo = ltrim($carpetaDestino, '.') . $zipNombre . '_' . $nuevoNombre;
-                        /*     $evidencia->archivo = ltrim($carpetaDestino, '.') . $nuevoNombre; */
-                        $evidencia->save();
-                    }
-                }
-            }
-            if ($request->compromisos) {
-                $decodeCompromisos = json_decode($request->compromisos, true);
-                if (count($decodeCompromisos) > 0) {
-                    foreach ($decodeCompromisos as $item) {
-                        $compromiso = new CompromisosVisitaCrm;
-                        if (isset($item['descripcion']) &&  $item['descripcion'] != "") {
-                            $compromiso->titulo = isset($item['titulo']) ? $item['titulo'] : '';
-                            $compromiso->descripcion = isset($item['descripcion']) ? $item['descripcion'] : '';
-                            $compromiso->registro_id = $result->id;
-                            $compromiso->responsable = isset($item['responsable']) ? $item['responsable'] : '';
-                            $compromiso->estado_cierre_id = isset($item['estado_cierre_id']) ? $item['estado_cierre_id'] : '';
-                            $compromiso->observacion = isset($item['observacion']) ? $item['observacion'] : '';
-                            $compromiso->responsable_id = isset($item['responsable_id']) ? $item['responsable_id'] : '';
-                            /*      $fechaCierreFormatted = Carbon::parse($item['fecha_cierre'])->format('d-m-Y H:i:s');
-                            $compromiso->fecha_cierre = isset($fechaCierreFormatted) ? $fechaCierreFormatted : ''; */
-                            $compromiso->save();
-                        }
-                    }
-                }
-            }
-            if ($request->temasPrincipales) {
-                $decodeTemas = json_decode($request->temasPrincipales, true);
-                if (count($decodeTemas) > 0) {
-                    foreach ($decodeTemas as $item) {
-
-                        $temaPrincipal = new TemasVisitaCrm;
-                        $temaPrincipal->titulo = isset($item['titulo']) ? $item['titulo'] : '';
-                        $temaPrincipal->descripcion = isset($item['descripcion']) ? $item['descripcion'] : '';
-                        $temaPrincipal->registro_id = $result->id;
-                        $temaPrincipal->save();
-                    }
-                }
-            }
-
-            // Procesar temas principales
-
-
-            if ($request->asistencia) {
-                foreach ($request->asistencia as $item) {
-                    for ($i = 0; $i < count($item); $i++) {
-                        if ($i > 0) {
-                            $asistencia = new AsistenciaVisitaCrm;
-                            $decodeFirma = json_decode($item[0], true);
-
-                            $asistencia->nombre = $decodeFirma ? $decodeFirma["nombre"] : "";
-                            $asistencia->registro_id = $result->id;
-                            $asistencia->cargo = $decodeFirma ? $decodeFirma["cargo"] : "";
-                            $nombreArchivoOriginal = $item[$i]->getClientOriginalName();
-                            $nuevoNombre = Carbon::now()->timestamp . "_" . $nombreArchivoOriginal;
-                            $carpetaDestino = './upload/evidenciasCrm/';
-                            $item[$i]->move($carpetaDestino, $nuevoNombre);
-                            $asistencia->firma = ltrim($carpetaDestino, '.') . $nuevoNombre;
-                            $asistencia->save();
-                        }
-                    }
-                }
-            }
-
-
-            DB::commit();
-            return response()->json(['status' => 'success', 'message' => 'Registro guardado de manera exitosa', 'id' => $result->id]);
-        } catch (\Exception $e) {
-            return $e;
-            DB::rollback();
-            return response()->json(['status' => 'error', 'message' => 'Error al guardar el formulario, por favor intenta nuevamente']);
-        }
-    }
-
-    /**
-     * Store a newly created resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
-     */
-    public function store(Request $request)
-    {
-        //
-    }
-
-    /**
-     * Display the specified resource.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function show($id)
-    {
-        //
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function edit($id)
-    {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-
-    public function update(Request $request, $id)
-    {
-        DB::beginTransaction();
-        try {
-            $result = SeguimientoCrm::find($id);
-            $result->sede_id = $request->sede_id;
-            $result->proceso_id = $request->proceso_id;
-            $result->solicitante_id = $request->solicitante_id;
-            $result->nombre_contacto = $request->nombre_contacto;
-            $result->tipo_atencion_id = $request->tipo_atencion_id;
-            $result->telefono = $request->telefono;
-            $result->correo = $request->correo;
-            $result->estado_id = $request->estado_id;
-            $result->nit_documento = $request->nit_documento;
-            $result->cierre_pqrsf = $request->cierre_pqrsf;
+            $result->usuario_guarda_cierre = $user->nombres . " " . $user->apellidos;
             $result->responsable = $request->responsable;
             $result->pqrsf_id = $request->pqrsf_id;
             $result->responsable_id = $request->responsable_id;
-            //campos agregados para el formulario de visita
             $result->visitante = $request->visitante;
             $result->visitado = $request->visitado;
-            $result->hora_inicio = $request->hora_inicio;
-            $result->hora_cierre = $request->hora_cierre;
+            $result->hora_inicio = $request->hora_inicio; //// falta este campo en el front android
             $result->cargo_visitante = $request->cargo_visitante;
             $result->cargo_visitado = $request->cargo_atendio;
-            $result->objetivo = $request->objetivo_visita;
-            $result->alcance = $request->alcance_visita;
+            $result->objetivo = $request->objetivo;
+            $result->alcance = $request->alcance;
+            $result->save();
+            // return response()->json(['status' => 'success', 'message' => 'Registro actualizado de manera exitosa', 'id' => $result->id]);
+            return response()->json(['status' => 'success', 'formulario' => $datosFormulario]);
+
+
+
+
+
+
+            //campos agregados para el formulario de visita
+
+
+
 
             if ($request->observacion != "") {
                 $observacionFragmentada = str_split($request->observacion, 4000);
@@ -637,52 +414,6 @@ class SeguimientoCrmController extends Controller
                         $evidencia->archivo = ltrim($carpetaDestino, '.') . $zipNombre . '_' . $nuevoNombre;
                         $evidencia->save();
                     }
-                    /*     if ($i > 0) {
-                      $evidencia = new Evidencia;
-                      $evidencia->descripcion = $item[0]?$item[0]:"";
-                      $evidencia->registro_id = $result->id;
-          
-                      $nombreArchivoOriginal = $item[$i]->getClientOriginalName();
-                      $nombreSinExtension = pathinfo($nombreArchivoOriginal, PATHINFO_FILENAME);
-                      $extension = pathinfo($nombreArchivoOriginal, PATHINFO_EXTENSION);
-                      $nombreLimpio = preg_replace('/[.\s]+/', '_', $nombreSinExtension) . '.' . $extension;
-                      $nuevoNombre = Carbon::now()->timestamp . "_" . $nombreLimpio;
-          
-                      $carpetaDestino = './upload/evidenciasCrm/';
-                      if (in_array($extension, ['jpg', 'jpeg', 'png'])) {
-                          $image = $manager->read($item[$i]->getPathname());
-                          $image->resizeDown(800, 600, function ($constraint) {
-                              $constraint->aspectRatio();
-                          })->save($carpetaDestino . $nuevoNombre, 70); 
-                      } elseif ($extension === 'pdf') {
-                          $pdf = new Fpdi();
-                          $pageCount = $pdf->setSourceFile($item[$i]->getPathname());
-                          for ($pageNo = 1; $pageNo <= $pageCount; $pageNo++) {
-                              $pdf->AddPage();
-                              $templateId = $pdf->importPage($pageNo);
-                              $pdf->useTemplate($templateId);
-                          }
-                          $pdf->Output($carpetaDestino . $nuevoNombre, 'F');
-                      } else if($extension === 'msg'){  
-                          $nombreGenerico= Carbon::now()->timestamp . "_" . $nombreSinExtension;
-                          $nombreZip=$nombreGenerico . ".zip";
-                          $nombreArchivo=$nombreGenerico . ".msg";
-                          $zip = new ZipArchive();
-                          $zipPath = $carpetaDestino . $nombreZip;
-                          if ($zip->open($zipPath, ZipArchive::CREATE) === true) {
-                              $zip->addFile($item[$i]->getPathname(), $nombreArchivo);
-                              $zip->close();
-                          } else {
-                              throw new \Exception('No se pudo crear el archivo ZIP');
-                          }
-                          $nuevoNombre = $nombreZip;
-                      }  else {
-                          $item[$i]->move($carpetaDestino, $nuevoNombre);
-                      }
-          
-                      $evidencia->archivo = ltrim($carpetaDestino, '.') . $nuevoNombre;
-                      $evidencia->save();
-                  } */
                 }
             }
             if ($request->compromisos) {
@@ -757,6 +488,484 @@ class SeguimientoCrmController extends Controller
                             $item[$i]->move($carpetaDestino, $nuevoNombre);
                             $asistencia->firma = ltrim($carpetaDestino, '.') . $nuevoNombre;
                             $asistencia->save();
+                        }
+                    }
+                }
+            }
+            // DB::commit();
+            return response()->json(['status' => 'success', 'message' => 'Registro actualizado de manera exitosa', 'id' => $result->id]);
+        } catch (\Exception $e) {
+            return $e;
+            DB::rollback();
+            return response()->json(['status' => 'error', 'message' => 'Error al guardar el formulario, por favor intenta nuevamente']);
+        }
+    }
+
+
+    /**
+     * Show the form for creating a new resource.
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function create(Request $request)
+    {
+
+        DB::beginTransaction();
+        try {
+            $fechaHoraActual = Carbon::now();
+            $user = auth()->user();
+            $result = new SeguimientoCrm;
+            $result->sede_id = $request->sede_id;
+            $result->proceso_id = $request->proceso_id;
+            $result->solicitante_id = $request->solicitante_id;
+            $result->nombre_contacto = $request->nombre_contacto;
+            $result->tipo_atencion_id = $request->tipo_atencion_id;
+            $result->telefono = $request->telefono;
+            $result->correo = $request->correo;
+            $result->estado_id = $request->estado_id;
+            /*     $result->observacion = $request->observacion; */
+            $result->nit_documento = $request->nit_documento;
+            $result->pqrsf_id = $request->pqrsf_id;
+            $result->creacion_pqrsf = $user->nombres . ' ' . $user->apellidos;
+            $result->responsable = $request->responsable;
+            $result->responsable_id = $request->responsable_id;
+
+            //campos agregados para el formulario de visita
+            $result->visitante = $request->visitante;
+            $result->visitado = $request->visitado;
+            $result->hora_inicio = $request->hora_inicio;
+            $result->hora_cierre = $request->hora_cierre;
+            $result->cargo_visitante = $request->cargo_visitante;
+            $result->cargo_visitado = $request->cargo_atendio;
+            $result->objetivo = $request->objetivo_visita;
+            $result->alcance = $request->alcance_visita;
+            $result->latitud = $request->latitud;
+            $result->longitud = $request->longitud;
+
+            if ($request->observacion != "") {
+                $observacionFragmentada = str_split($request->observacion, 4000);
+                $result->observacion = $observacionFragmentada[0];
+                if (isset($observacionFragmentada[1])) {
+                    $result->observacion2 = $observacionFragmentada[1];
+                }
+            }
+
+
+            if ($request->estado_id == 3) {
+                $result->cierre_pqrsf = $request->cierre_pqrsf;
+                $result->fecha_cerrado = $fechaHoraActual->format('d-m-Y H:i:s');
+                $result->usuario_guarda_cierre = $user->nombres . ' ' . $user->apellidos;
+            }
+
+            $result->save();
+            /*    $manager = new ImageManager(new Driver());
+            $zipNombre = $result->numero_radicado . '.zip';
+            $zipGeneral = public_path('./upload/evidenciasCrm/' . $zipNombre);
+            $zipCoincidencia = glob($zipGeneral); */
+            foreach ($request->imagen as $item) {
+                for ($i = 0; $i < count($item); $i++) {
+                    if ($i > 0) {
+                        $evidencia = new Evidencia;
+                        $evidencia->descripcion = $item[0] ? $item[0] : "";
+                        $evidencia->registro_id = $result->id;
+                        /*  $nombreArchivoOriginal = $item[$i]->getClientOriginalName();
+                        $nombreSinExtension = pathinfo($nombreArchivoOriginal, PATHINFO_FILENAME);
+                        $extension = pathinfo($nombreArchivoOriginal, PATHINFO_EXTENSION);
+                        $nombreLimpio = preg_replace('/[.\s]+/', '_', $nombreSinExtension) . '.' . $extension;
+                        $nuevoNombre = Carbon::now()->timestamp . "_" . $nombreLimpio;
+                        $carpetaDestino = './upload/evidenciasCrm/';
+                        $zipPath = $carpetaDestino . $zipNombre;
+                        if (in_array($extension, ['jpg', 'jpeg', 'png', 'pdf'])) {
+                            if (in_array($extension, ['jpg', 'jpeg', 'png'])) {
+                                $image = $manager->read($item[$i]->getPathname());
+                                $image->resizeDown(800, 600, function ($constraint) {
+                                    $constraint->aspectRatio();
+                                })->save($carpetaDestino . $nuevoNombre, 70);
+                            } elseif ($extension === 'pdf') {
+                                $pdf = new Fpdi();
+                                $pageCount = $pdf->setSourceFile($item[$i]->getPathname());
+                                for ($pageNo = 1; $pageNo <= $pageCount; $pageNo++) {
+                                    $pdf->AddPage();
+                                    $templateId = $pdf->importPage($pageNo);
+                                    $pdf->useTemplate($templateId);
+                                }
+                                $pdf->Output($carpetaDestino . $nuevoNombre, 'F');
+                            }
+                            if (count($zipCoincidencia) > 0) {
+                                $zip = new ZipArchive;
+                                $res = $zip->open($zipGeneral);
+                                if ($res === true) {
+                                    $zip->addFile($carpetaDestino . $nuevoNombre, $nuevoNombre);
+                                    $zip->close();
+                                } else {
+                                    throw new \Exception('No se pudo acceder al ZIP');
+                                }
+                                $nuevoNombre = $zipNombre . $nuevoNombre;
+                            } else {
+                                $zip = new ZipArchive();
+                                if ($zip->open($zipPath, ZipArchive::CREATE) === true) {
+                                    $zip->addFile($carpetaDestino . $nuevoNombre, $nuevoNombre);
+                                    $zip->close();
+                                }
+                            }
+                            if (file_exists($carpetaDestino . $nuevoNombre)) {
+                                unlink($carpetaDestino . $nuevoNombre);
+                            }
+                        } else {
+                            if (count($zipCoincidencia) > 0) {
+                                $zip = new ZipArchive;
+                                $res = $zip->open($zipGeneral);
+                                if ($res === true) {
+                                    $zip->addFile($item[$i]->getPathname(), $nuevoNombre);
+                                    $zip->close();
+                                } else {
+                                    throw new \Exception('No se pudo acceder al ZIP');
+                                }
+                                $nuevoNombre = $zipNombre . $nuevoNombre;
+                            } else {
+                                $zip = new ZipArchive();
+                                if ($zip->open($zipPath, ZipArchive::CREATE) === true) {
+                                    $zip->addFile($item[$i]->getPathname(), $nuevoNombre);
+                                    $zip->close();
+                                }
+                            }
+                        } */
+                        $ruta = './upload/evidenciasCrm/';
+
+                        $evidencia->archivo = $this->comprimirArchivos($result->numero_radicado, $item[$i], $ruta);
+                        /*     $evidencia->archivo = ltrim($carpetaDestino, '.') . $nuevoNombre; */
+                        $evidencia->save();
+                    }
+                }
+            }
+            if ($request->compromisos) {
+                $decodeCompromisos = json_decode($request->compromisos, true);
+                if (count($decodeCompromisos) > 0) {
+                    foreach ($decodeCompromisos as $item) {
+                        $compromiso = new CompromisosVisitaCrm;
+                        if (isset($item['descripcion']) &&  $item['descripcion'] != "") {
+                            $compromiso->titulo = isset($item['titulo']) ? $item['titulo'] : '';
+                            $compromiso->descripcion = isset($item['descripcion']) ? $item['descripcion'] : '';
+                            $compromiso->registro_id = $result->id;
+                            $compromiso->responsable = isset($item['responsable']) ? $item['responsable'] : '';
+                            $compromiso->estado_cierre_id = isset($item['estado_cierre_id']) ? $item['estado_cierre_id'] : '';
+                            $compromiso->observacion = isset($item['observacion']) ? $item['observacion'] : '';
+                            $compromiso->responsable_id = isset($item['responsable_id']) ? $item['responsable_id'] : '';
+                            /*      $fechaCierreFormatted = Carbon::parse($item['fecha_cierre'])->format('d-m-Y H:i:s');
+                            $compromiso->fecha_cierre = isset($fechaCierreFormatted) ? $fechaCierreFormatted : ''; */
+                            if (isset($item['estado_cierre_id']) && $item['estado_cierre_id'] != "") {
+                                $fechaCierreFormatted = $fechaHoraActual->format('d-m-Y H:i:s');;
+                                $compromiso->fecha_cierre = isset($fechaCierreFormatted) ? $fechaCierreFormatted : '';
+                            }
+                            $compromiso->save();
+                        }
+                    }
+                }
+            }
+            if ($request->temasPrincipales) {
+                $decodeTemas = json_decode($request->temasPrincipales, true);
+                if (count($decodeTemas) > 0) {
+                    foreach ($decodeTemas as $item) {
+
+                        $temaPrincipal = new TemasVisitaCrm;
+                        $temaPrincipal->titulo = isset($item['titulo']) ? $item['titulo'] : '';
+                        $temaPrincipal->descripcion = isset($item['descripcion']) ? $item['descripcion'] : '';
+                        $temaPrincipal->registro_id = $result->id;
+                        $temaPrincipal->save();
+                    }
+                }
+            }
+
+            // Procesar temas principales
+
+
+            if ($request->asistencia) {
+                foreach ($request->asistencia as $item) {
+                    for ($i = 0; $i < count($item); $i++) {
+                        if ($i > 0) {
+                            $asistencia = new AsistenciaVisitaCrm;
+                            $decodeFirma = json_decode($item[0], true);
+
+                            $asistencia->nombre = $decodeFirma ? $decodeFirma["nombre"] : "";
+                            $asistencia->registro_id = $result->id;
+                            $asistencia->cargo = $decodeFirma ? $decodeFirma["cargo"] : "";
+                            $asistencia->correo = $decodeFirma ? $decodeFirma["correo"] : "";
+                            $nombreArchivoOriginal = $item[$i]->getClientOriginalName();
+                            $nuevoNombre = Carbon::now()->timestamp . "_" . $nombreArchivoOriginal;
+                            $carpetaDestino = './upload/evidenciasCrm/';
+                            $item[$i]->move($carpetaDestino, $nuevoNombre);
+                            $asistencia->firma = ltrim($carpetaDestino, '.') . $nuevoNombre;
+                            $asistencia->save();
+                        }
+                    }
+                }
+            }
+
+
+            DB::commit();
+            return response()->json(['status' => 'success', 'message' => 'Registro guardado de manera exitosa', 'id' => $result->id]);
+        } catch (\Exception $e) {
+            return $e;
+            DB::rollback();
+            return response()->json(['status' => 'error', 'message' => 'Error al guardar el formulario, por favor intenta nuevamente']);
+        }
+    }
+
+    /**
+     * Store a newly created resource in storage.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response
+     */
+    public function store(Request $request)
+    {
+        //
+    }
+
+    /**
+     * Display the specified resource.
+     *
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
+     */
+    public function show($id)
+    {
+        //
+    }
+
+    /**
+     * Show the form for editing the specified resource.
+     *
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
+     */
+    public function edit($id)
+    {
+        //
+    }
+
+    /**
+     * Update the specified resource in storage.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
+     */
+
+    public function update(Request $request, $id)
+    {
+        $user = auth()->user();
+        DB::beginTransaction();
+        try {
+            $fechaHoraActual = Carbon::now();
+            $result = SeguimientoCrm::find($id);
+            $result->sede_id = $request->sede_id;
+            $result->proceso_id = $request->proceso_id;
+            $result->solicitante_id = $request->solicitante_id;
+            $result->nombre_contacto = $request->nombre_contacto;
+            $result->tipo_atencion_id = $request->tipo_atencion_id;
+            $result->telefono = $request->telefono;
+            $result->correo = $request->correo;
+            $result->estado_id = $request->estado_id;
+            $result->nit_documento = $request->nit_documento;
+            $result->responsable = $request->responsable;
+            $result->pqrsf_id = $request->pqrsf_id;
+            $result->responsable_id = $request->responsable_id;
+
+            //campos agregados para el formulario de visita
+            $result->visitante = $request->visitante;
+            $result->visitado = $request->visitado;
+            $result->hora_inicio = $request->hora_inicio;
+            $result->hora_cierre = $request->hora_cierre;
+            $result->cargo_visitante = $request->cargo_visitante;
+            $result->cargo_visitado = $request->cargo_atendio;
+            $result->objetivo = $request->objetivo_visita;
+            $result->alcance = $request->alcance_visita;
+
+            if ($request->observacion != "") {
+                $observacionFragmentada = str_split($request->observacion, 4000);
+                $result->observacion = $observacionFragmentada[0];
+                if (isset($observacionFragmentada[1])) {
+                    $result->observacion2 = $observacionFragmentada[1];
+                }
+            }
+
+            if ($request->estado_id == 3) {
+                $result->cierre_pqrsf = $request->cierre_pqrsf;
+                $result->fecha_cerrado = $fechaHoraActual->format('d-m-Y H:i:s');
+                $result->usuario_guarda_cierre = $user->nombres . ' ' . $user->apellidos;
+            }
+
+
+            $result->save();
+            /*  $manager = new ImageManager(new Driver());
+            $zipNombre = $result->numero_radicado . '.zip';
+            $zipGeneral = public_path('./upload/evidenciasCrm/' . $zipNombre);
+            $zipCoincidencia = glob($zipGeneral); */
+            foreach ($request->imagen as $item) {
+                for ($i = 0; $i < count($item); $i++) {
+                    if ($i > 0) {
+                        $evidencia = new Evidencia;
+                        $evidencia->descripcion = $item[0] ? $item[0] : "";
+                        $evidencia->registro_id = $result->id;
+                        /* $nombreArchivoOriginal = $item[$i]->getClientOriginalName();
+                        $nombreSinExtension = pathinfo($nombreArchivoOriginal, PATHINFO_FILENAME);
+                        $extension = pathinfo($nombreArchivoOriginal, PATHINFO_EXTENSION);
+                        $nombreLimpio = preg_replace('/[.\s]+/', '_', $nombreSinExtension) . '.' . $extension;
+                        $nuevoNombre = Carbon::now()->timestamp . "_" . $nombreLimpio;
+                        $carpetaDestino = './upload/evidenciasCrm/';
+                        $zipPath = $carpetaDestino . $zipNombre;
+                        if (in_array($extension, ['jpg', 'jpeg', 'png', 'pdf'])) {
+                            if (in_array($extension, ['jpg', 'jpeg', 'png'])) {
+                                $image = $manager->read($item[$i]->getPathname());
+                                $image->resizeDown(800, 600, function ($constraint) {
+                                    $constraint->aspectRatio();
+                                })->save($carpetaDestino . $nuevoNombre, 70);
+                            } elseif ($extension === 'pdf') {
+                                $pdf = new Fpdi();
+                                $pageCount = $pdf->setSourceFile($item[$i]->getPathname());
+                                for ($pageNo = 1; $pageNo <= $pageCount; $pageNo++) {
+                                    $pdf->AddPage();
+                                    $templateId = $pdf->importPage($pageNo);
+                                    $pdf->useTemplate($templateId);
+                                }
+                                $pdf->Output($carpetaDestino . $nuevoNombre, 'F');
+                            }
+                            if (count($zipCoincidencia) > 0) {
+                                $zip = new ZipArchive;
+                                $res = $zip->open($zipGeneral);
+                                if ($res === true) {
+                                    $zip->addFile($carpetaDestino . $nuevoNombre, $nuevoNombre);
+                                    $zip->close();
+                                } else {
+                                    throw new \Exception('No se pudo acceder al ZIP');
+                                }
+                            } else {
+                                $zip = new ZipArchive();
+                                if ($zip->open($zipPath, ZipArchive::CREATE) === true) {
+                                    $zip->addFile($carpetaDestino . $nuevoNombre, $nuevoNombre);
+                                    $zip->close();
+                                }
+                            }
+                            if (file_exists($carpetaDestino . $nuevoNombre)) {
+                                unlink($carpetaDestino . $nuevoNombre);
+                            }
+                        } else {
+                            if (count($zipCoincidencia) > 0) {
+                                $zip = new ZipArchive;
+                                $res = $zip->open($zipGeneral);
+                                if ($res === true) {
+                                    $zip->addFile($item[$i]->getPathname(), $nuevoNombre);
+                                    $zip->close();
+                                } else {
+                                    throw new \Exception('No se pudo acceder al ZIP');
+                                }
+                            } else {
+                                $zip = new ZipArchive();
+                                if ($zip->open($zipPath, ZipArchive::CREATE) === true) {
+                                    $zip->addFile($item[$i]->getPathname(), $nuevoNombre);
+                                    $zip->close();
+                                }
+                            }
+                        } */
+                        $ruta = './upload/evidenciasCrm/';
+                        $evidencia->archivo = $this->comprimirArchivos($result->numero_radicado, $item[$i], $ruta);
+                        $evidencia->save();
+                    }
+                }
+            }
+            if ($request->compromisos) {
+                $decodeCompromisos = json_decode($request->compromisos, true);
+                $compromisoCant = "";
+                if (count($decodeCompromisos) > 0) {
+                    foreach ($decodeCompromisos as $item) {
+                        if ($item['id'] != "") {
+                            $compromiso = CompromisosVisitaCrm::find($item['id']);
+                            $compromiso->titulo = isset($item['titulo']) ? $item['titulo'] : '';
+                            $compromiso->descripcion = isset($item['descripcion']) ? $item['descripcion'] : '';
+                            $compromiso->registro_id = $result->id;
+                            $compromiso->estado_cierre_id = isset($item['estado_cierre_id']) ? $item['estado_cierre_id'] : '';
+                            /* $fechaCierreFormatted = Carbon::parse($item['fecha_cierre'])->format('d-m-Y H:i:s'); */
+                            $compromiso->responsable = isset($item['responsable']) ? $item['responsable'] : '';
+                            $compromiso->observacion = isset($item['observacion']) ? $item['observacion'] : '';
+                            /* $compromiso->fecha_cierre = isset($fechaCierreFormatted) ? $fechaCierreFormatted : ''; */
+                            $compromiso->responsable_id = isset($item['responsable_id']) ? $item['responsable_id'] : '';
+                            if (isset($item['estado_cierre_id']) && $item['estado_cierre_id'] != "") {
+                                $fechaCierreFormatted = $fechaHoraActual->format('d-m-Y H:i:s');;
+                                $compromiso->fecha_cierre = isset($fechaCierreFormatted) ? $fechaCierreFormatted : '';
+                            }
+                            $compromiso->save();
+                        } else {
+                            $compromiso = new CompromisosVisitaCrm;
+                            if (isset($item['descripcion']) &&  $item['descripcion'] != "") {
+                                $compromiso->titulo = isset($item['titulo']) ? $item['titulo'] : '';
+                                $compromiso->descripcion = isset($item['descripcion']) ? $item['descripcion'] : '';
+                                $compromiso->registro_id = $result->id;
+                                $compromiso->responsable = isset($item['responsable']) ? $item['responsable'] : '';
+                                $compromiso->estado_cierre_id = isset($item['estado_cierre_id']) ? $item['estado_cierre_id'] : '';
+                                $compromiso->observacion = isset($item['observacion']) ? $item['observacion'] : '';
+                                $compromiso->responsable_id = isset($item['responsable_id']) ? $item['responsable_id'] : '';
+                                /*         $fechaCierreFormatted = Carbon::parse($item['fecha_cierre'])->format('d-m-Y H:i:s');
+                        $compromiso->fecha_cierre = isset($fechaCierreFormatted) ? $fechaCierreFormatted : ''; */
+                                if (isset($item['estado_cierre_id']) && $item['estado_cierre_id'] != "") {
+                                    $fechaCierreFormatted = $fechaHoraActual->format('d-m-Y H:i:s');;
+                                    $compromiso->fecha_cierre = isset($fechaCierreFormatted) ? $fechaCierreFormatted : '';
+                                }
+                                $compromiso->save();
+                            }
+                        }
+                    }
+                }
+            }
+            if ($request->temasPrincipales) {
+                $decodeTemas = json_decode($request->temasPrincipales, true);
+                if (count($decodeTemas) > 0) {
+                    foreach ($decodeTemas as $item) {
+                        if ($item['id'] != "") {
+                            $temaPrincipal = TemasVisitaCrm::find($item['id']);
+                            $temaPrincipal->titulo = isset($item['titulo']) ? $item['titulo'] : '';
+                            $temaPrincipal->descripcion = isset($item['descripcion']) ? $item['descripcion'] : '';
+                            $temaPrincipal->registro_id = $result->id;
+                            $temaPrincipal->save();
+                        } else {
+
+                            $temaPrincipal = new TemasVisitaCrm;
+                            $temaPrincipal->titulo = isset($item['titulo']) ? $item['titulo'] : '';
+                            $temaPrincipal->descripcion = isset($item['descripcion']) ? $item['descripcion'] : '';
+                            $temaPrincipal->registro_id = $result->id;
+                            $temaPrincipal->save();
+                        }
+                    }
+                }
+            }
+            if ($request->asistencia) {
+                foreach ($request->asistencia as $item) {
+                    for ($i = 0; $i < count($item); $i++) {
+                        if ($i > 0) {
+
+                            $asistencia = new AsistenciaVisitaCrm;
+                            $decodeFirma = json_decode($item[0], true);
+                            $asistencia->nombre = $decodeFirma ? $decodeFirma["nombre"] : "";
+                            $asistencia->registro_id = $result->id;
+                            $asistencia->cargo = $decodeFirma ? $decodeFirma["cargo"] : "";
+                            $asistencia->correo = $decodeFirma ? $decodeFirma["correo"] : "";
+                            $nombreArchivoOriginal = $item[$i]->getClientOriginalName();
+                            $nuevoNombre = Carbon::now()->timestamp . "_" . $nombreArchivoOriginal;
+                            $carpetaDestino = './upload/evidenciasCrm/';
+                            $item[$i]->move($carpetaDestino, $nuevoNombre);
+                            $asistencia->firma = ltrim($carpetaDestino, '.') . $nuevoNombre;
+                            $asistencia->save();
+                        } else {
+                            $asistencia = new AsistenciaVisitaCrm;
+                            $decodeFirma = json_decode($item[0], true);
+                            if ($decodeFirma["id"] != "") {
+                                $asistencia = AsistenciaVisitaCrm::find($decodeFirma['id']);
+                                $asistencia->nombre = $decodeFirma ? $decodeFirma["nombre"] : "";
+                                $asistencia->cargo = $decodeFirma ? $decodeFirma["cargo"] : "";
+                                $asistencia->correo = $decodeFirma ? $decodeFirma["correo"] : "";
+                                $asistencia->firma = $asistencia->firma;
+                                $asistencia->save();
+                            }
                         }
                     }
                 }
@@ -1054,7 +1263,7 @@ class SeguimientoCrmController extends Controller
                 $tituloFormateado = preg_replace('/([a-zA-Z])([0-9])/', '$1 $2', $compromiso->titulo);
                 $tituloFormateado = preg_replace('/([0-9])([a-zA-Z])/', '$1 $2', $tituloFormateado);
                 $tituloFormateado = ucwords(strtolower($tituloFormateado));
-                $compromiso->descripcion != "" ?  $html .= ' 
+                $compromiso->descripcion != " " ?  $html .= ' 
                  
                 <h4>' . $tituloFormateado . ':</h4>
                 <p>' . $compromiso->descripcion . '</p>
@@ -1125,12 +1334,17 @@ class SeguimientoCrmController extends Controller
                 if (!file_exists($pdfPath)) {
                     return response()->json(['message' => 'Error al crear el PDF'], 500);
                 }
-                $rutaImagen1 = public_path($user->imagen_firma_1);
+
 
                 // Enviar correos a cada uno en el request
                 foreach ($request->correos as $correoData) {
-                    if ($correoData['correo'] != "") {
-                        $resultCorreo = $this->enviarCorreo($correoData['correo'], $formulario, $pdfPath, $registro_id, $modulo, $correoData['observacion'], $user->usuario, $correoData['compromiso']);
+                    try {
+                        if ($correoData['correo'] != "" && $correoData['correo'] != "null") {
+
+                            $resultCorreo = $this->enviarCorreo($correoData['correo'], $formulario, $pdfPath, $registro_id, $modulo, $correoData['observacion'], $user->usuario, $correoData['compromiso']);
+                        }
+                    } catch (\Exception $th) {
+                        return response()->json(['status' => 'error', 'message' => 'No fue posible enviar el registro verifique el correo de contacto o de los responsables']);
                     }
                 }
                 return $resultCorreo;
@@ -1150,11 +1364,15 @@ class SeguimientoCrmController extends Controller
         $numeroRadicado = $formulario->numero_radicado;
         $tipo_atencion_id = $formulario->tipo_atencion_id;
         if ($tipo_atencion_id == 5 || $tipo_atencion_id == 6) {
-            $body = "Cordial saludo, esperamos se encuentren muy bien.\n\n Informamos que el registro de visita ha sido creado satisfactoriamente con número de radicado: <b><i>$numeroRadicado</i></b>, Cualquier información adicional puede comunicarse con:
-        Katerin Andrea Nuno: (+57) 311-437-0207
-        William Hernán Hernandez: (+57) 311-586-4835
-        o a nuestra línea de atención general (604) 4485744, con gusto uno de nuestros facilitadores atenderá su llamada.\n\n simplificando conexiones, facilitando experiencias.
-        \n\n Atentamente:";
+            if ((($formulario->nit_documento == "900032514" || $formulario->nit_documento == "811025401") && $formulario->correo == $destinatario) || (($formulario->nit_documento == "900032514" || $formulario->nit_documento == "811025401") && $booleanCompromiso == false)) {
+                $body = "Coordial saludo, Informamos que el acta de la reunion interna ha sido creado satisfactoriamente con radicado:  <b><i>$numeroRadicado</i></b>";
+            } else {
+                $body = "Cordial saludo, esperamos se encuentren muy bien.\n\n Informamos que el registro de visita ha sido creado satisfactoriamente con número de radicado: <b><i>$numeroRadicado</i></b>, Cualquier información adicional puede comunicarse con:
+                    Katerin Andrea Nuno: (+57) 311-437-0207
+                    William Hernán Hernandez: (+57) 311-586-4835
+                    o a nuestra línea de atención general (604) 4485744, con gusto uno de nuestros facilitadores atenderá su llamada.\n\n simplificando conexiones, facilitando experiencias.
+                    \n\n Atentamente:";
+            }
         } else {
             $body = "Cordial saludo, esperamos se encuentren muy bien.\n\n Informamos que el registro de servicio ha sido creado satisfactoriamente con número de radicado: <b><i>$numeroRadicado</i></b>, Cualquier información adicional podrá ser atendida en la línea Servisai de Saitemp S.A. marcando  al (604) 4485744, con gusto uno de nuestros facilitadores atenderá su llamada.\n\n simplificando conexiones, facilitando experiencias.";
         }
@@ -1273,5 +1491,82 @@ class SeguimientoCrmController extends Controller
             DB::rollback();
             return response()->json(['status' => 'error', 'message' => 'Error al dividir las observaciones: ' . $e->getMessage()]);
         }
+    }
+    public function comprimirArchivos($numero_radicado, $archivo, $ruta, $nombre_archivo = null)
+    {
+        $manager = new ImageManager(new Driver());
+        $zipNombre = $numero_radicado . '.zip';
+        $zipGeneral = public_path($ruta . $zipNombre);
+        $zipCoincidencia = glob($zipGeneral);
+        if ($nombre_archivo == null) {
+            $nombreArchivoOriginal = $archivo->getClientOriginalName();
+        } else {
+            $nombreArchivoOriginal = $nombre_archivo;
+        }
+        $nombreSinExtension = pathinfo($nombreArchivoOriginal, PATHINFO_FILENAME);
+        $extension = pathinfo($nombreArchivoOriginal, PATHINFO_EXTENSION);
+        $nombreLimpio = preg_replace('/[.\s]+/', '_', $nombreSinExtension) . '.' . $extension;
+        $nuevoNombre = Carbon::now()->timestamp . "_" . $nombreLimpio;
+        $carpetaDestino = $ruta;
+        $zipPath = $carpetaDestino . $zipNombre;
+        if (in_array($extension, ['jpg', 'jpeg', 'png', 'pdf'])) {
+            if (in_array($extension, ['jpg', 'jpeg', 'png'])) {
+                $image = $manager->read($archivo->getPathname());
+                $image->resizeDown(800, 600, function ($constraint) {
+                    $constraint->aspectRatio();
+                })->save($carpetaDestino . $nuevoNombre, 70);
+            } elseif ($extension === 'pdf') {
+                $pdf = new Fpdi();
+                $pageCount = $pdf->setSourceFile($archivo->getPathname());
+                for ($pageNo = 1; $pageNo <= $pageCount; $pageNo++) {
+                    $pdf->AddPage();
+                    $templateId = $pdf->importPage($pageNo);
+                    $pdf->useTemplate($templateId);
+                }
+                $pdf->Output($carpetaDestino . $nuevoNombre, 'F');
+            }
+            if (count($zipCoincidencia) > 0) {
+                $zip = new ZipArchive;
+                $res = $zip->open($zipGeneral);
+                if ($res === true) {
+                    $zip->addFile($carpetaDestino . $nuevoNombre, $nuevoNombre);
+                    $zip->close();
+                } else {
+                    throw new \Exception('No se pudo acceder al ZIP');
+                }
+                /* $nuevoNombre = $zipNombre . $nuevoNombre; */
+            } else {
+                $zip = new ZipArchive();
+                if ($zip->open($zipPath, ZipArchive::CREATE) === true) {
+                    $zip->addFile($carpetaDestino . $nuevoNombre, $nuevoNombre);
+                    $zip->close();
+                    /*   $nuevoNombre = $zipNombre . $nuevoNombre; */
+                }
+            }
+            if (file_exists($carpetaDestino . $nuevoNombre)) {
+                unlink($carpetaDestino . $nuevoNombre);
+            }
+        } else {
+            if (count($zipCoincidencia) > 0) {
+                $zip = new ZipArchive;
+                $res = $zip->open($zipGeneral);
+                if ($res === true) {
+                    $zip->addFile($archivo->getPathname(), $nuevoNombre);
+                    $zip->close();
+                } else {
+                    throw new \Exception('No se pudo acceder al ZIP');
+                }
+                /* $nuevoNombre = $zipNombre . $nuevoNombre; */
+            } else {
+                $zip = new ZipArchive();
+                if ($zip->open($zipPath, ZipArchive::CREATE) === true) {
+                    $zip->addFile($archivo->getPathname(), $nuevoNombre);
+                    $zip->close();
+                    /* $nuevoNombre = $zipNombre . $nuevoNombre; */
+                }
+            }
+        }
+        $ruta_zip_archivo = ltrim($carpetaDestino, '.') . $zipNombre . '_' . $nuevoNombre;
+        return $ruta_zip_archivo;
     }
 }

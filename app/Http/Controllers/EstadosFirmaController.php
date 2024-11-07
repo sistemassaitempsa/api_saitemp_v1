@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\EstadosFirma;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Carbon;
 
 class EstadosFirmaController extends Controller
 {
@@ -14,6 +16,10 @@ class EstadosFirmaController extends Controller
      */
     public function index()
     {
+        /* $hoy = Carbon::now();
+        $diaSemana = $hoy->dayName;
+        formatoFechaCarbon= 2024-10-28T20:06:44.820417Z; */
+
         $result = EstadosFirma::select(
             'id',
             'nombre',
@@ -28,9 +34,22 @@ class EstadosFirmaController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function create()
+    public function create(Request $request)
     {
-        //
+        DB::beginTransaction();
+        try {
+            $estadosFirma= new EstadosFirma;
+            $estadosFirma->nombre= $request->nombre;
+            $estadosFirma->color= $request->color;
+            /* $estadosFirma->horas_requeridas= $request->horas_requeridas; */
+            $estadosFirma->save();
+            DB::commit();
+            return response()->json(['status' => 'success', 'message' => 'Registro guardado de manera exitosa', 'id' => $estadosFirma->id]);
+        } catch (\Exception $e) {
+            DB::rollback();
+            return response()->json(['status' => 'error', 'message' => 'Error al guardar el formulario, por favor intenta nuevamente']);
+        }
+     
     }
 
     /**
@@ -75,7 +94,19 @@ class EstadosFirmaController extends Controller
      */
     public function update(Request $request, $id)
     {
-        //
+        DB::beginTransaction();
+        try {
+            $result = EstadosFirma::find($id);
+            $result->nombre= $request->nombre;
+            $result->color= $request->color;
+            /* $result->horas_requeridas= $request->horas_requeridas; */
+            $result->save();
+            DB::commit();
+            return response()->json(['status' => 'success', 'message' => 'Registro actualizado de manera exitosa', 'id' => $result->id]);
+            } catch (\Exception $e) {
+                DB::rollback();
+                return response()->json(['status' => 'error', 'message' => 'Error al guardar el formulario, por favor intenta nuevamente']);
+            }
     }
 
     /**
@@ -86,6 +117,14 @@ class EstadosFirmaController extends Controller
      */
     public function destroy($id)
     {
-        //
+        $result = EstadosFirma::find($id);
+        if (!$result) {
+            return response()->json(['message' => 'El radicado no existe.'], 404);}
+            try {
+                $result->delete();
+                return response()->json(['message' => 'Estado eliminado con éxito.'], 200);
+            } catch (\Exception $e) {
+                return response()->json(['message' => 'Error al eliminar el estado.', 'error' => $e->getMessage()], 500);
+            }
     }
 }
