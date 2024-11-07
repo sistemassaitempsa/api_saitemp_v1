@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\ResponsablesEstadosModel;
 use App\Models\ClientesSeguimientoGuardado;
 use App\Models\ClientesSeguimientoEstado;
 use App\Models\UsuarioPermiso;
@@ -293,6 +294,20 @@ class formularioDebidaDiligenciaController extends Controller
                 )
                 ->where('usr_app_clientes.id', '=', $id)
                 ->first();
+            $seguimiento_estados = ClientesSeguimientoEstado::join('usr_app_estados_firma as ei', 'ei.id', '=', 'usr_app_clientes_seguimiento_estado.estados_firma_inicial')
+                ->join('usr_app_estados_firma as ef', 'ef.id', '=', 'usr_app_clientes_seguimiento_estado.estados_firma_final')
+                ->where('usr_app_clientes_seguimiento_estado.cliente_id', $id)
+                ->select(
+                    'usr_app_clientes_seguimiento_estado.responsable_inicial',
+                    'usr_app_clientes_seguimiento_estado.responsable_final',
+                    'ei.nombre as estados_firma_inicial',
+                    'ef.nombre as estados_firma_final',
+                    'usr_app_clientes_seguimiento_estado.actualiza_registro',
+                    'usr_app_clientes_seguimiento_estado.created_at',
+                )
+                ->orderby('usr_app_clientes_seguimiento_estado.id', 'desc')
+                ->get();
+            $result['seguimiento_estados'] = $seguimiento_estados;
 
             $cargos = Cargos::join('usr_app_riesgos_laborales as rl2', 'rl2.id', '=', 'usr_app_cargos.riesgo_laboral_id')
                 ->join('usr_app_cargos_requisitos as cr', 'cr.cargo_id', '=', 'usr_app_cargos.id')
@@ -1185,7 +1200,9 @@ class formularioDebidaDiligenciaController extends Controller
      */
     public function update(Request $request, $id)
     {
+        $estado_id = $request->estado_firma_id;
         $user = auth()->user();
+        $permisos = $this->validaPermiso();
         $cliente = Cliente::where('usr_app_clientes.id', '=', $id)
             ->select()
             ->first();
@@ -1270,27 +1287,45 @@ class formularioDebidaDiligenciaController extends Controller
             $cliente->contratacion_carnet_corporativo = $request['contratacion_carnet_corporativo'];
             $cliente->contratacion_pagos_31 = $request['contratacion_pagos_31'];
             $cliente->contratacion_observacion = $request['contratacion_observacion'];
-            $cliente->estado_firma_id = $request->estado_firma_id;
+            /*    $cliente->estado_firma_id = $request->estado_firma_id;
             $cliente->responsable = $request->responsable;
-            $cliente->responsable_id = $request->responsable_id;
+            $cliente->responsable_id = $request->responsable_id; */
             $cliente->save();
 
-            $seguimiento = new ClientesSeguimientoGuardado;
+            $ids = [];
+            array_push($ids, $id);
+            if ($cliente->responsable_id != null && $cliente->responsable_id != $user->id && !in_array('31', $permisos)) {
+
+                $seguimiento = new ClientesSeguimientoGuardado;
+                $seguimiento->estado_firma_id = $request->estado_id;
+                $seguimiento->usuario =  $user->nombres . ' ' . str_replace("null", "", $user->apellidos);
+                $seguimiento->cliente_id = $id;
+                $seguimiento->save();
+
+                return response()->json(['status' => '200', 'message' => 'ok', 'registro_ingreso_id' => $ids]);
+            }
+
+            $seguimiento = new ClientesSeguimientoGuardado();
             $seguimiento->estado_firma_id = $request->estado_firma_id;
-            $seguimiento->usuario = $user->nombres . ' ' .  $user->apellidos; //Preguntar con Andres si debe ser el ususario
+            $seguimiento->usuario =  $user->nombres . ' ' . str_replace("null", "", $user->apellidos);
             $seguimiento->cliente_id = $id;
             $seguimiento->save();
 
-            $nombres = str_replace("null", "", $user->nombres);
-            $apellidos = str_replace("null", "", $user->apellidos);
+            $responsable_inicial = str_replace("null", "", $cliente->responsable);
+            $estado_inicial = $cliente->estado_firma_id;
 
-            $registroCambio = new RegistroCambio;
-            $registroCambio->observaciones = $request['registro_cambios']['observaciones'];
-            $registroCambio->solicitante = $request['registro_cambios']['solicitante'];
-            $registroCambio->autoriza = $request['registro_cambios']['autoriza'];
-            $registroCambio->actualiza = $nombres . ' ' . $apellidos;
-            $registroCambio->cliente_id = $id;
-            $registroCambio->save();
+            if ($estado_id != $cliente->estado_firma_id ||  $cliente->responsable == null) {
+                $this->actualizaestadofirma($id, $estado_id, $cliente->responsable_id, $responsable_inicial, $estado_inicial);
+            } else {
+                $seguimiento_estado = new ClientesSeguimientoEstado();
+                $seguimiento_estado->responsable_inicial =  $responsable_inicial;
+                $seguimiento_estado->responsable_final = str_replace("null", "", $cliente->responsable);
+                $seguimiento_estado->estados_firma_inicial = $estado_inicial;
+                $seguimiento_estado->estados_firma_final =   $request->estado_id;
+                $seguimiento_estado->cliente_id =  $id;
+                $seguimiento_estado->actualiza_registro =   $user->nombres . ' ' . str_replace("null", "", $user->apellidos);
+                $seguimiento_estado->save();
+            }
 
             $cargo = Cargo2::where('cliente_id', '=', $id)
                 ->select()
@@ -1801,15 +1836,57 @@ class formularioDebidaDiligenciaController extends Controller
         }
     }
 
-    public function actualizaestadofirma($item_id, $estado_id)
+    public function actualizaestadofirma($item_id, $estado_id, $responsable_id = null,  $responsable_actual = null, $estado_inicial = null)
     {
-        $cliente = Cliente::where('usr_app_clientes.id', '=', $item_id)
-            ->select()
+
+        $user = auth()->user();
+        $usuarios = ResponsablesEstadosModel::where('usr_app_clientes_responsable_estado.estado_firma_id', '=', $estado_id)
+            ->join('usr_app_usuarios as usr', 'usr.id', '=', 'usr_app_clientes_responsable_estado.usuario_id')
+            ->select(
+                'usuario_id',
+                'usr.nombres',
+                'usr.apellidos'
+            )
+            ->get();
+
+
+        // Obtener el número total de responsables
+        $numeroResponsables = $usuarios->count();
+
+        // Obtener el registro de ingreso
+        $registro_ingreso = Cliente::where('usr_app_clientes.id', '=', $item_id)
             ->first();
-        $cliente->estado_firma_id = $estado_id;
-        if ($cliente->save()) {
+
+
+        $permisos = $this->validaPermiso();
+
+
+        if ($registro_ingreso->responsable_id != null && $registro_ingreso->responsable_id != $user->id && !in_array('31', $permisos)) {
+            return response()->json(['status' => 'error', 'message' => 'Solo el responsable puede realizar esta acción.']);
+        }
+
+        // Asignar a cada registro d e ingreso un responsable
+        $indiceResponsable = $registro_ingreso->id % $numeroResponsables; // Calcula el índice del responsable basado en el ID del registro
+        $responsable = $usuarios[$indiceResponsable];
+
+
+        $seguimiento_estado = new ClientesSeguimientoEstado;
+        $seguimiento_estado->responsable_inicial =  $registro_ingreso->responsable != null ?  str_replace("null", "", $registro_ingreso->responsable) : str_replace("null", "", $responsable_actual);
+        $seguimiento_estado->responsable_final = $responsable->nombres . ' ' . str_replace("null", "", $responsable->apellidos);;
+        $seguimiento_estado->estados_firma_inicial = $estado_inicial != null ? $estado_inicial : $registro_ingreso->estado_firma_id;
+        $seguimiento_estado->estados_firma_final =   $estado_id;
+        $seguimiento_estado->cliente_id =  $item_id;
+        $seguimiento_estado->actualiza_registro =   $user->nombres . ' ' .  $user->apellidos;
+        $seguimiento_estado->save();
+
+        // Actualizar el registro de ingreso con el estado y el responsable
+        $registro_ingreso->estado_firma_id = $estado_id;
+        $registro_ingreso->responsable_id = $responsable->usuario_id;
+        $registro_ingreso->responsable = $responsable->nombres . ' ' . str_replace("null", "", $responsable->apellidos);
+        if ($registro_ingreso->save()) {
             return response()->json(['status' => 'success', 'message' => 'Registro actualizado de manera exitosa.']);
         }
+
         return response()->json(['status' => 'error', 'message' => 'Error al actualizar registro.']);
     }
 
@@ -1820,7 +1897,7 @@ class formularioDebidaDiligenciaController extends Controller
             $user = auth()->user();
             $registro_ingreso = cliente::where('usr_app_clientes.id', '=', $item_id)
                 ->first();
-
+            return $user;
             $permisos = $this->validaPermiso();
 
 
@@ -1831,8 +1908,8 @@ class formularioDebidaDiligenciaController extends Controller
             $seguimiento_estado = new ClientesSeguimientoEstado;
             $seguimiento_estado->responsable_inicial =  $registro_ingreso->responsable;
             $seguimiento_estado->responsable_final = $nombre_responsable;
-            $seguimiento_estado->estados_firma_inicial =  $registro_ingreso->estado_ingreso_id;
-            $seguimiento_estado->estados_firma_final =  $registro_ingreso->estado_ingreso_id;
+            $seguimiento_estado->estados_firma_inicial =  $registro_ingreso->estado_firma_id;
+            $seguimiento_estado->estados_firma_final =  $registro_ingreso->estado_firma_id;
             $seguimiento_estado->cliente_id =  $item_id;
             $seguimiento_estado->actualiza_registro =   $user->nombres . ' ' .  $user->apellidos;
 

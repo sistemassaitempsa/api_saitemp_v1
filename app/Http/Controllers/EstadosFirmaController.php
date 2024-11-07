@@ -7,6 +7,7 @@ use App\Models\EstadosFirma;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Carbon;
 use App\Models\ResponsablesEstadosModel;
+use App\Models\ClientesSeguimientoEstado;
 
 class EstadosFirmaController extends Controller
 {
@@ -17,9 +18,11 @@ class EstadosFirmaController extends Controller
      */
     public function index()
     {
+
         /* $hoy = Carbon::now();
         $diaSemana = $hoy->dayName;
         formatoFechaCarbon= 2024-10-28T20:06:44.820417Z; */
+
 
         $result = EstadosFirma::select(
             'id',
@@ -167,5 +170,10 @@ class EstadosFirmaController extends Controller
         } catch (\Exception $e) {
             return response()->json(['status' => 'error', 'message' => 'Error al eliminar el estado, por favor intenta nuevamente o verifica que no existan registros creados con este estado', 'error']);
         }
+    }
+    public function allClientesSeguimientoEstado()
+    {
+        $result = ClientesSeguimientoEstado::all();
+        return response()->json($result);
     }
 }

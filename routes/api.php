@@ -611,7 +611,7 @@ Route::group([
   Route::post('/formulariocliente/doc/{id}', [formularioDebidaDiligenciaController::class, 'store']);
   Route::post('/formulariocliente/{id}', [formularioDebidaDiligenciaController::class, 'update']);
   Route::delete('/formulariocliente/{id}', [formularioDebidaDiligenciaController::class, 'destroy']);
-  Route::post('/actualizaestadofirma/{item_id}/{estado_id}', [formularioDebidaDiligenciaController::class, 'actualizaestadofirma']);
+  Route::get('/actualizaestadofirma/{item_id}/{estado_id}', [formularioDebidaDiligenciaController::class, 'actualizaestadofirma']);
   Route::get('/versiondebidadiligencia', [formularioDebidaDiligenciaController::class, 'versionformulario']);
 
   Route::get('/consultaformulariocliente/{cantidad}', [formularioDebidaDiligenciaController::class, 'consultacliente']);
