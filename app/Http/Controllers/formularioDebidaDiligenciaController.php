@@ -294,6 +294,20 @@ class formularioDebidaDiligenciaController extends Controller
                 )
                 ->where('usr_app_clientes.id', '=', $id)
                 ->first();
+
+
+            $seguimiento = ClientesSeguimientoGuardado::join('usr_app_estados_firma as ei', 'ei.id', '=', 'usr_app_clientes_seguimiento_guardado.estado_firma_id')
+                ->where('usr_app_clientes_seguimiento_guardado.cliente_id', $id)
+                ->select(
+                    'usr_app_clientes_seguimiento_guardado.usuario',
+                    'ei.nombre as estado',
+                    'usr_app_clientes_seguimiento_guardado.created_at',
+
+                )
+                ->orderby('usr_app_clientes_seguimiento_guardado.id', 'desc')
+                ->get();
+            $result['seguimiento'] = $seguimiento;
+
             $seguimiento_estados = ClientesSeguimientoEstado::join('usr_app_estados_firma as ei', 'ei.id', '=', 'usr_app_clientes_seguimiento_estado.estados_firma_inicial')
                 ->join('usr_app_estados_firma as ef', 'ef.id', '=', 'usr_app_clientes_seguimiento_estado.estados_firma_final')
                 ->where('usr_app_clientes_seguimiento_estado.cliente_id', $id)
@@ -1897,7 +1911,7 @@ class formularioDebidaDiligenciaController extends Controller
             $user = auth()->user();
             $registro_ingreso = cliente::where('usr_app_clientes.id', '=', $item_id)
                 ->first();
-            return $user;
+
             $permisos = $this->validaPermiso();
 
 
