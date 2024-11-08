@@ -63,9 +63,9 @@ class formularioDebidaDiligenciaController extends Controller
         $result = cliente::select(
             'id',
             'razon_social as nombre',
-            'nit'
-        )
-            ->get();
+            DB::raw('COALESCE(nit, numero_identificacion) as nit')
+        )->get();
+
         return response()->json($result);
     }
     public function consultacliente($cantidad)
@@ -1854,7 +1854,7 @@ class formularioDebidaDiligenciaController extends Controller
     {
 
         $user = auth()->user();
-        $usuarios = ResponsablesEstadosModel::where('usr_app_clientes_responsable_estado.estado_firma_id', '=', $estado_id)
+        /*      $usuarios = ResponsablesEstadosModel::where('usr_app_clientes_responsable_estado.estado_firma_id', '=', $estado_id)
             ->join('usr_app_usuarios as usr', 'usr.id', '=', 'usr_app_clientes_responsable_estado.usuario_id')
             ->select(
                 'usuario_id',
@@ -1862,14 +1862,31 @@ class formularioDebidaDiligenciaController extends Controller
                 'usr.apellidos'
             )
             ->get();
+ */
+        $registro_ingreso = Cliente::where('usr_app_clientes.id', '=', $item_id)
+            ->first();
+        if ($responsable_id != 0) {
+            $responsable = ResponsablesEstadosModel::where('usuario_id', '=', $responsable_id)
+                ->join('usr_app_usuarios as usr', 'usr.id', '=', 'usr_app_clientes_responsable_estado.usuario_id')
+                ->select('usuario_id', 'usr.nombres', 'usr.apellidos')
+                ->first();
+        } else {
+            // Obtener la lista de responsables si no se proporciona $responsable_id
+            $usuarios = ResponsablesEstadosModel::where('estado_firma_id', "=", $estado_id)
+                ->join('usr_app_usuarios as usr', 'usr.id', '=', 'usr_app_clientes_responsable_estado.usuario_id')
+                ->select('usuario_id', 'usr.nombres', 'usr.apellidos')
+                ->get();
+
+            $numeroResponsables = $usuarios->count();
+            $indiceResponsable = $registro_ingreso->id % $numeroResponsables;
+            $responsable = $usuarios[$indiceResponsable];
+        }
 
 
         // Obtener el número total de responsables
-        $numeroResponsables = $usuarios->count();
+        /* $numeroResponsables = $usuarios->count(); */
 
         // Obtener el registro de ingreso
-        $registro_ingreso = Cliente::where('usr_app_clientes.id', '=', $item_id)
-            ->first();
 
 
         $permisos = $this->validaPermiso();
@@ -1880,8 +1897,8 @@ class formularioDebidaDiligenciaController extends Controller
         }
 
         // Asignar a cada registro d e ingreso un responsable
-        $indiceResponsable = $registro_ingreso->id % $numeroResponsables; // Calcula el índice del responsable basado en el ID del registro
-        $responsable = $usuarios[$indiceResponsable];
+        /*   $indiceResponsable = $registro_ingreso->id % $numeroResponsables; // Calcula el índice del responsable basado en el ID del registro
+        $responsable = $usuarios[$indiceResponsable]; */
 
 
         $seguimiento_estado = new ClientesSeguimientoEstado;
