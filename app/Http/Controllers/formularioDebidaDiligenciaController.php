@@ -138,8 +138,10 @@ class formularioDebidaDiligenciaController extends Controller
                 ->leftJoin('usr_app_estratos as est', 'est.id', '=', 'usr_app_clientes.estrato_id')
                 ->leftJoin('usr_app_municipios as mun1', 'mun1.id', '=', 'usr_app_clientes.municipio_id')
                 ->leftJoin('usr_app_municipios as mun2', 'mun2.id', '=', 'usr_app_clientes.municipio_prestacion_servicio_id')
+                ->leftJoin('usr_app_municipios as mun3', 'mun3.id', '=', 'usr_app_clientes.municipio_rut_id')
                 ->leftJoin('usr_app_departamentos as dep1', 'dep1.id', '=', 'mun1.departamento_id')
                 ->leftJoin('usr_app_departamentos as dep2', 'dep2.id', '=', 'mun2.departamento_id')
+                ->leftJoin('usr_app_departamentos as dep3', 'dep3.id', '=', 'mun3.departamento_id')
                 ->leftJoin('usr_app_paises as pais', 'pais.id', '=', 'dep1.pais_id')
                 ->leftJoin('usr_app_paises as pais2', 'pais2.id', '=', 'dep2.pais_id')
                 ->leftJoin('usr_app_sociedades_comerciales as sc', 'sc.id', '=', 'usr_app_clientes.sociedad_comercial_id')
@@ -158,6 +160,7 @@ class formularioDebidaDiligenciaController extends Controller
                 ->leftJoin('usr_app_tipo_proveedor as tpro', 'tpro.id', '=', 'usr_app_clientes.tipo_proveedor_id')
                 ->leftJoin('usr_app_tipo_cliente as tcli', 'tcli.id', '=', 'usr_app_clientes.tipo_cliente_id')
                 ->leftJoin('usr_app_estados_firma as estf', 'estf.id', '=', 'usr_app_clientes.estado_firma_id')
+                ->leftJoin('usr_app_usuarios as usuario', 'usuario.id', '=', 'usr_app_clientes.usuario_corregir_id')
                 ->select(
                     DB::raw('COALESCE(CONVERT(VARCHAR, usr_app_clientes.numero_radicado), CONVERT(VARCHAR, usr_app_clientes.id)) AS numero_radicado'),
                     'ac.codigo_actividad as codigo_actividad_ciiu',
@@ -186,10 +189,14 @@ class formularioDebidaDiligenciaController extends Controller
                     'mun1.id as municipio_id',
                     'mun2.nombre as municipio_prestacion_servicio',
                     'mun2.id as municipio_prestacion_servicio_id',
+                    'mun3.nombre as municipio_rut',
+                    'mun3.id as municipio_rut_id',
                     'dep1.nombre as departamento',
                     'dep1.id as departamento_id',
                     'dep2.nombre as departamento_prestacion_servicio',
                     'dep2.id as departamento_prestacion_servicio_id',
+                    'dep3.nombre as departamento_rut',
+                    'dep3.id as departamento_rut_id',
                     'pais.nombre as pais',
                     'pais.id as pais_id',
                     'pais2.nombre as pais_prestacion_servicio',
@@ -289,7 +296,11 @@ class formularioDebidaDiligenciaController extends Controller
                     'usr_app_clientes.responsable_id',
                     'usr_app_clientes.responsable',
                     'usr_app_clientes.estado_firma_id',
-                    'estf.nombre as nombre_estado_firma'
+                    'estf.nombre as nombre_estado_firma',
+                    'usr_app_clientes.novedad_servicio',
+                    'usr_app_clientes.afectacion_servicio',
+                    'usr_app_clientes.usuario_corregir_id',
+                    DB::raw("CONCAT(usuario.nombres,' ',usuario.apellidos)  AS nombre_usuario_corregir"),
 
                 )
                 ->where('usr_app_clientes.id', '=', $id)
@@ -816,6 +827,8 @@ class formularioDebidaDiligenciaController extends Controller
             $cliente->actividad_ciiu_id = $actividad_ciiu->id;
             $cliente->estrato_id = $request['estrato'];
             $cliente->municipio_id = $request['municipio'];
+            $cliente->municipio_rut_id = $request['municipio_rut'];
+            /*          $cliente->direccion_rut= $request['direccion_rut']; */
             $cliente->direccion_empresa = $request['direccion_empresa'];
             $cliente->contacto_empresa = $request['contacto_empresa'];
             $cliente->correo_empresa = $request['correo_electronico'];
@@ -888,6 +901,12 @@ class formularioDebidaDiligenciaController extends Controller
             $cliente->responsable_id = $request->responsable_id;
             $cliente->contratacion_observacion = $request['contratacion_observacion'];
             $cliente->save();
+
+            $seguimiento = new ClientesSeguimientoGuardado();
+            $seguimiento->estado_firma_id = $cliente->estado_firma_id;
+            $seguimiento->usuario = $user->nombres . ' ' . $user->apellidos;
+            $seguimiento->cliente_id = $cliente->id;
+            $seguimiento->save();
 
             $contador = 0;
             foreach ($request['cargos2'] as $item) {
@@ -1103,7 +1122,7 @@ class formularioDebidaDiligenciaController extends Controller
         } catch (\Exception $e) {
             // Revertir la transacción si se produce alguna excepción
             DB::rollback();
-            // return $e;
+            return $e;
             return response()->json(['status' => 'error', 'message' => 'Error al guardar formulario, por favor verifique el llenado de todos los campos e intente nuevamente']);
         }
     }
@@ -1223,6 +1242,9 @@ class formularioDebidaDiligenciaController extends Controller
         try {
             $actividad_ciiu = $this->actividades_ciiu($request['actividad_ciiu']);
             $cliente->operacion_id = $request['operacion'];
+            $cliente->novedad_servicio = $request['novedad_servicio'];
+            $cliente->usuario_corregir_id = $request['usuario_corregir_id'];
+            $cliente->afectacion_servicio = $request['afectacion_servicio'];
             $cliente->contratacion_directa = $request['contratacion_directa'];
             $cliente->atraccion_seleccion = $request['atraccion_seleccion'];
             $cliente->tipo_persona_id = $request['tipo_persona'];
@@ -1304,6 +1326,7 @@ class formularioDebidaDiligenciaController extends Controller
             /*    $cliente->estado_firma_id = $request->estado_firma_id;
             $cliente->responsable = $request->responsable;
             $cliente->responsable_id = $request->responsable_id; */
+
             $cliente->save();
 
             $ids = [];

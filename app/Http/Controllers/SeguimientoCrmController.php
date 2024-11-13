@@ -1062,8 +1062,8 @@ class SeguimientoCrmController extends Controller
 
     public function generarPdfCrm(Request $request, $registro_id, $btnId = 1)
     {
-        $modulo = 46;
 
+        $modulo = 46;
         // Obtener los datos del formulario
 
         $user = auth()->user();

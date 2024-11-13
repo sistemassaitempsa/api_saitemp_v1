@@ -70,10 +70,28 @@ class EstadosFirmaController extends Controller
             ->where('usr_app_clientes_responsable_estado.estado_firma_id', '=', $estado)
             ->select(
                 'usuario_id',
-                DB::raw("CONCAT(nombres,' ',apellidos)  AS nombre")
+                DB::raw("CONCAT(nombres,' ',apellidos)  AS nombre"),
+                'usr.usuario as email'
             )
             ->get();
         return response()->json($usuarios);
+    }
+    public function indexResponsableEstado2()
+    {
+        try {
+            $usuarios = ResponsablesEstadosModel::join('usr_app_usuarios as usr', 'usr.id', '=', 'usr_app_clientes_responsable_estado.usuario_id')
+                ->select(
+                    'usuario_id',
+                    DB::raw("CONCAT(usr.nombres, ' ', usr.apellidos) AS nombre"),
+                    'usr.usuario as email'
+                )
+                ->distinct()
+                ->get();
+
+            return response()->json($usuarios);
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
     }
     /**
      * Store a newly created resource in storage.
