@@ -7,11 +7,13 @@ use Illuminate\Http\Request;
 
 class enviarCorreoDDController extends Controller
 {
-    public function enviarCorreosDD(Request $request, $registro_id, $modulo)
+    public function enviarCorreosDD(Request $request, $registro_id)
     {
+        $modulo = 15;
         $formularioDebidaDiligenciaController = new formularioDebidaDiligenciaController;
         $formulario = $formularioDebidaDiligenciaController->getbyid($registro_id)->getData();
         $user = auth()->user();
+
         foreach ($request->correos as $correoData) {
             try {
                 if ($correoData['correo'] != "" && $correoData['correo'] != "null") {
@@ -19,9 +21,10 @@ class enviarCorreoDDController extends Controller
                     $resultCorreo = $this->enviarCorreo($correoData['correo'], $formulario,  $registro_id, $modulo, $correoData['observacion'], $user->usuario, $correoData['corregir']);
                 }
             } catch (\Exception $th) {
-                return response()->json(['status' => 'error', 'message' => 'No fue posible enviar el registro verifique el correo de contacto o de los responsables']);
+                $resultCorreo = response()->json(['status' => 'error', 'message' => 'No fue posible enviar el registro verifique el correo de contacto o de los responsables']);
             }
         }
+        return $resultCorreo;
     }
     private function enviarCorreo($destinatario, $formulario,  $registro_id, $modulo, $observacion = '', $user, $booleanCorregir)
     {
@@ -33,10 +36,10 @@ class enviarCorreoDDController extends Controller
 
 
         if ($booleanCorregir == true) {
-            $body = "Cordial saludo, tiene nuevas tareas pendientes por corregir asignados en el radicado Debida Diligencia número: <b><i>$numeroRadicado</i></b> adjunto con las siguientes observaciones: $observacion.
+            $body = "Cordial saludo, tiene nuevas tareas pendientes por corregir asignados en el radicado Debida Diligencia número: <b><i>$numeroRadicado</i></b> con las siguientes observaciones: $observacion.
         \n\n Atentamente:";
         } else {
-            $body = "Cordial saludo, tiene nuevas tareas asignadas en el radicado Debida Diligencia número: <b><i>$numeroRadicado</i></b> adjunto con las siguientes observaciones: $observacion.
+            $body = "Cordial saludo, tiene nuevas tareas asignadas en el radicado Debida Diligencia número: <b><i>$numeroRadicado</i></b>.
             \n\n Atentamente:";
         }
 

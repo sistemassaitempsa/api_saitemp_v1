@@ -620,7 +620,7 @@ Route::group([
   Route::get('/consultaformularioclientefiltro/{cadena}', [formularioDebidaDiligenciaController::class, 'filtro']);
   Route::get('/actualizaResponsableCliente/{item}/{responsable_id}/{nombre}', [formularioDebidaDiligenciaController::class, 'actualizaResponsableCliente']);
   Route::get('/contrato/{id}', [ContratoController::class, 'index']);
-  Route::post('/enviarCorreoDD/{registro_id}/{modulo}', [enviarCorreoDDController::class, 'enviarCorreosDD']);
+  Route::post('/enviarCorreoDD/{registro_id}', [enviarCorreoDDController::class, 'enviarCorreosDD']);
 
   // Tipos de documento de identidad
   Route::get('/tipodocumento/{cantidad}', [SigTipoDocumentoIdentidadController::class, 'index']);
