@@ -841,7 +841,7 @@ Route::group([
   Route::get('/seguimientocrm/{cantidad}', [SeguimientoCrmController::class, 'index']);
   Route::get('/seguimientocrmbyid/{id}', [SeguimientoCrmController::class, 'byid']);
   Route::post('/seguimientocrm', [SeguimientoCrmController::class, 'create']);
-  Route::post('/seguimientocrm2', [SeguimientoCrmController::class, 'create2']);
+  Route::post('/seguimientocrm2', [SeguimientoCrmController::class, 'createandroid']);
   Route::post('/seguimientocrm/{id}', [SeguimientoCrmController::class, 'update']);
   Route::get('/seguimientocrmfiltro/{cadena}', [SeguimientoCrmController::class, 'filtro']);
   Route::post('/seguimientocrmpendientes', [SeguimientoCrmController::class, 'pendientes']);
