@@ -1078,11 +1078,8 @@ class SeguimientoCrmController extends Controller
             // Manejar el caso donde tipo_atencion_id no exista
             $atencionInteracion = null;
         }
-
-        // Inicializar TCPDF
-        /* $pdf = new \TCPDF('P', 'mm', 'A4', true, 'UTF-8', false); */
         $pdf = new \TCPDF();
-        // Establecer los metadatos del documento
+
         $pdf->SetCreator(PDF_CREATOR);
         $pdf->SetAuthor('Saitemp');
         $pdf->SetTitle('Reporte CRM');
@@ -1101,36 +1098,14 @@ class SeguimientoCrmController extends Controller
         if (!empty($formulario->hora_cierre)) {
             $horaCierreFormateada = Carbon::parse($formulario->hora_cierre)->format('H:i');
         }
-        // Eliminar la cabecera y pie de página por defecto
         $pdf->setPrintHeader(false);
-        /*  function addMembrete(\TCPDF $pdf)
-            {
-                $url = public_path('/upload/MEMBRETE.png');
-                $pdf->Image($url, -0.5, 0, $pdf->getPageWidth() + 0.5, 30, '', '', '', false, 300, '', false, false, 0);
-            }
-         */
-        // Añadir la primera página
         $pdf->AddPage();
-        /*  addMembrete($pdf); */
-        /*  $pdf->AddPage(); */
-        /*   $pdf->setPrintFooter(false);
-            $pdf->setFooterMargin(0); */
-
-        // Añadir una página
-
         $pdf->SetMargins(0, 0, 0);
         $pdf->SetAutoPageBreak(false, 0);
         // Agregar imagen de fondo
         $url = public_path('/upload/MEMBRETE.png');
         $pdf->Image($url, -0.5, 0, $pdf->getPageWidth() + 0.5, $pdf->getPageHeight(), '', '', '', false, 300, '', false, false, 0);
-        // Asegurarse de que el contenido no esté afectado por la imagen de fondo
-        /*  $pdf->SetMargins(5, 20, 5); */
-        // Establecer fuente
         $pdf->SetFont('helvetica', '', 12);
-
-        // Construir el contenido del PDF con las claves y valores del formulario y aplicando estilos
-
-
         $pdf->Ln(20);
         $html = '
                 <style>

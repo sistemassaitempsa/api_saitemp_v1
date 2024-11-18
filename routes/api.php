@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Artisan;
 use Illuminate\Http\Request;
 use App\Http\Controllers\FiltroCrmController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\ApiFirmaElectronicaController;
 use App\Http\Controllers\FamiliaresFormEmpleadoController;
 use App\Http\Controllers\GrupoEtnicoFormEmpleadoController;
 use App\Http\Controllers\NivelAcademicoFormEmpleadoController;
@@ -621,6 +622,10 @@ Route::group([
   Route::get('/actualizaResponsableCliente/{item}/{responsable_id}/{nombre}', [formularioDebidaDiligenciaController::class, 'actualizaResponsableCliente']);
   Route::get('/contrato/{id}', [ContratoController::class, 'index']);
   Route::post('/enviarCorreoDD/{registro_id}', [enviarCorreoDDController::class, 'enviarCorreosDD']);
+
+  //Api validart
+  Route::post('/tokenValidarte', [ApiFirmaElectronicaController::class, 'firmaEstandar']);
+
 
   // Tipos de documento de identidad
   Route::get('/tipodocumento/{cantidad}', [SigTipoDocumentoIdentidadController::class, 'index']);
