@@ -165,8 +165,6 @@ class ApiFirmaElectronicaController extends Controller
     public function callBackFirmado(Request $request)
     {
         $id = $request['id'];
-
-        // Buscar cliente en la base de datos
         $cliente = Cliente::where('usr_app_clientes.transaccion_id', '=', $id)
             ->select(
                 'usr_app_clientes.id',
@@ -177,7 +175,6 @@ class ApiFirmaElectronicaController extends Controller
                 'usr_app_clientes.ruta_contrato',
             )
             ->first();
-
         if (!$cliente) {
             return response()->json([
                 'status' => 'error',
@@ -195,12 +192,12 @@ class ApiFirmaElectronicaController extends Controller
                 if ($response->successful()) {
                     $fileContent = $response->body();
                     $fileName = $id . '_evidencia.pdf';
-                    $filePath = public_path('contratosFirmados/' . $fileName);
-                    if (!file_exists(public_path('contratosFirmados'))) {
-                        mkdir(public_path('contratosFirmados'), 0755, true);
+                    $filePath = public_path('upload/contratosFirmados/' . $fileName);
+                    if (!file_exists(public_path('upload/contratosFirmados'))) {
+                        mkdir(public_path('upload/contratosFirmados'), 0755, true);
                     }
                     file_put_contents($filePath, $fileContent);
-                    $relativePath = 'contratosFirmados/' . $fileName;
+                    $relativePath = 'upload/contratosFirmados/' . $fileName;
                     $cliente->ruta_contrato = $relativePath;
                     $cliente->save();
                     return response()->json([
@@ -225,6 +222,40 @@ class ApiFirmaElectronicaController extends Controller
                 'status' => 'error',
                 'message' => 'El estado no permite procesar la solicitud',
             ], 400);
+        }
+    }
+    public function reenvioFirmantes($id)
+    {
+        $url_validart = Config::get('app.VALIDART_URL');
+        $end_point = '/api/Transaccion/reenvio/' . $id;
+        $takenToken = $this->takeTokenValidart();
+
+        if ($takenToken['status'] == 'success') {
+            $token = $takenToken['token']['token'];
+            try {
+                $response = Http::withHeaders(['Authorization' => 'Bearer ' . $token])->get($url_validart . $end_point);
+                if ($response->successful()) {
+                    return [
+                        'status' => 'success',
+                        'response' => $response->json(),
+                    ];
+                } else {
+                    return response()->json([
+                        'status' => 'error',
+                        'message' => $response->json()
+                    ], $response->status());
+                }
+            } catch (\Exception $e) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => $e->getMessage(),
+                ], 500);
+            }
+        } else {
+            return response()->json([
+                'status' => 'error',
+                'message' => $takenToken['message'] ?? 'No se pudo obtener el token'
+            ]);
         }
     }
 }

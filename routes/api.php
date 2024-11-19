@@ -627,6 +627,7 @@ Route::group([
   Route::post('/uploadFileValidart/{id}', [ApiFirmaElectronicaController::class, 'uploadFileValidarT']);
   Route::post('/firmaValidart/{id}', [ApiFirmaElectronicaController::class, 'firmaEstandar']);
   Route::post('/callBackFirmado', [ApiFirmaElectronicaController::class, 'callBackFirmado']);
+  Route::get('/reenviarFirma/{id}', [ApiFirmaElectronicaController::class, 'reenvioFirmantes']);
 
 
   // Tipos de documento de identidad
