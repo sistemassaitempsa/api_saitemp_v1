@@ -624,7 +624,9 @@ Route::group([
   Route::post('/enviarCorreoDD/{registro_id}', [enviarCorreoDDController::class, 'enviarCorreosDD']);
 
   //Api validart
-  Route::post('/tokenValidarte', [ApiFirmaElectronicaController::class, 'firmaEstandar']);
+  Route::post('/uploadFileValidart/{id}', [ApiFirmaElectronicaController::class, 'uploadFileValidarT']);
+  Route::post('/firmaValidart/{id}', [ApiFirmaElectronicaController::class, 'firmaEstandar']);
+  Route::post('/callBackFirmado', [ApiFirmaElectronicaController::class, 'callBackFirmado']);
 
 
   // Tipos de documento de identidad

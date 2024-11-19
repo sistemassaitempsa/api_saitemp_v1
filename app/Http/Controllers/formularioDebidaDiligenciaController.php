@@ -300,6 +300,8 @@ class formularioDebidaDiligenciaController extends Controller
                     'usr_app_clientes.novedad_servicio',
                     'usr_app_clientes.afectacion_servicio',
                     'usr_app_clientes.usuario_corregir_id',
+                    'usr_app_clientes.dirección_rut',
+                    'usr_app_clientes.transaccion_id',
                     DB::raw("CONCAT(usuario.nombres,' ',usuario.apellidos)  AS nombre_usuario_corregir"),
 
                 )
@@ -828,7 +830,7 @@ class formularioDebidaDiligenciaController extends Controller
             $cliente->estrato_id = $request['estrato'];
             $cliente->municipio_id = $request['municipio'];
             $cliente->municipio_rut_id = $request['municipio_rut'];
-            /*          $cliente->direccion_rut= $request['direccion_rut']; */
+            $cliente->dirección_rut = $request['direccion_rut'];
             $cliente->direccion_empresa = $request['direccion_empresa'];
             $cliente->contacto_empresa = $request['contacto_empresa'];
             $cliente->correo_empresa = $request['correo_electronico'];
@@ -1323,6 +1325,7 @@ class formularioDebidaDiligenciaController extends Controller
             $cliente->contratacion_carnet_corporativo = $request['contratacion_carnet_corporativo'];
             $cliente->contratacion_pagos_31 = $request['contratacion_pagos_31'];
             $cliente->contratacion_observacion = $request['contratacion_observacion'];
+            $cliente->dirección_rut = $request['direccion_rut'];
             /*    $cliente->estado_firma_id = $request->estado_firma_id;
             $cliente->responsable = $request->responsable;
             $cliente->responsable_id = $request->responsable_id; */
