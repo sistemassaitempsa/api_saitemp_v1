@@ -258,4 +258,39 @@ class ApiFirmaElectronicaController extends Controller
             ]);
         }
     }
+    public function anularContrato(Request $request, $id)
+    {
+        $url_validart = Config::get('app.VALIDART_URL');
+        $end_point = '/api/Transaccion/transaccionanular/anular';
+        $takenToken = $this->takeTokenValidart();
+        $motivo = $request['motivo'];
+        $datos = [
+            'Id' => $id,
+            'Motivo' => $motivo
+        ];
+        if ($takenToken['status'] == 'success') {
+            $token = $takenToken['token']['token'];
+            try {
+                $response = Http::withHeaders(['Authorization' => 'Bearer ' . $token])->post($url_validart . $end_point, $datos);
+                if ($response->successful()) {
+                    return [
+                        'status' => 'success',
+                        'response' => $response->json(),
+
+                    ];
+                } else {
+                    return response()->json([
+                        'status' => 'error',
+                        'message' => $response->json()
+                    ], $response->status());
+                }
+            } catch (\Exception $e) {
+            }
+        } else {
+            return response()->json([
+                'status' => 'error',
+                'message' => $takenToken['message'] ?? 'No se pudo obtener el token'
+            ]);
+        }
+    }
 }
