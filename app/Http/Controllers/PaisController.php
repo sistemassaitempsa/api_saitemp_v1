@@ -19,6 +19,12 @@ class PaisController extends Controller
             ->get();
         return response()->json($result);
     }
+    public function index2()
+    {
+        $result = Paises::select()
+            ->get();
+        return response()->json($result);
+    }
 
     /**
      * Show the form for creating a new resource.

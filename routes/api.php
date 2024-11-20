@@ -630,8 +630,6 @@ Route::group([
   Route::get('/reenviarFirma/{id}', [ApiFirmaElectronicaController::class, 'reenvioFirmantes']);
   Route::get('/anularContrato/{id}', [ApiFirmaElectronicaController::class, 'anularContrato']);
 
-
-
   // Tipos de documento de identidad
   Route::get('/tipodocumento/{cantidad}', [SigTipoDocumentoIdentidadController::class, 'index']);
   Route::post('/tipodocumento', [SigTipoDocumentoIdentidadController::class, 'create']);

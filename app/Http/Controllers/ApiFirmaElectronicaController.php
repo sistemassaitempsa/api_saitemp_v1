@@ -121,11 +121,11 @@ class ApiFirmaElectronicaController extends Controller
         if ($cliente['contrato_firma_id'] != "" && $cliente['contrato_firma_id'] != null) {
             $datos = [
                 "documentoid" => $cliente['contrato_firma_id'],
-                "Modificar" => false,
+                "Modificar" => true,
                 "Firmantes" => $firmantes,
                 "NombreCreador" => "Saitemp S.A",
                 "Notificacion" => "5",
-                "Callback" => "https://prueba.c.com",
+                "Callback" => "https://debidadiligencia.saitempsa.com:8484/aplicaciones/api2/public/api/v1/seguimientocrm2",
                 "DiasVence" => "30",
                 "FirmaGrafica" => "0"
             ];
@@ -169,6 +169,7 @@ class ApiFirmaElectronicaController extends Controller
             ->select(
                 'usr_app_clientes.id',
                 'usr_app_clientes.contrato_firma_id',
+                'usr_app_clientes.firmado_empresa',
                 'usr_app_clientes.numero_radicado',
                 'usr_app_clientes.transaccion_id',
                 DB::raw('COALESCE(CONVERT(VARCHAR, usr_app_clientes.numero_radicado), CONVERT(VARCHAR, usr_app_clientes.id)) AS numero_radicado'),
