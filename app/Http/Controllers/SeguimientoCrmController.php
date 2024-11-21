@@ -1105,6 +1105,7 @@ class SeguimientoCrmController extends Controller
         // Agregar imagen de fondo
         $url = public_path('/upload/MEMBRETE.png');
         $pdf->Image($url, -0.5, 0, $pdf->getPageWidth() + 0.5, $pdf->getPageHeight(), '', '', '', false, 300, '', false, false, 0);
+
         $pdf->SetFont('helvetica', '', 12);
         $pdf->Ln(20);
         $html = '

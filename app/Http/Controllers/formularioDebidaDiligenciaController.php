@@ -301,7 +301,6 @@ class formularioDebidaDiligenciaController extends Controller
                     'usr_app_clientes.afectacion_servicio',
                     'usr_app_clientes.usuario_corregir_id',
                     'usr_app_clientes.dirección_rut',
-                    'usr_app_clientes.transaccion_id',
                     DB::raw("CONCAT(usuario.nombres,' ',usuario.apellidos)  AS nombre_usuario_corregir"),
 
                 )

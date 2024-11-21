@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Config;
 use App\Models\cliente;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use App\Models\HistoricoContratosDDModel;
 
 class ApiFirmaElectronicaController extends Controller
 
@@ -70,16 +71,17 @@ class ApiFirmaElectronicaController extends Controller
                     ]);
 
                 if ($response->successful()) {
-                    $cliente = Cliente::where('usr_app_clientes.id', '=', $id)
-                        ->select(
-                            'usr_app_clientes.id',
-                            'usr_app_clientes.contrato_firma_id',
-                            'usr_app_clientes.numero_radicado',
-                            DB::raw('COALESCE(CONVERT(VARCHAR, usr_app_clientes.numero_radicado), CONVERT(VARCHAR, usr_app_clientes.id)) AS numero_radicado'),
-                        )
-                        ->first();
-                    $cliente->contrato_firma_id = $response->json()['id'];
-                    $cliente->save();
+                    try {
+                        DB::table('usr_app_historico_contratos_dd')
+                            ->where('cliente_id', $id)
+                            ->update(['activo' => 0]);
+                    } catch (\Exception $e) {
+                    }
+                    $contrato = new HistoricoContratosDDModel();
+                    $contrato->contrato_firma_id = $response->json()['id'];
+                    $contrato->cliente_id = $id;
+                    $contrato->activo = 1;
+                    $contrato->save();
                     return [
                         'status' => 'success',
                         'response' => $response->json(),
@@ -106,21 +108,23 @@ class ApiFirmaElectronicaController extends Controller
 
     public function firmaEstandar(Request $request, $id)
     {
+        /* $contratos = HistoricoContratosDDModel::all();
+
+        // Retornar la respuesta en formato JSON
+        return response()->json([
+            'status' => 'success',
+            'data' => $contratos,
+        ], 200); */
+
+        $user = auth()->user();
         $url_validart = Config::get('app.VALIDART_URL');
         $end_point = '/api/Transaccion/create';
         $firmantes = $request['firmantes'];
-        $cliente = Cliente::where('usr_app_clientes.id', '=', $id)
-            ->select(
-                'usr_app_clientes.id',
-                'usr_app_clientes.contrato_firma_id',
-                'usr_app_clientes.numero_radicado',
-                'usr_app_clientes.transaccion_id',
-                DB::raw('COALESCE(CONVERT(VARCHAR, usr_app_clientes.numero_radicado), CONVERT(VARCHAR, usr_app_clientes.id)) AS numero_radicado'),
-            )
+        $contrato = HistoricoContratosDDModel::where('usr_app_historico_contratos_dd.cliente_id', '=', $id)->where('activo', '=', 1)
             ->first();
-        if ($cliente['contrato_firma_id'] != "" && $cliente['contrato_firma_id'] != null) {
+        if ($contrato['contrato_firma_id'] != "" && $contrato['contrato_firma_id'] != null) {
             $datos = [
-                "documentoid" => $cliente['contrato_firma_id'],
+                "documentoid" => $contrato['contrato_firma_id'],
                 "Modificar" => true,
                 "Firmantes" => $firmantes,
                 "NombreCreador" => "Saitemp S.A",
@@ -135,12 +139,15 @@ class ApiFirmaElectronicaController extends Controller
                     $token = $takenToken['token']['token'];
                     $response = Http::withHeaders(['Authorization' => 'Bearer ' . $token])->post($url_validart . $end_point, $datos);
                     if ($response->successful()) {
-                        $cliente->transaccion_id = $response->json()['id'];
-                        $cliente->save();
+                        $contrato->transaccion_id = $response->json()['id'];
+                        $contrato->usuario_envia = $user->id;
+                        $contrato->correo_enviado_cliente = $firmantes[0]['Email'];
+                        $contrato->correo_enviado_empresa = $firmantes[1]['Email'];
+                        $contrato->save();
                         return [
                             'status' => 'success',
                             'token' => $response->json(),
-                            'cliente' => $cliente
+                            'cliente' => $contrato
                         ];
                     } else {
                         return response()->json([
@@ -155,6 +162,7 @@ class ApiFirmaElectronicaController extends Controller
                     ]);
                 }
             } catch (\Exception $e) {
+                return $e;
                 return response()->json([
                     'status' => 'error',
                     'message' => $e->getMessage()
