@@ -9,6 +9,7 @@ use Intervention\Image\Drivers\Gd\Driver;
 use Illuminate\Http\Request;
 use App\Models\SeguimientoCrm;
 use App\Models\SeguimientoCrmPendiente;
+use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use App\Models\Evidencia;
@@ -310,6 +311,7 @@ class SeguimientoCrmController extends Controller
             $result->alcance = $request->alcance;
             $result->longitud = $request->longitud;
             $result->latitud = $request->latitud;
+            $result->formulario_web = 0;
             if ($request->observaciones != "") {
                 $observacionFragmentada = str_split($request->observaciones, 4000);
                 $result->observacion = $observacionFragmentada[0];
@@ -325,6 +327,7 @@ class SeguimientoCrmController extends Controller
 			$result->save();
 			
 			if(isset($datosFormulario['evidencias'])){
+			
 				
             foreach ($datosFormulario['evidencias'] as $item) {
                 // Crea una nueva instancia del modelo Evidencia
@@ -363,6 +366,7 @@ class SeguimientoCrmController extends Controller
                 if (file_exists($tempFilePath)) {
                 unlink($tempFilePath);
                 }
+				
 			}
 			}
 			
@@ -382,7 +386,7 @@ class SeguimientoCrmController extends Controller
 				],
 			];
 			
-			
+			$contador = 1;
 			if(isset($datosFormulario['asistentes'])){
 				foreach ($datosFormulario['asistentes'] as $item) {
                 // Crea una nueva instancia del modelo Evidencia
@@ -405,7 +409,7 @@ class SeguimientoCrmController extends Controller
 				}
 				
 				// Genera un nombre único para el archivo
-				$nombreArchivo = Carbon::now()->timestamp . '.png';
+				$nombreArchivo = Carbon::now()->timestamp .'_'.$contador. '.png';
 				$rutaCompleta = $carpetaDestino . $nombreArchivo;
 				
 				// Guarda el archivo directamente en la carpeta public/upload/evidenciasCrm2
@@ -427,6 +431,7 @@ class SeguimientoCrmController extends Controller
 				} else {
 					throw new \Exception("Error al guardar el archivo en la carpeta public/upload/evidenciasCrm2.");
 				}
+				$contador++;
             }
 			}
 			
@@ -456,8 +461,7 @@ class SeguimientoCrmController extends Controller
 			   $temaPrincipal->save();
 			   
 			  DB::commit();
-			// Crear el objeto Request a partir del array $correo
-			$emails = Request::createFromBase(new Request($correosResponsables));
+	
 			
 			return response()->json(["correos"=>$correosResponsables,"formulario_id"=> $result->id]);
         } catch (\Exception $e) {
@@ -1096,7 +1100,7 @@ class SeguimientoCrmController extends Controller
 
         // Construir el contenido del PDF con las claves y valores del formulario y aplicando estilos
 
-
+        $parrafo = str_replace("\n", "<br>", $formulario->observacion);
         $pdf->Ln(20);
         $html = '
                 <style>
@@ -1208,7 +1212,7 @@ class SeguimientoCrmController extends Controller
         
         ' : '') . '
     
-            <div class="data-label">Observación:<span class="info"> ' . $formulario->observacion . '</span></div>
+            <div class="data-label">Observación:<span class="info"> ' . $parrafo . '</span></div>
        
             ';
 

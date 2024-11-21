@@ -453,6 +453,7 @@ class formularioGestionIngresoController extends Controller
 
         $fecha_ingreso = $formulario->fecha_ingreso;
         $numero_identificacion = $formulario->numero_identificacion;
+        $tipo_id = $formulario->tipo_identificacion;
         $nombre_completo = $formulario->nombre_completo;
         $razon_social = $formulario->razon_social;
         $cargo = $formulario->cargo;
@@ -617,13 +618,21 @@ class formularioGestionIngresoController extends Controller
             $pdf->SetFont('helveticaI', 'B', 11);
             $pdf->SetX(20);
             $pdf->Cell(95, 10, 'Número de identificación:', 0, 0, 'L');
+            $pdf->SetX(120);
+            $pdf->Cell(95, 10, 'Tipo de identificación:', 0, 1, 'L');
             $pdf->SetFont('helveticaI', '', 11);
 
-            $pdf->ln(10);
+            $pdf->ln(2);
             $pdf->SetX(20);
             $ancho_texto = $pdf->GetStringWidth($numero_identificacion);
-            $pdf->MultiCell($ancho_texto + 7, 7, $numero_identificacion != null ? $numero_identificacion : 'Sin datos', 0, 'L');
+            $pdf->Cell(10, 1, $numero_identificacion != null ? $numero_identificacion : 'Sin datos', 0, 0, 'L');
 
+            $pdf->SetX(120);
+            $pdf->Cell(65, 1, $tipo_id != null ? $tipo_id : 'Sin datos', 0, 1, 'L');
+            $pdf->Ln(2);
+
+            /*  
+            tipo_id */
 
             $pdf->SetFont('helveticaI', 'B', 11);
             $pdf->SetX(20);
@@ -1012,12 +1021,17 @@ class formularioGestionIngresoController extends Controller
             $pdf->SetX(20);
             $pdf->Cell(95, 10, 'Número de identificación:', 0, 0, 'L');
             $pdf->SetFont('helveticaI', '', 11);
-
-            $pdf->ln(10);
+            $pdf->SetX(120);
+            $pdf->SetFont('helveticaI', 'B', 11);
+            $pdf->Cell(95, 10, 'Tipo de identificación:', 0, 1, 'L');
+            $pdf->SetFont('helveticaI', '', 11);
+            $pdf->ln(2);
             $pdf->SetX(20);
             $ancho_texto = $pdf->GetStringWidth($numero_identificacion);
-            $pdf->MultiCell($ancho_texto + 7, 7, $numero_identificacion != null ? $numero_identificacion : 'Sin datos', 0, 'L');
-
+            $pdf->Cell(10, 1, $numero_identificacion != null ? $numero_identificacion : 'Sin datos', 0, 0, 'L');
+            $pdf->SetX(120);
+            $pdf->Cell(65, 1, $tipo_id != null ? $tipo_id : 'Sin datos', 0, 1, 'L');
+            $pdf->Ln(2);
             $pdf->SetFont('helveticaI', 'B', 11);
             $pdf->SetX(20);
             $pdf->Cell(95, 10, 'Apellidos y nombres:', 0, 0, 'L');
@@ -1032,6 +1046,7 @@ class formularioGestionIngresoController extends Controller
             $pdf->SetX(120);
             $pdf->Cell(65, 1, $numero_contacto != null ? $numero_contacto : 'Sin datos', 0, 1, 'L');
             $pdf->Ln(2);
+
 
             if (strlen($cargo) < 35) {
                 $pdf->SetFont('helveticaI', 'B', 11);
@@ -1213,14 +1228,31 @@ class formularioGestionIngresoController extends Controller
             $pdf->Cell(95, 10, 'Apellidos y nombres:', 0, 0, 'L');
 
             $pdf->SetX(100);
-            $pdf->Cell(95, 10, 'Número identificación:', 0, 1, 'L');
+            $pdf->Cell(95, 10, '', 0, 1, 'L');
             $pdf->SetFont('helveticaI', '', 10);
 
             $pdf->SetX(10);
             $pdf->Cell(10, 1, $nombre_completo != null ? $nombre_completo : 'Sin datos', 0, 0, 'L');
 
             $pdf->SetX(100);
-            $pdf->Cell(65, 1, $numero_identificacion != null ? $numero_identificacion : 'Sin datos', 0, 1, 'L');
+            $pdf->Cell(65, 1, "", 0, 1, 'L');
+            $pdf->Ln(2);
+
+            $pdf->SetFont('helveticaI', 'B', 10);
+            $pdf->SetX(10);
+            $pdf->Cell(95, 10, 'Número de identificación', 0, 0, 'L');
+
+            $pdf->SetX(100);
+            $pdf->Cell(95, 10, 'Tipo de identificación', 0, 1, 'L');
+            $pdf->SetFont('helveticaI', '', 10);
+
+
+            $pdf->SetFont('helveticaI', '', 10);
+            $pdf->SetX(10);
+            $pdf->Cell(10, 1, $numero_identificacion != null ? $numero_identificacion : 'Sin datos', 0, 0, 'L');
+
+            $pdf->SetX(100);
+            $pdf->Cell(65, 1, $tipo_id != null ? $tipo_id : 'Sin datos', 0, 1, 'L');
             $pdf->Ln(2);
 
             if (strlen($cargo) < 35) {
@@ -1229,17 +1261,11 @@ class formularioGestionIngresoController extends Controller
                 $pdf->Cell(95, 10, 'Cargo:', 0, 0, 'L');
                 $pdf->SetFont('helveticaI', '', 10);
 
-                $pdf->SetX(100);
-                $pdf->SetFont('helveticaI', 'B', 10);
-                $pdf->Cell(95, 10, 'Salario:', 0, 1, 'L');
-
-                $pdf->SetFont('helveticaI', '', 10);
+                $pdf->Ln(10);
                 $pdf->SetX(10);
                 $ancho_texto = $pdf->GetStringWidth($cargo);
-                $pdf->MultiCell($ancho_texto + 7, 1, $cargo != null ? $cargo : 'Sin datos', 0, 'L', false, 0);
-                $pdf->SetFont('helveticaI', '', 10);
-                $pdf->SetX(100);
-                $pdf->Cell(10, 1, $formulario->salario != null ? $formulario->salario : 'Sin datos', 0, 1, 'L');
+
+                $pdf->MultiCell($ancho_texto + 7, 7, $cargo != null ? $cargo : 'Sin datos', 0, 'L');
             } else {
                 $pdf->SetFont('helveticaI', 'B', 10);
                 $pdf->SetX(10);
@@ -1254,26 +1280,9 @@ class formularioGestionIngresoController extends Controller
                     $pdf->SetX(10);
                     $pdf->MultiCell($ancho_texto + 7, 7, $linea, 0, 'L');
                 }
-                $pdf->SetFont('helveticaI', 'B', 10);
-                $pdf->SetX(10);
-                $pdf->Cell(95, 10, 'Salario:', 0, 0, 'L');
-                $pdf->Ln(10);
-                $pdf->SetFont('helveticaI', '', 10);
-                $pdf->SetX(10);
-                $pdf->Cell(10, 1, $formulario->salario != null ? $formulario->salario : 'Sin datos', 0, 1, 'L');
             }
-            /*   $pdf->SetX(100);
+
             $pdf->SetFont('helveticaI', 'B', 10);
-            $pdf->Cell(95, 10, 'Salario:', 0, 1, 'L');
-
-
-
-            $pdf->SetFont('helveticaI', '', 10);
-            $pdf->SetX(100);
-            $pdf->Cell(10, 1, $formulario->salario != null ? $formulario->salario : 'Sin datos', 0, 1, 'L'); */
-
-
-            /*  $pdf->SetFont('helveticaI', 'B', 10);
             $pdf->SetX(10);
             $pdf->Cell(95, 10, 'Departamento de prestación de servicios:', 0, 0, 'L');
 
@@ -1286,7 +1295,7 @@ class formularioGestionIngresoController extends Controller
 
             $pdf->SetX(100);
             $pdf->Cell(65, 1, $municipio, 0, 1, 'L');
-            $pdf->Ln(2); */
+            $pdf->Ln(2);
 
             if (isset($formulario->laboratorios[0])) {
 
@@ -1369,7 +1378,7 @@ class formularioGestionIngresoController extends Controller
                     $pdf->MultiCell($ancho_texto + 7, 7, $linea, 0, 'L');
                 }
             }
-            /*  $pdf->SetFont('helveticaI', 'B', 10);
+            $pdf->SetFont('helveticaI', 'B', 10);
             $pdf->SetX(10);
             $pdf->Cell(95, 10, 'Exámenes:', 0, 0, 'L');
             $pdf->SetFont('helveticaI', '', 10);
@@ -1387,7 +1396,7 @@ class formularioGestionIngresoController extends Controller
                 $ancho_texto = $pdf->GetStringWidth($linea);
                 $pdf->SetX(10);
                 $pdf->MultiCell($ancho_texto + 7, 7, $linea, 0, 'L');
-            } */
+            }
             $pdf->SetFont('helveticaI', 'B', 10);
             $pdf->SetX(10);
             $pdf->Cell(95, 10, 'Recomendaciones exámenes:', 0, 0, 'L');
