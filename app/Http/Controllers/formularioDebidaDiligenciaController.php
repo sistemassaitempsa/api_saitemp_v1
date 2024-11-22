@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\ResponsablesEstadosModel;
 use App\Models\ClientesSeguimientoGuardado;
+use App\Models\HistoricoContratosDDModel;
 use App\Models\ClientesSeguimientoEstado;
 use App\Models\UsuarioPermiso;
 use App\Models\cliente;
@@ -320,6 +321,25 @@ class formularioDebidaDiligenciaController extends Controller
                 ->get();
             $result['seguimiento'] = $seguimiento;
 
+            $contrato = HistoricoContratosDDModel::join('usr_app_usuarios as usuario', 'usuario.id', '=', 'usr_app_historico_contratos_dd.usuario_envia')
+                ->where('usr_app_historico_contratos_dd.cliente_id', $id)->where('usr_app_historico_contratos_dd.activo', '=', 1)
+                ->select(
+                    'usr_app_historico_contratos_dd.cliente_id',
+                    'usr_app_historico_contratos_dd.firmado_cliente',
+                    'usr_app_historico_contratos_dd.firmado_empresa',
+                    'usr_app_historico_contratos_dd.ruta_contrato',
+                    'usr_app_historico_contratos_dd.contrato_firma_id',
+                    'usr_app_historico_contratos_dd.transaccion_id',
+                    'usr_app_historico_contratos_dd.correo_enviado_cliente',
+                    'usr_app_historico_contratos_dd.correo_enviado_empresa',
+                    'usr_app_historico_contratos_dd.activo',
+                    'usr_app_historico_contratos_dd.estado_contrato',
+                    'usr_app_historico_contratos_dd.usuario_envia',
+                    'usr_app_historico_contratos_dd.created_at',
+                    DB::raw("CONCAT(usuario.nombres,' ',usuario.apellidos)  AS nombre_usuario_envia"),
+                )
+                ->get();
+            $result['contrato'] = $contrato;
             $seguimiento_estados = ClientesSeguimientoEstado::join('usr_app_estados_firma as ei', 'ei.id', '=', 'usr_app_clientes_seguimiento_estado.estados_firma_inicial')
                 ->join('usr_app_estados_firma as ef', 'ef.id', '=', 'usr_app_clientes_seguimiento_estado.estados_firma_final')
                 ->where('usr_app_clientes_seguimiento_estado.cliente_id', $id)

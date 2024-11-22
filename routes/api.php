@@ -629,6 +629,7 @@ Route::group([
   Route::post('/callBackFirmado', [ApiFirmaElectronicaController::class, 'callBackFirmado']);
   Route::get('/reenviarFirma/{id}', [ApiFirmaElectronicaController::class, 'reenvioFirmantes']);
   Route::get('/anularContrato/{id}', [ApiFirmaElectronicaController::class, 'anularContrato']);
+  Route::get('/consultaFirmantes/{id}', [ApiFirmaElectronicaController::class, 'consultaFirmantes']);
 
   // Tipos de documento de identidad
   Route::get('/tipodocumento/{cantidad}', [SigTipoDocumentoIdentidadController::class, 'index']);

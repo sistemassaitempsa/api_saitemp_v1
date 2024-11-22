@@ -143,6 +143,7 @@ class ApiFirmaElectronicaController extends Controller
                         $contrato->usuario_envia = $user->id;
                         $contrato->correo_enviado_cliente = $firmantes[0]['Email'];
                         $contrato->correo_enviado_empresa = $firmantes[1]['Email'];
+                        $contrato->estado_contrato = "Enviado";
                         $contrato->save();
                         return [
                             'status' => 'success',
@@ -201,7 +202,7 @@ class ApiFirmaElectronicaController extends Controller
                     $contrato->ruta_contrato = $relativePath;
                     $contrato->firmado_empresa = 1;
                     $contrato->firmado_cliente = 1;
-                    $contrato->estado_contrato =  "firmado";
+                    $contrato->estado_contrato =  "Firmado";
                     $contrato->save();
                     return response()->json([
                         'status' => 'success',
@@ -293,6 +294,51 @@ class ApiFirmaElectronicaController extends Controller
                     ], $response->status());
                 }
             } catch (\Exception $e) {
+            }
+        } else {
+            return response()->json([
+                'status' => 'error',
+                'message' => $takenToken['message'] ?? 'No se pudo obtener el token'
+            ]);
+        }
+    }
+
+    public function consultaFirmantes($id)
+    {
+        $contrato = HistoricoContratosDDModel::where('usr_app_historico_contratos_dd.transaccion_id', '=', $id)->where('activo', '=', 1)
+            ->first();
+        $url_validart = Config::get('app.VALIDART_URL');
+        $end_point = '/api/Transaccion/firmantes/' . $id;
+        $takenToken = $this->takeTokenValidart();
+        if ($takenToken['status'] == 'success') {
+            $token = $takenToken['token']['token'];
+            try {
+                $response = Http::withHeaders(['Authorization' => 'Bearer ' . $token])->get($url_validart . $end_point);
+                if ($response->successful()) {
+                    $firmantes = $response->json();
+                    foreach ($firmantes as $firmante) {
+                        if ($firmante['email'] == $contrato->correo_enviado_empresa && $firmante['estado'] == 1) {
+                            $contrato->firmado_empresa = 1;
+                        }
+                        if ($firmante['email'] == $contrato->correo_enviado_cliente && $firmante['estado'] == 1) {
+                            $contrato->firmado_cliente = 1;
+                        }
+                    }
+                    return [
+                        'status' => 'success',
+                        'response' => $response->json(),
+                    ];
+                } else {
+                    return response()->json([
+                        'status' => 'error',
+                        'message' => $response->json()
+                    ], $response->status());
+                }
+            } catch (\Exception $e) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => $e->getMessage(),
+                ], 500);
             }
         } else {
             return response()->json([
