@@ -108,14 +108,14 @@ class ApiFirmaElectronicaController extends Controller
 
     public function firmaEstandar(Request $request, $id)
     {
-        /* $contratos = HistoricoContratosDDModel::all();
+        /*   $contratos = HistoricoContratosDDModel::all();
 
         // Retornar la respuesta en formato JSON
         return response()->json([
             'status' => 'success',
             'data' => $contratos,
-        ], 200); */
-
+        ], 200);
+ */
         $user = auth()->user();
         $url_validart = Config::get('app.VALIDART_URL');
         $end_point = '/api/Transaccion/create';
@@ -173,18 +173,9 @@ class ApiFirmaElectronicaController extends Controller
     public function callBackFirmado(Request $request)
     {
         $id = $request['id'];
-        $cliente = Cliente::where('usr_app_clientes.transaccion_id', '=', $id)
-            ->select(
-                'usr_app_clientes.id',
-                'usr_app_clientes.contrato_firma_id',
-                'usr_app_clientes.firmado_empresa',
-                'usr_app_clientes.numero_radicado',
-                'usr_app_clientes.transaccion_id',
-                DB::raw('COALESCE(CONVERT(VARCHAR, usr_app_clientes.numero_radicado), CONVERT(VARCHAR, usr_app_clientes.id)) AS numero_radicado'),
-                'usr_app_clientes.ruta_contrato',
-            )
+        $contrato = HistoricoContratosDDModel::where('usr_app_historico_contratos_dd.transaccion_id', '=', $id)->where('activo', '=', 1)
             ->first();
-        if (!$cliente) {
+        if (!$contrato) {
             return response()->json([
                 'status' => 'error',
                 'message' => 'Cliente no encontrado para la transacción especificada',
@@ -207,8 +198,11 @@ class ApiFirmaElectronicaController extends Controller
                     }
                     file_put_contents($filePath, $fileContent);
                     $relativePath = 'upload/contratosFirmados/' . $fileName;
-                    $cliente->ruta_contrato = $relativePath;
-                    $cliente->save();
+                    $contrato->ruta_contrato = $relativePath;
+                    $contrato->firmado_empresa = 1;
+                    $contrato->firmado_cliente = 1;
+                    $contrato->estado_contrato =  "firmado";
+                    $contrato->save();
                     return response()->json([
                         'status' => 'success',
                         'message' => 'Archivo descargado y guardado exitosamente',
@@ -269,6 +263,8 @@ class ApiFirmaElectronicaController extends Controller
     }
     public function anularContrato(Request $request, $id)
     {
+        $contrato = HistoricoContratosDDModel::where('usr_app_historico_contratos_dd.transaccion_id', '=', $id)->where('activo', '=', 1)
+            ->first();
         $url_validart = Config::get('app.VALIDART_URL');
         $end_point = '/api/Transaccion/transaccionanular/anular';
         $takenToken = $this->takeTokenValidart();
@@ -282,6 +278,9 @@ class ApiFirmaElectronicaController extends Controller
             try {
                 $response = Http::withHeaders(['Authorization' => 'Bearer ' . $token])->post($url_validart . $end_point, $datos);
                 if ($response->successful()) {
+                    $contrato->estado_contrato = "Anulado";
+                    $contrato->activo = 0;
+                    $contrato->save();
                     return [
                         'status' => 'success',
                         'response' => $response->json(),
