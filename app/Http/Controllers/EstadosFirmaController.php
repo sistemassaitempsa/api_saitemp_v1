@@ -194,4 +194,15 @@ class EstadosFirmaController extends Controller
         $result = ClientesSeguimientoEstado::all();
         return response()->json($result);
     }
+    public function byId($id)
+    {
+        $result = EstadosFirma::select(
+            'id',
+            'nombre',
+            'color',
+            'tiempo_respuesta'
+        )->where('usr_app_estados_firma.id', $id)
+            ->first();
+        return response()->json($result);
+    }
 }

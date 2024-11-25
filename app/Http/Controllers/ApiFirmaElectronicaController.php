@@ -327,6 +327,7 @@ class ApiFirmaElectronicaController extends Controller
                     return [
                         'status' => 'success',
                         'response' => $response->json(),
+                        'contrato' => $contrato
                     ];
                 } else {
                     return response()->json([

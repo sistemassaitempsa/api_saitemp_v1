@@ -778,6 +778,7 @@ Route::group([
   Route::delete('/estadosfirma/{id}', [EstadosFirmaController::class, 'destroy']);
   Route::get('/estadoResponsableFirma', [EstadosFirmaController::class, 'indexResponsableEstado2']);
   Route::get('/estadoResponsableFirma/{estado}', [EstadosFirmaController::class, 'indexResponsableEstado']);
+  Route::get('/estadosfirma/{estado}', [EstadosFirmaController::class, 'byId']);
 
   // Historial de cambios
   Route::get('/registrocambios', [RegistroCambioController::class, 'index']);
