@@ -1949,11 +1949,6 @@ class formularioDebidaDiligenciaController extends Controller
                 $tiempo_cumplimiento_laboral =   $tiempo_cumplimiento_segundos;
             }
 
-
-
-
-
-
             if ($tiempo_cumplimiento_laboral <= $tiempo_respuesta_segundos) {
                 $last_registro->oportuno = 1;
                 $last_registro->save();
