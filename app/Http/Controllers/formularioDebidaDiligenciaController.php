@@ -1936,7 +1936,8 @@ class formularioDebidaDiligenciaController extends Controller
             $fecha_last_registro = $last_registro->created_at;
             $last_registro_segundos = $fecha_last_registro->timestamp;
             $conteo_dia_fin_semana = $fin_semana_controller->cuentaFindes($fecha_last_registro, $fecha_actual);
-            $tiempo_cumplimiento_segundos = $segundos_desde_unix - $last_registro_segundos - ($conteo_dia_fin_semana * 86400);
+            $conteo_festivos = $fin_semana_controller->countHolidaysBetweenDates($fecha_last_registro, $fecha_actual);
+            $tiempo_cumplimiento_segundos = $segundos_desde_unix - $last_registro_segundos - ($conteo_dia_fin_semana * 86400) - ($conteo_festivos * 86400);
 
             // 86400 corresponde a la cantidad de segundos que tiene un dia
             $tiempo_cumplimiento_dias =  $tiempo_cumplimiento_segundos / 86400;
@@ -1947,6 +1948,11 @@ class formularioDebidaDiligenciaController extends Controller
             } else {
                 $tiempo_cumplimiento_laboral =   $tiempo_cumplimiento_segundos;
             }
+
+
+
+
+
 
             if ($tiempo_cumplimiento_laboral <= $tiempo_respuesta_segundos) {
                 $last_registro->oportuno = 1;
