@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\HorarioLaboralController;
+use App\Http\Controllers\EstadosFirmaController;
 use App\Models\ResponsablesEstadosModel;
 use App\Models\ClientesSeguimientoGuardado;
 use App\Models\HistoricoContratosDDModel;
@@ -37,6 +39,7 @@ use App\Models\ClienteConvenioBanco;
 use App\Models\ClienteTipoContrato;
 use App\Models\ClienteLaboratorio;
 use App\Models\VersionFormularioDD;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 // use App\Events\EventoPrueba2;
@@ -346,6 +349,7 @@ class formularioDebidaDiligenciaController extends Controller
                 ->select(
                     'usr_app_clientes_seguimiento_estado.responsable_inicial',
                     'usr_app_clientes_seguimiento_estado.responsable_final',
+                    'usr_app_clientes_seguimiento_estado.oportuno',
                     'ei.nombre as estados_firma_inicial',
                     'ef.nombre as estados_firma_final',
                     'usr_app_clientes_seguimiento_estado.actualiza_registro',
@@ -1261,6 +1265,7 @@ class formularioDebidaDiligenciaController extends Controller
             ->select()
             ->first();
         try {
+            $cliente->acuerdo_comercial = $request['acuerdo_comercial'];
             $actividad_ciiu = $this->actividades_ciiu($request['actividad_ciiu']);
             $cliente->operacion_id = $request['operacion'];
             $cliente->novedad_servicio = $request['novedad_servicio'];
@@ -1287,7 +1292,7 @@ class formularioDebidaDiligenciaController extends Controller
             $cliente->celular_empresa = $request['numero_celular'];
             $cliente->sociedad_comercial_id = $request['sociedad_comercial'];
             $cliente->otra = $request['otra_cual'];
-            $cliente->acuerdo_comercial = $request['observaciones'];
+            /* $cliente->acuerdo_comercial = $request['observaciones']; */
             $cliente->aiu_negociado = $request['aiu_negociado'];
             $cliente->plazo_pago = $request['plazo_pago'];
             $cliente->vendedor_id = $request['vendedor'];
@@ -1910,6 +1915,49 @@ class formularioDebidaDiligenciaController extends Controller
  */
         $registro_ingreso = Cliente::where('usr_app_clientes.id', '=', $item_id)
             ->first();
+        $estado_inicial = $registro_ingreso->estado_firma_id;
+        $fin_semana_controller = new HorarioLaboralController;
+
+
+
+        $estadoController = new EstadosFirmaController;
+        if ($estado_inicial != null) {
+            $estado_inicial_info = $estadoController->byId($estado_inicial);
+            $tiempo_respuesta_segundos =  $estado_inicial_info->tiempo_respuesta * 60;
+            $fecha_actual = Carbon::now()->format('Y-m-d H:i:s');
+
+
+
+
+            $last_registro = ClientesSeguimientoEstado::where('usr_app_clientes_seguimiento_estado.cliente_id', $item_id)
+                ->select()->orderBy('id', 'desc')->first();
+
+            $segundos_desde_unix = Carbon::parse($fecha_actual)->timestamp;
+            $fecha_last_registro = $last_registro->created_at;
+            $last_registro_segundos = $fecha_last_registro->timestamp;
+            $conteo_dia_fin_semana = $fin_semana_controller->cuentaFindes($fecha_last_registro, $fecha_actual);
+            $tiempo_cumplimiento_segundos = $segundos_desde_unix - $last_registro_segundos - ($conteo_dia_fin_semana * 86400);
+
+            // 86400 corresponde a la cantidad de segundos que tiene un dia
+            $tiempo_cumplimiento_dias =  $tiempo_cumplimiento_segundos / 86400;
+
+            if ($tiempo_cumplimiento_dias >= 1) {
+                // 28800 corresponde a 8 horas laborales en segundos
+                $tiempo_cumplimiento_laboral =  $tiempo_cumplimiento_dias * 28800;
+            } else {
+                $tiempo_cumplimiento_laboral =   $tiempo_cumplimiento_segundos;
+            }
+
+            if ($tiempo_cumplimiento_laboral <= $tiempo_respuesta_segundos) {
+                $last_registro->oportuno = 1;
+                $last_registro->save();
+            } else {
+                $last_registro->oportuno = 0;
+                $last_registro->save();
+            }
+        }
+        /*  $estado_final_info = $estadoController->byId($estado_id); */
+
         if ($responsable_id != 0) {
             $responsable = ResponsablesEstadosModel::where('usuario_id', '=', $responsable_id)
                 ->join('usr_app_usuarios as usr', 'usr.id', '=', 'usr_app_clientes_responsable_estado.usuario_id')
