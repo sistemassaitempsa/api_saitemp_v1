@@ -5,6 +5,7 @@ use Illuminate\Http\Request;
 use App\Http\Controllers\FiltroCrmController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ApiFirmaElectronicaController;
+use App\Http\Controllers\HistoricoEstadosDdController;
 use App\Http\Controllers\FamiliaresFormEmpleadoController;
 use App\Http\Controllers\GrupoEtnicoFormEmpleadoController;
 use App\Http\Controllers\NivelAcademicoFormEmpleadoController;
@@ -622,6 +623,9 @@ Route::group([
   Route::get('/actualizaResponsableCliente/{item}/{responsable_id}/{nombre}', [formularioDebidaDiligenciaController::class, 'actualizaResponsableCliente']);
   Route::get('/contrato/{id}', [ContratoController::class, 'index']);
   Route::post('/enviarCorreoDD/{registro_id}', [enviarCorreoDDController::class, 'enviarCorreosDD']);
+
+  //Rutas para el historico de estados DD
+  Route::get('/consultaHistoricoEstadosDd/{cantidad}', [HistoricoEstadosDdController::class, 'index']);
 
   //Api validart
   Route::post('/uploadFileValidart/{id}', [ApiFirmaElectronicaController::class, 'uploadFileValidarT']);

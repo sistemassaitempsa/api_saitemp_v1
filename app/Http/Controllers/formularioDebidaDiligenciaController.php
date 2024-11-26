@@ -354,6 +354,7 @@ class formularioDebidaDiligenciaController extends Controller
                     'ef.nombre as estados_firma_final',
                     'usr_app_clientes_seguimiento_estado.actualiza_registro',
                     'usr_app_clientes_seguimiento_estado.created_at',
+                    'usr_app_clientes_seguimiento_estado.updated_at',
                 )
                 ->orderby('usr_app_clientes_seguimiento_estado.id', 'desc')
                 ->get();
@@ -1925,10 +1926,6 @@ class formularioDebidaDiligenciaController extends Controller
             $estado_inicial_info = $estadoController->byId($estado_inicial);
             $tiempo_respuesta_segundos =  $estado_inicial_info->tiempo_respuesta * 60;
             $fecha_actual = Carbon::now()->format('Y-m-d H:i:s');
-
-
-
-
             $last_registro = ClientesSeguimientoEstado::where('usr_app_clientes_seguimiento_estado.cliente_id', $item_id)
                 ->select()->orderBy('id', 'desc')->first();
 
@@ -1975,14 +1972,10 @@ class formularioDebidaDiligenciaController extends Controller
             $indiceResponsable = $registro_ingreso->id % $numeroResponsables;
             $responsable = $usuarios[$indiceResponsable];
         }
-
-
         // Obtener el número total de responsables
         /* $numeroResponsables = $usuarios->count(); */
 
         // Obtener el registro de ingreso
-
-
         $permisos = $this->validaPermiso();
 
 
