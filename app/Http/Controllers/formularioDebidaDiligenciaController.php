@@ -1995,6 +1995,7 @@ class formularioDebidaDiligenciaController extends Controller
         $seguimiento_estado->estados_firma_final =   $estado_id;
         $seguimiento_estado->cliente_id =  $item_id;
         $seguimiento_estado->actualiza_registro =   $user->nombres . ' ' .  $user->apellidos;
+        $seguimiento_estado->oportuno = "2";
         $seguimiento_estado->save();
 
         // Actualizar el registro de ingreso con el estado y el responsable
@@ -2030,6 +2031,7 @@ class formularioDebidaDiligenciaController extends Controller
             $seguimiento_estado->estados_firma_final =  $registro_ingreso->estado_firma_id;
             $seguimiento_estado->cliente_id =  $item_id;
             $seguimiento_estado->actualiza_registro =   $user->nombres . ' ' .  $user->apellidos;
+            $seguimiento_estado->oportuno =   "2";
 
             $seguimiento_estado->save();
 
