@@ -10,6 +10,15 @@ class HistoricoEstadosDdController extends Controller
 {
     public function index($cantidad)
     {
+        // Consulta total de registros oportunos, no oportunos y pendientes a nivel global
+        $totalRegistros = ClientesSeguimientoEstado::count();
+        $oportunosGlobal = ClientesSeguimientoEstado::where('oportuno', '1')->count();
+        $noOportunosGlobal = ClientesSeguimientoEstado::where('oportuno', '0')->count();
+        $pendientesGlobal = $totalRegistros - ($oportunosGlobal + $noOportunosGlobal);
+        $porcentajeOportunoGlobal = $totalRegistros > 0 ? round(($oportunosGlobal / $totalRegistros) * 100, 2) : 0;
+        $porcentajeNoOportunoGlobal = $totalRegistros > 0 ? round(($noOportunosGlobal / $totalRegistros) * 100, 2) : 0;
+        $porcentajePendientesGlobal = round(100 - $porcentajeOportunoGlobal - $porcentajeNoOportunoGlobal, 2);
+
         $estados = ClientesSeguimientoEstado::leftJoin(
             'usr_app_clientes as cliente',
             'cliente.id',
@@ -38,6 +47,7 @@ class HistoricoEstadosDdController extends Controller
             ->orderby('usr_app_clientes_seguimiento_estado.cliente_id', 'DESC')
             ->paginate($cantidad);
 
+
         $estados->getCollection()->transform(function ($item) {
             $created = \Carbon\Carbon::parse($item->created_at);
             $updated = \Carbon\Carbon::parse($item->updated_at);
@@ -45,23 +55,18 @@ class HistoricoEstadosDdController extends Controller
             $dif_seconds = $created->diffInMilliseconds($updated);
             if ($dif_seconds != 0) {
                 $item->tiempo = $created->diffInMinutes($updated);
-                return $item;
             } else {
                 $item->tiempo = "Estado pendiente";
-                return $item;
             }
+            return $item;
         });
 
-        $totalRegistros = $estados->total();
-        $oportunos = $estados->getCollection()->where('oportuno', "1")->count();
-        $noOportunos = $estados->getCollection()->where('oportuno', "0")->count();
-        $porcentajeOportuno = $totalRegistros > 0 ? round(($oportunos / $totalRegistros) * 100, 2) : 0;
-        $porcentajeNoOportunos = $totalRegistros > 0 ? round(($noOportunos / $totalRegistros) * 100, 2) : 0;
-        $porcentajePendientes = round(100 - $porcentajeOportuno - $porcentajeNoOportunos, 2);
         $response = $estados->toArray();
-        $response['porcentaje_no_oportuno'] = $porcentajeNoOportunos;
-        $response['porcentaje_oportuno'] = $porcentajeOportuno;
-        $response['porcentaje_pendientes'] = $porcentajePendientes;
+
+        $response['porcentaje_oportuno'] = $porcentajeOportunoGlobal;
+        $response['porcentaje_no_oportuno'] = $porcentajeNoOportunoGlobal;
+        $response['porcentaje_pendientes'] = $porcentajePendientesGlobal;
+
         return response()->json($response);
     }
 }
