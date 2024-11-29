@@ -626,6 +626,7 @@ Route::group([
 
   //Rutas para el historico de estados DD
   Route::get('/consultaHistoricoEstadosDd/{cantidad}', [HistoricoEstadosDdController::class, 'index']);
+  Route::post('/consultaHistoricoEstadosDd/{cantidad}', [HistoricoEstadosDdController::class, 'filtrarEstados']);
 
   //Api validart
   Route::post('/uploadFileValidart/{id}', [ApiFirmaElectronicaController::class, 'uploadFileValidarT']);
