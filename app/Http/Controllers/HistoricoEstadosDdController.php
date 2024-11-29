@@ -6,6 +6,8 @@ use Illuminate\Http\Request;
 use App\Models\ClientesSeguimientoEstado;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use App\Exports\EstadosExport;
+use Maatwebsite\Excel\Facades\Excel;
 
 
 
@@ -187,5 +189,103 @@ class HistoricoEstadosDdController extends Controller
         $response['porcentaje_pendientes'] = $porcentajePendiente;
 
         return response()->json($response);
+    }
+    public function exportExcel(Request $request)
+    {
+
+        $query = ClientesSeguimientoEstado::leftJoin(
+            'usr_app_clientes as cliente',
+            'cliente.id',
+            '=',
+            'usr_app_clientes_seguimiento_estado.cliente_id'
+        )->leftJoin(
+            'usr_app_estados_firma as estado',
+            'estado.id',
+            '=',
+            'usr_app_clientes_seguimiento_estado.estados_firma_inicial'
+        )->select(
+            'usr_app_clientes_seguimiento_estado.id',
+            'usr_app_clientes_seguimiento_estado.responsable_inicial',
+            'usr_app_clientes_seguimiento_estado.responsable_final',
+            'usr_app_clientes_seguimiento_estado.estados_firma_inicial',
+            'usr_app_clientes_seguimiento_estado.estados_firma_final',
+            'usr_app_clientes_seguimiento_estado.actualiza_registro',
+            'usr_app_clientes_seguimiento_estado.cliente_id',
+            'usr_app_clientes_seguimiento_estado.created_at as estado_created_at',
+            'usr_app_clientes_seguimiento_estado.updated_at as estado_updated_at',
+            'usr_app_clientes_seguimiento_estado.oportuno',
+            'usr_app_clientes_seguimiento_estado.inactivo',
+            'cliente.numero_radicado as radicado',
+            'estado.nombre as nombre_estado',
+            DB::raw('DATEDIFF(MINUTE, usr_app_clientes_seguimiento_estado.created_at, usr_app_clientes_seguimiento_estado.updated_at) as tiempo') // Cálculo de tiempo
+        );
+
+        // Aplicar filtros dinámicos
+        if ($request->has('filtros') && is_array($request->filtros)) {
+            foreach ($request->filtros as $filtro) {
+                if (isset($filtro['campo'], $filtro['comparacion'], $filtro['valor']) && $filtro['valor'] !== '') {
+                    $campo = $filtro['campo'];
+                    $comparacion = $filtro['comparacion'];
+                    $valor = $filtro['valor'];
+
+                    // Mapear campos
+                    if ($campo === 'radicado') {
+                        $campo = 'cliente.numero_radicado';
+                    } elseif ($campo === 'nombre_estado') {
+                        $campo = 'estado.nombre';
+                    } elseif (in_array($campo, ['created_at', 'updated_at'])) {
+                        $campo = 'usr_app_clientes_seguimiento_estado.' . $campo;
+                    }
+
+                    // Manejo especial para el campo "tiempo"
+                    if ($campo === 'tiempo') {
+                        switch ($comparacion) {
+                            case 'Entre':
+                                if (is_array($valor) && count($valor) === 2) {
+                                    $query->whereRaw('DATEDIFF(MINUTE, usr_app_clientes_seguimiento_estado.created_at, usr_app_clientes_seguimiento_estado.updated_at) BETWEEN ? AND ?', [$valor[0], $valor[1]]);
+                                }
+                                break;
+                            case 'Igual a':
+
+                                $query->whereRaw('DATEDIFF(MINUTE, usr_app_clientes_seguimiento_estado.created_at, usr_app_clientes_seguimiento_estado.updated_at) = ?', [$valor]);
+                                break;
+                            default:
+                                break;
+                        }
+                    } else {
+                        // Otros filtros
+                        switch ($comparacion) {
+                            case 'Igual a':
+                                if ($campo === 'usr_app_clientes_seguimiento_estado.created_at' || $campo === 'usr_app_clientes_seguimiento_estado.updated_at') {
+                                    $fechaInicio = Carbon::createFromFormat('Y-m-d', $valor)->startOfDay()->format('d-m-Y H:i:s');
+                                    $fechaFin = Carbon::createFromFormat('Y-m-d', $valor)->endOfDay()->format('d-m-Y H:i:s');
+                                    $query->whereBetween($campo, [$fechaInicio, $fechaFin]);
+                                } else {
+                                    $query->where($campo, '=', $valor);
+                                }
+                                break;
+                            case 'Contiene':
+                                $query->where($campo, 'LIKE', '%' . $valor . '%');
+                                break;
+                            case 'Entre':
+                                if (is_array($valor) && count($valor) === 2) {
+                                    if ($campo === 'usr_app_clientes_seguimiento_estado.created_at' || $campo === 'usr_app_clientes_seguimiento_estado.updated_at') {
+                                        $fechaInicio = Carbon::createFromFormat('Y-m-d', $valor[0])->startOfDay()->format('d-m-Y H:i:s');
+                                        $fechaFin = Carbon::createFromFormat('Y-m-d', $valor[1])->endOfDay()->format('d-m-Y H:i:s');
+                                        $query->whereBetween($campo, [$fechaInicio, $fechaFin]);
+                                    }
+                                }
+                                break;
+                            default:
+                                break;
+                        }
+                    }
+                }
+            }
+        }
+
+        // Obtener resultados paginados
+        $estados = $query->orderby('usr_app_clientes_seguimiento_estado.cliente_id', 'DESC');
+        return Excel::download(new EstadosExport($estados), 'estados.xlsx');
     }
 }
