@@ -190,6 +190,7 @@ class HistoricoEstadosDdController extends Controller
 
         return response()->json($response);
     }
+
     public function exportExcel(Request $request)
     {
 

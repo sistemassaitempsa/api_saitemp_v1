@@ -166,6 +166,7 @@ class formularioDebidaDiligenciaController extends Controller
                 ->leftJoin('usr_app_tipo_cliente as tcli', 'tcli.id', '=', 'usr_app_clientes.tipo_cliente_id')
                 ->leftJoin('usr_app_estados_firma as estf', 'estf.id', '=', 'usr_app_clientes.estado_firma_id')
                 ->leftJoin('usr_app_usuarios as usuario', 'usuario.id', '=', 'usr_app_clientes.usuario_corregir_id')
+                ->leftJoin('usr_app_observacion_estado as novedad', 'novedad.id', '=', 'usr_app_clientes.novedad_servicio')
                 ->select(
                     DB::raw('COALESCE(CONVERT(VARCHAR, usr_app_clientes.numero_radicado), CONVERT(VARCHAR, usr_app_clientes.id)) AS numero_radicado'),
                     'ac.codigo_actividad as codigo_actividad_ciiu',
@@ -306,6 +307,7 @@ class formularioDebidaDiligenciaController extends Controller
                     'usr_app_clientes.afectacion_servicio',
                     'usr_app_clientes.usuario_corregir_id',
                     'usr_app_clientes.dirección_rut',
+                    'novedad.nombre as nombre_novedad_servicio',
                     DB::raw("CONCAT(usuario.nombres,' ',usuario.apellidos)  AS nombre_usuario_corregir"),
 
                 )
