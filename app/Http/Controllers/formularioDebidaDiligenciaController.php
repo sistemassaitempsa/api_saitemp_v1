@@ -38,6 +38,7 @@ use App\Models\ClienteOtroSi;
 use App\Models\ClienteConvenioBanco;
 use App\Models\ClienteTipoContrato;
 use App\Models\ClienteLaboratorio;
+use App\Models\HistoricoOperacionesDDModel;
 use App\Models\VersionFormularioDD;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -802,11 +803,11 @@ class formularioDebidaDiligenciaController extends Controller
                     }
                     break;
                 case 'Igual a fecha':
-                    $query->whereDate($campo, '=', $valor);
+                    $query->whereDate("usr_app_clientes." . $campo, '=', $valor);
                     break;
                 case 'Entre':
-                    $query->whereDate($campo, '>=', $valor)
-                        ->whereDate($campo, '<=', $valor2);
+                    $query->whereDate("usr_app_clientes." . $campo, '>=', $valor)
+                        ->whereDate("usr_app_clientes." . $campo, '<=', $valor2);
                     break;
             }
 
@@ -927,6 +928,12 @@ class formularioDebidaDiligenciaController extends Controller
             $cliente->responsable_id = $request->responsable_id;
             $cliente->contratacion_observacion = $request['contratacion_observacion'];
             $cliente->save();
+
+            $operacion = new HistoricoOperacionesDDModel();
+            $operacion->cliente_id =  $cliente->id;
+            $operacion->tipo_operacion_id = $cliente->operacion_id;
+            $operacion->nombre_usuario_actualiza = $user->nombres . ' ' . $user->apellidos;
+            $operacion->save();
 
             $seguimiento = new ClientesSeguimientoGuardado();
             $seguimiento->estado_firma_id = $cliente->estado_firma_id;
@@ -1265,7 +1272,15 @@ class formularioDebidaDiligenciaController extends Controller
         $cliente = Cliente::where('usr_app_clientes.id', '=', $id)
             ->select()
             ->first();
+
         try {
+            if ($cliente->operacion_id != $request['operacion']) {
+                $operacion = new HistoricoOperacionesDDModel();
+                $operacion->cliente_id =  $cliente->id;
+                $operacion->tipo_operacion_id = $cliente->operacion_id;
+                $operacion->nombre_usuario_actualiza = $user->nombres . ' ' . $user->apellidos;
+                $operacion->save();
+            }
             $cliente->acuerdo_comercial = $request['acuerdo_comercial'];
             $actividad_ciiu = $this->actividades_ciiu($request['actividad_ciiu']);
             $cliente->operacion_id = $request['operacion'];
@@ -1354,7 +1369,6 @@ class formularioDebidaDiligenciaController extends Controller
             /*    $cliente->estado_firma_id = $request->estado_firma_id;
             $cliente->responsable = $request->responsable;
             $cliente->responsable_id = $request->responsable_id; */
-
             $cliente->save();
 
             $ids = [];

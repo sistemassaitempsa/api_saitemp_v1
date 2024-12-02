@@ -164,6 +164,7 @@ use App\Http\Controllers\GenerarZipController;
 use App\Http\Controllers\limitesCrmController;
 use App\Models\SeguimientoCrm;
 use App\Http\Controllers\enviarCorreoDDController;
+use App\Http\Controllers\IndicadoresDDController;
 
 /*
 |--------------------------------------------------------------------------
@@ -628,6 +629,10 @@ Route::group([
   Route::get('/consultaHistoricoEstadosDd/{cantidad}', [HistoricoEstadosDdController::class, 'index']);
   Route::post('/consultaHistoricoEstadosDd/{cantidad}', [HistoricoEstadosDdController::class, 'filtrarEstados']);
   Route::post('/excelHistoricoEstadosDd', [HistoricoEstadosDdController::class, 'exportExcel']);
+
+  //Rutas para los indicadores DD
+  Route::get('/numeroRadicadosMes/{anio}', [IndicadoresDDController::class, 'numeroRadicadosMes']);
+  Route::get('/tipoDeOperacionMes/{anio}', [IndicadoresDDController::class, 'tipoDeOperacionMes']);
 
   //Api validart
   Route::post('/uploadFileValidart/{id}', [ApiFirmaElectronicaController::class, 'uploadFileValidarT']);
