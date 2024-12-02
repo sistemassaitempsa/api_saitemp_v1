@@ -117,4 +117,57 @@ class IndicadoresDDController extends Controller
             'data' => $contratos,
         ], 200);
     }
+
+    public function estadoOportunoMes($anio)
+    {
+        try {
+            $registrosPorEstadoYMes = DB::table('usr_app_clientes_seguimiento_estado')
+                ->select(
+                    DB::raw('MONTH(created_at) as mes'),
+                    'oportuno',
+                    DB::raw('COUNT(*) as total')
+                )
+                ->whereYear('created_at', $anio)
+                ->groupBy('oportuno', DB::raw('MONTH(created_at)'))
+                ->get();
+
+            // Mapeo de los valores de 'oportuno' como un array asociativo con claves como cadenas
+            $oportunoLabels = [
+                "0" => 'No oportuno',
+                "1" => 'Oportuno',
+                "2" => 'Estado pendiente',
+            ];
+
+            // Inicializar array de resultados
+            $nombresArray = ['nombres' => (object) $oportunoLabels]; // Convertir a objeto explícitamente
+            $datosPorMesArray = [];
+
+            // Inicializar arrays con 12 meses para cada estado
+            foreach ($oportunoLabels as $id => $label) {
+                $datosPorMesArray[$id] = array_fill(1, 12, 0);
+            }
+
+            // Procesar los registros obtenidos y actualizar los valores por mes
+            foreach ($registrosPorEstadoYMes as $registro) {
+                $mes = $registro->mes;
+                $oportuno = (string) $registro->oportuno; // Convertir a cadena para garantizar coincidencia
+                $cantidad = $registro->total;
+
+                // Validar que 'oportuno' esté mapeado
+                if (isset($datosPorMesArray[$oportuno])) {
+                    $datosPorMesArray[$oportuno][$mes] = $cantidad;
+                }
+            }
+
+            // Convertir el formato de datosPorMesArray para ajustarse a la estructura solicitada
+            $resultadoFinal = [$nombresArray];
+            foreach ($datosPorMesArray as $datosPorMes) {
+                $resultadoFinal[] = $datosPorMes;
+            }
+
+            return response()->json($resultadoFinal);
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
+    }
 }

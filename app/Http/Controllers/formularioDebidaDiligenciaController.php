@@ -1277,7 +1277,7 @@ class formularioDebidaDiligenciaController extends Controller
             if ($cliente->operacion_id != $request['operacion']) {
                 $operacion = new HistoricoOperacionesDDModel();
                 $operacion->cliente_id =  $cliente->id;
-                $operacion->tipo_operacion_id = $cliente->operacion_id;
+                $operacion->tipo_operacion_id = $request['operacion'];
                 $operacion->nombre_usuario_actualiza = $user->nombres . ' ' . $user->apellidos;
                 $operacion->save();
             }

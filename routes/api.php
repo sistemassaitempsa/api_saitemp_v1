@@ -633,6 +633,7 @@ Route::group([
   //Rutas para los indicadores DD
   Route::get('/numeroRadicadosMes/{anio}', [IndicadoresDDController::class, 'numeroRadicadosMes']);
   Route::get('/tipoDeOperacionMes/{anio}', [IndicadoresDDController::class, 'tipoDeOperacionMes']);
+  Route::get('/estadoOportunoMes/{anio}', [IndicadoresDDController::class, 'estadoOportunoMes']);
 
   //Api validart
   Route::post('/uploadFileValidart/{id}', [ApiFirmaElectronicaController::class, 'uploadFileValidarT']);
