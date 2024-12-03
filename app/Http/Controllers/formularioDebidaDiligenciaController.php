@@ -921,15 +921,30 @@ class formularioDebidaDiligenciaController extends Controller
             $cliente->contratacion_pago_efectivo = $request['contratacion_pago_efectivo'];
             $cliente->contratacion_carnet_corporativo = $request['contratacion_carnet_corporativo'];
             $cliente->contratacion_pagos_31 = $request['contratacion_pagos_31'];
-            if ($request->estado_id == '') {
+            if (
+                $request->estado_firma_id
+                == ''
+            ) {
                 $cliente->estado_firma_id = 1;
             } else {
-                $cliente->estado_firma_id = $request->estado_id;
+                $cliente->estado_firma_id = $request->estado_firma_id;
             }
             $cliente->responsable = $request->responsable;
             $cliente->responsable_id = $request->responsable_id;
             $cliente->contratacion_observacion = $request['contratacion_observacion'];
             $cliente->save();
+
+
+            $seguimiento_estado = new ClientesSeguimientoEstado;
+            $seguimiento_estado->responsable_inicial =  $user->nombres . ' ' . $user->apellidos;
+            $seguimiento_estado->responsable_final = $cliente->responsable = $request->responsable;
+            $seguimiento_estado->estados_firma_inicial =  $cliente->estado_firma_id;
+            $seguimiento_estado->estados_firma_final =    $cliente->estado_firma_id;
+            $seguimiento_estado->cliente_id =   $cliente->id;
+            $seguimiento_estado->actualiza_registro =   $user->nombres . ' ' .  $user->apellidos;
+            $seguimiento_estado->oportuno = "2";
+            $seguimiento_estado->save();
+
 
             $operacion = new HistoricoOperacionesDDModel();
             $operacion->cliente_id =  $cliente->id;
@@ -1268,7 +1283,7 @@ class formularioDebidaDiligenciaController extends Controller
      */
     public function update(Request $request, $id)
     {
-        $estado_id = $request->estado_firma_id;
+        $estado__nuevo_id = $request->estado_firma_id;
         $user = auth()->user();
         $permisos = $this->validaPermiso();
         $cliente = Cliente::where('usr_app_clientes.id', '=', $id)
@@ -1373,6 +1388,7 @@ class formularioDebidaDiligenciaController extends Controller
             $cliente->responsable_id = $request->responsable_id; */
             $cliente->save();
 
+
             $ids = [];
             array_push($ids, $id);
             if ($cliente->responsable_id != null && $cliente->responsable_id != $user->id && !in_array('31', $permisos)) {
@@ -1395,8 +1411,11 @@ class formularioDebidaDiligenciaController extends Controller
             $responsable_inicial = str_replace("null", "", $cliente->responsable);
             $estado_inicial = $cliente->estado_firma_id;
 
-            if ($estado_id != $cliente->estado_firma_id ||  $cliente->responsable == null) {
-                $this->actualizaestadofirma($id, $estado_id, $cliente->responsable_id, $responsable_inicial, $estado_inicial);
+
+            if ($estado__nuevo_id != $estado_inicial ||  $cliente->responsable == null) {
+                $this->actualizaestadofirma($id, $estado__nuevo_id, $request->responsable_id, $responsable_inicial, $estado_inicial);
+                /*                 actualizaestadofirma($item_id, $estado_id, $responsable_id = null,  $responsable_actual = null, $estado_inicial = null)
+ */
             } else {
                 $seguimiento_estado = new ClientesSeguimientoEstado();
                 $seguimiento_estado->responsable_inicial =  $responsable_inicial;
@@ -1963,10 +1982,10 @@ class formularioDebidaDiligenciaController extends Controller
             }
 
             if ($tiempo_cumplimiento_laboral <= $tiempo_respuesta_segundos) {
-                $last_registro->oportuno = 1;
+                $last_registro->oportuno = "1";
                 $last_registro->save();
             } else {
-                $last_registro->oportuno = 0;
+                $last_registro->oportuno = "0";
                 $last_registro->save();
             }
         }

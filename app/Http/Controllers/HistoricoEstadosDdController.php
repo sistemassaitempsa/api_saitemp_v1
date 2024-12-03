@@ -33,7 +33,7 @@ class HistoricoEstadosDdController extends Controller
             'usr_app_estados_firma as estado',
             'estado.id',
             '=',
-            'usr_app_clientes_seguimiento_estado.estados_firma_inicial'
+            'usr_app_clientes_seguimiento_estado.estados_firma_final'
         )->select(
             'usr_app_clientes_seguimiento_estado.id',
             'usr_app_clientes_seguimiento_estado.responsable_inicial',
@@ -86,7 +86,7 @@ class HistoricoEstadosDdController extends Controller
             'usr_app_estados_firma as estado',
             'estado.id',
             '=',
-            'usr_app_clientes_seguimiento_estado.estados_firma_inicial'
+            'usr_app_clientes_seguimiento_estado.estados_firma_final'
         )->select(
             'usr_app_clientes_seguimiento_estado.id',
             'usr_app_clientes_seguimiento_estado.responsable_inicial',
@@ -288,5 +288,25 @@ class HistoricoEstadosDdController extends Controller
         // Obtener resultados paginados
         $estados = $query->orderby('usr_app_clientes_seguimiento_estado.cliente_id', 'DESC');
         return Excel::download(new EstadosExport($estados), 'estados.xlsx');
+    }
+
+    public function deleteAll()
+    {
+        try {
+            // Eliminar todos los registros de la tabla asociada al modelo
+            DB::table('usr_app_clientes_seguimiento_estado')->delete();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Todos los registros han sido eliminados correctamente.',
+            ]);
+        } catch (\Exception $e) {
+            // Manejar errores y devolver una respuesta adecuada
+            return response()->json([
+                'success' => false,
+                'message' => 'Hubo un error al intentar eliminar los registros.',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
     }
 }

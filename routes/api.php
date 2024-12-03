@@ -629,6 +629,7 @@ Route::group([
   Route::get('/consultaHistoricoEstadosDd/{cantidad}', [HistoricoEstadosDdController::class, 'index']);
   Route::post('/consultaHistoricoEstadosDd/{cantidad}', [HistoricoEstadosDdController::class, 'filtrarEstados']);
   Route::post('/excelHistoricoEstadosDd', [HistoricoEstadosDdController::class, 'exportExcel']);
+  Route::delete('/deleteAllHistoricoDD', [HistoricoEstadosDdController::class, 'deleteAll']);
 
   //Rutas para los indicadores DD
   Route::get('/numeroRadicadosMes/{anio}', [IndicadoresDDController::class, 'numeroRadicadosMes']);
