@@ -35,6 +35,7 @@ use App\Models\ClienteLaboratorio;
 use App\Models\VersionFormularioDD;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use App\Models\VersionTablasAndroid;
 // use App\Events\EventoPrueba2;
 
 
@@ -65,17 +66,18 @@ class formularioDebidaDiligenciaController extends Controller
             ->get();
         return response()->json($result);
     }
-    public function consultacliente($cantidad){
+    public function consultacliente($cantidad)
+    {
         $permisos = $this->validaPermiso();
-        
+
         $user = auth()->user();
         $year_actual = date('Y');
         $result = cliente::join('gen_vendedor as ven', 'ven.cod_ven', '=', 'usr_app_clientes.vendedor_id')
             ->leftJoin('usr_app_estados_firma as estf', 'estf.id', '=', 'usr_app_clientes.estado_firma_id')
             ->whereYear('usr_app_clientes.created_at', $year_actual)
-             ->when(!in_array('39', $permisos), function ($query) use ($user) {
+            ->when(!in_array('39', $permisos), function ($query) use ($user) {
                 return $query->where('usr_app_clientes.vendedor_id', $user->vendedor_id);
-            }) 
+            })
             ->select(
                 'usr_app_clientes.id',
                 DB::raw('COALESCE(CONVERT(VARCHAR, usr_app_clientes.numero_radicado), CONVERT(VARCHAR, usr_app_clientes.id)) AS numero_radicado'),
@@ -724,11 +726,11 @@ class formularioDebidaDiligenciaController extends Controller
                     }
                     break;
                 case 'Igual a fecha':
-                    $query->whereDate($campo, '=', $valor);
+                    $query->whereDate("usr_app_clientes.".$campo, '=', $valor);
                     break;
                 case 'Entre':
-                    $query->whereDate($campo, '>=', $valor)
-                        ->whereDate($campo, '<=', $valor2);
+                    $query->whereDate("usr_app_clientes.".$campo, '>=', $valor)
+                        ->whereDate("usr_app_clientes.".$campo, '<=', $valor2);
                     break;
             }
 
@@ -1049,6 +1051,10 @@ class formularioDebidaDiligenciaController extends Controller
                 $cliente_laboratorio->cliente_id = $cliente->id;
                 $cliente_laboratorio->save();
             }
+
+            $clientes_android = VersionTablasAndroid::find(12);
+            $clientes_android->version = $clientes_android->version+1;
+            $clientes_android->save();
 
             DB::commit();
             return response()->json(['status' => '200', 'message' => 'ok', 'client' => $cliente->id]);

@@ -952,7 +952,7 @@ Route::group([
   Route::get('/tablasandroid_usr_app_estado_cierre_crm', [VersionTablasAndroidController::class, 'usr_app_estado_cierre_crm']);
   Route::get('/tablasandroid_usr_app_estado_compromiso_crm', [VersionTablasAndroidController::class, 'usr_app_estado_compromiso_crm']);
   Route::get('/tablasandroid_usr_app_pqrsf_crm', [VersionTablasAndroidController::class, 'usr_app_pqrsf_crm']);
-
+  Route::get('/tablasandroid_usr_app_cliente_debida_diligencia', [VersionTablasAndroidController::class, 'usr_app_clientes']);
 
   Route::get('/clear-cache', function () {
     echo Artisan::call('config:clear');
