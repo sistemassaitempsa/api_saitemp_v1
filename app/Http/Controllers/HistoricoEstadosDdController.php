@@ -82,7 +82,7 @@ class HistoricoEstadosDdController extends Controller
             'cliente.id',
             '=',
             'usr_app_clientes_seguimiento_estado.cliente_id'
-        )->leftJoin(
+        )->leftjoin(
             'usr_app_estados_firma as estado',
             'estado.id',
             '=',

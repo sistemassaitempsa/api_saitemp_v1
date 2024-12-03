@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\NotificacionSeiya;
 use App\Http\Controllers\HorarioLaboralController;
 use App\Http\Controllers\EstadosFirmaController;
 use App\Models\ResponsablesEstadosModel;
@@ -944,7 +945,7 @@ class formularioDebidaDiligenciaController extends Controller
             $seguimiento_estado->actualiza_registro =   $user->nombres . ' ' .  $user->apellidos;
             $seguimiento_estado->oportuno = "2";
             $seguimiento_estado->save();
-
+            $this->eventoSocket($request->responsable_id);
 
             $operacion = new HistoricoOperacionesDDModel();
             $operacion->cliente_id =  $cliente->id;
@@ -1412,21 +1413,27 @@ class formularioDebidaDiligenciaController extends Controller
             $estado_inicial = $cliente->estado_firma_id;
 
 
-            if ($estado__nuevo_id != $estado_inicial ||  $cliente->responsable == null) {
+
+            if ($estado__nuevo_id != $estado_inicial ||  $cliente->responsable == null || $cliente->responsable_id != $request->responsable_id) {
                 $this->actualizaestadofirma($id, $estado__nuevo_id, $request->responsable_id, $responsable_inicial, $estado_inicial);
                 /*                 actualizaestadofirma($item_id, $estado_id, $responsable_id = null,  $responsable_actual = null, $estado_inicial = null)
  */
-            } else {
+            }/* else if( $cliente->responsable_id != $request->responsable_id){
+                $this->actualizaestadofirma($id, $estado__nuevo_id, $request->responsable_id, $responsable_inicial, $estado_inicial);
+            } */
+
+
+            /* else {
                 $seguimiento_estado = new ClientesSeguimientoEstado();
                 $seguimiento_estado->responsable_inicial =  $responsable_inicial;
                 $seguimiento_estado->responsable_final = str_replace("null", "", $cliente->responsable);
                 $seguimiento_estado->estados_firma_inicial = $estado_inicial;
-                $seguimiento_estado->estados_firma_final =   $request->estado_id;
+                $seguimiento_estado->estados_firma_final =   $request->estado_firma_id;
                 $seguimiento_estado->cliente_id =  $id;
                 $seguimiento_estado->actualiza_registro =   $user->nombres . ' ' . str_replace("null", "", $user->apellidos);
-                $seguimiento_estado->save();
+                $seguimiento_estado->save(); 
             }
-
+ */
             $cargo = Cargo2::where('cliente_id', '=', $id)
                 ->select()
                 ->get();
@@ -2037,6 +2044,8 @@ class formularioDebidaDiligenciaController extends Controller
         $registro_ingreso->estado_firma_id = $estado_id;
         $registro_ingreso->responsable_id = $responsable->usuario_id;
         $registro_ingreso->responsable = $responsable->nombres . ' ' . str_replace("null", "", $responsable->apellidos);
+
+        $this->eventoSocket($responsable->usuario_id);
         if ($registro_ingreso->save()) {
             return response()->json(['status' => 'success', 'message' => 'Registro actualizado de manera exitosa.']);
         }
@@ -2134,5 +2143,17 @@ class formularioDebidaDiligenciaController extends Controller
         } else {
             return response()->json("Error al borrar registro");
         }
+    }
+    public function eventoSocket($id)
+    {
+        try {
+            $data = [
+                'encargado_id' => $id,
+                'mensaje' => 'Te han asignado una nueva actividad en el módulo Debida diligencia.'
+            ];
+            event(new NotificacionSeiya($data));
+        } catch (\Throwable $th) {
+        }
+        return;
     }
 }
