@@ -20,13 +20,14 @@ class enviarCorreoDDController extends Controller
 
                     $resultCorreo = $this->enviarCorreo($correoData['correo'], $formulario,  $registro_id, $modulo, $correoData['observacion'], $user->usuario, $correoData['corregir']);
                 }
-            } catch (\Exception $th) {
+            } catch (\Exception $e) {
                 $resultCorreo = response()->json(['status' => 'error', 'message' => 'No fue posible enviar el registro verifique el correo de contacto o de los responsables']);
             }
         }
         return $resultCorreo;
     }
-    private function enviarCorreo($destinatario, $formulario,  $registro_id, $modulo, $observacion = '', $user, $booleanCorregir)
+
+    public function enviarCorreo($destinatario, $formulario,  $registro_id, $modulo, $observacion = '', $user, $booleanCorregir, $booleanCancelado = false)
     {
 
 
@@ -40,6 +41,11 @@ class enviarCorreoDDController extends Controller
         \n\n Atentamente:";
         } else {
             $body = "Cordial saludo, tiene nuevas tareas asignadas en el radicado Debida Diligencia número: <b><i>$numeroRadicado</i></b>.
+            \n\n Atentamente:";
+        }
+
+        if ($booleanCancelado == true) {
+            $body = "Cordial saludo, el radicado Debida Diligencia número: <b><i>$numeroRadicado</i></b> ha sido cancelado.
             \n\n Atentamente:";
         }
 

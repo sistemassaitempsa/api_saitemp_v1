@@ -42,8 +42,10 @@ use App\Models\ClienteLaboratorio;
 use App\Models\HistoricoOperacionesDDModel;
 use App\Models\VersionFormularioDD;
 use Carbon\Carbon;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use App\Http\Controllers\enviarCorreoDDController;
 // use App\Events\EventoPrueba2;
 
 
@@ -97,7 +99,7 @@ class formularioDebidaDiligenciaController extends Controller
                 'usr_app_clientes.created_at',
                 'estf.nombre as nombre_estado_firma',
                 'estf.color as color_estado_firma',
-                'estf.id as estado_firma_id',
+                /* 'estf.id as estado_firma_id', */
                 'usr_app_clientes.responsable'
 
             )
@@ -1410,14 +1412,13 @@ class formularioDebidaDiligenciaController extends Controller
             $seguimiento->save();
 
             $responsable_inicial = str_replace("null", "", $cliente->responsable);
+
             $estado_inicial = $cliente->estado_firma_id;
 
 
 
             if ($estado__nuevo_id != $estado_inicial ||  $cliente->responsable == null || $cliente->responsable_id != $request->responsable_id) {
                 $this->actualizaestadofirma($id, $estado__nuevo_id, $request->responsable_id, $responsable_inicial, $estado_inicial);
-                /*                 actualizaestadofirma($item_id, $estado_id, $responsable_id = null,  $responsable_actual = null, $estado_inicial = null)
- */
             }/* else if( $cliente->responsable_id != $request->responsable_id){
                 $this->actualizaestadofirma($id, $estado__nuevo_id, $request->responsable_id, $responsable_inicial, $estado_inicial);
             } */
@@ -1959,6 +1960,25 @@ class formularioDebidaDiligenciaController extends Controller
         $registro_ingreso = Cliente::where('usr_app_clientes.id', '=', $item_id)
             ->first();
         $estado_inicial = $registro_ingreso->estado_firma_id;
+        if ($estado_id == 14) {
+            $enviarCorreoDDController = new enviarCorreoDDController;
+
+            $usuarioResponsable = User::where('usr_app_usuarios.id', '=', $registro_ingreso->responsable_id)
+                ->select()
+                ->first();
+
+            $usuarioComercial = User::where('usr_app_usuarios.vendedor_id', '=', $registro_ingreso->vendedor_id)
+                ->select()
+                ->first();
+            $correoResponsable = $usuarioResponsable->usuario;
+            $correoCOmercial = $usuarioComercial->usuario;
+
+            $enviarCorreoDDController->enviarCorreo($correoResponsable, $registro_ingreso, $registro_ingreso->id, 15, "", $user->usuario, false, true);
+            $enviarCorreoDDController->enviarCorreo($correoCOmercial, $registro_ingreso, $registro_ingreso->id, 15, "", $user->usuario, false, true);
+        }
+
+
+
         $fin_semana_controller = new HorarioLaboralController;
 
 
@@ -2046,6 +2066,7 @@ class formularioDebidaDiligenciaController extends Controller
         $registro_ingreso->responsable = $responsable->nombres . ' ' . str_replace("null", "", $responsable->apellidos);
 
         $this->eventoSocket($responsable->usuario_id);
+
         if ($registro_ingreso->save()) {
             return response()->json(['status' => 'success', 'message' => 'Registro actualizado de manera exitosa.']);
         }

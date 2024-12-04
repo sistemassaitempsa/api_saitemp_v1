@@ -174,8 +174,10 @@ class HistoricoEstadosDdController extends Controller
 
         // Calcular porcentajes
         $totalRegistros = $query->count();
-        $oportunos = $query->where('usr_app_clientes_seguimiento_estado.oportuno', '1')->count();
-        $noOportunos = $query->where('usr_app_clientes_seguimiento_estado.oportuno', '0')->count();
+        $oportunosQuery = clone $query;
+        $noOportunosQuery = clone $query;
+        $oportunos = $oportunosQuery->where('usr_app_clientes_seguimiento_estado.oportuno', '1')->count();
+        $noOportunos = $noOportunosQuery->where('usr_app_clientes_seguimiento_estado.oportuno', '0')->count();
         $pendientes = $totalRegistros - ($oportunos + $noOportunos);
 
         $porcentajeOportuno = $totalRegistros > 0 ? round(($oportunos / $totalRegistros) * 100, 2) : 0;
