@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use Exception;
 use App\Events\NotificacionSeiya;
 use App\Http\Controllers\HorarioLaboralController;
 use App\Http\Controllers\EstadosFirmaController;
@@ -135,7 +136,7 @@ class formularioDebidaDiligenciaController extends Controller
     }
 
 
-    public function getbyid($id)
+    public function getbyid($id, $asJson = true)
     {
         try {
             $result = Cliente::leftJoin('usr_app_actividades_ciiu as ac', 'ac.id', '=', 'usr_app_clientes.actividad_ciiu_id')
@@ -747,6 +748,9 @@ class formularioDebidaDiligenciaController extends Controller
             $result['laboratorios_agregados'] = $cliente_laboratorio;
             $result['ubicacion_laboratorio'] = $ubicacion_laboratorio;
 
+            if (!$asJson) {
+                return $result;
+            }
             return response()->json($result);
         } catch (\Exception $e) {
             return $e;
@@ -2134,7 +2138,7 @@ class formularioDebidaDiligenciaController extends Controller
         return $permisos;
     }
 
-    public function versionformulario()
+    public function versionformulario($asJson = true)
     {
         $currentDate = now(); // Obtener la fecha actual
 
@@ -2146,6 +2150,9 @@ class formularioDebidaDiligenciaController extends Controller
             ->select()
             ->get();
 
+        if (!$asJson) {
+            return $result;
+        }
         return response()->json($result);
     }
     /**
@@ -2176,5 +2183,190 @@ class formularioDebidaDiligenciaController extends Controller
         } catch (\Throwable $th) {
         }
         return;
+    }
+    public function generarPdf($id)
+    {
+
+        try {
+            // Obtener los datos
+            $versiones = $this->versionformulario(false);
+            $result = $this->getbyid($id, false);
+            if (!$result) {
+                return response()->json(['error' => 'Cliente no encontrado'], 404);
+            }
+            $url = public_path('public/upload/logo1.png');
+            // Iniciar TCPDF
+            $pdf = new \TCPDF();
+            $pdf->SetCreator(PDF_CREATOR);
+            $pdf->SetAuthor('Tu Empresa');
+            $pdf->SetTitle('Reporte de Cliente');
+            $pdf->SetSubject('Detalle del Cliente');
+            $pdf->SetMargins(15, 10, 15);
+            $pdf->SetAutoPageBreak(TRUE, PDF_MARGIN_BOTTOM);
+            $pdf->AddPage();
+            $url = public_path('upload/logo1.png');
+
+            // Verificar que el archivo existe
+            if (!file_exists($url)) {
+                throw new Exception("La imagen no existe en la ruta especificada.");
+            }
+
+            // Convertir la imagen en base64 si el método estándar no funciona
+            $imageData = base64_encode(file_get_contents($url));
+            $imageSrc = 'data:image/png;base64,' . $imageData;
+            // Iniciar HTML
+            $html = '
+            <style>
+                .version{
+                font-size: 11px;
+           
+                }
+                h1, h2, h3 {
+                    color: #333;
+                    text-align: center;
+                }
+                table {
+                    width: 100%;
+                    border-collapse: collapse;
+                    margin-bottom: 20px;
+                }
+                table th, table td {
+                    border: 1px solid #ddd;
+                    padding: 8px;
+                    text-align: left;
+                }
+                table th {
+                    background-color: #f2f2f2;
+                    font-weight: bold;
+                }
+                .section-title {
+                    font-size: 40px;
+                    font-weight: bold;
+                    margin-top: 20px;
+                    margin-bottom: 10px;
+                    text-align: left;
+                }
+            </style>
+            ';
+
+            // Datos Generales
+            $html = '<table border="1" cellpadding="5">
+            <tr>
+            <th style="text-align: center;"> <img style="margin: auto;" src="' . $imageSrc . '" alt="test alt attribute" width="50" height="50" border="0" /></th>
+                <th colspan="2" style="text-align: center;">
+                    <h4 >SAGRILAFT</h4>
+                    <h5>Sistema de Autocontrol y Gestión del Riesgo Integral de Lavado de Activos y Financiación del Terrorismo FORMATO ÚNICO DE VINCULACIÓN DE CONTRAPARTES</h5>
+                </th>
+            ';
+
+            // Aquí empieza el contenido dinámico del `<td>`
+            $html .= '
+            <td>';
+
+            foreach ($versiones as $version) {
+                $html .= '<p style="font-size: 10px;">' . htmlspecialchars($version->descripcion) . '</p>'; // Escapar caracteres especiales si es necesario
+            }
+
+            $html .= '</td>
+        </tr>';
+
+            $html .= '</table>';
+
+            $html .= '<h3>Datos Generales</h3>';
+            $html .= '<table>
+                <tr><th>Razón Social</th><td>' . $result['razon_social'] . '</td></tr>
+                <tr><th>NIT</th><td>' . $result['nit'] . '-' . $result['digito_verificacion'] . '</td></tr>
+                <tr><th>Número Radicado</th><td>' . $result['numero_radicado'] . '</td></tr>
+                <tr><th>Teléfono</th><td>' . $result['telefono_empresa'] . '</td></tr>
+                <tr><th>Correo</th><td>' . $result['correo_empresa'] . '</td></tr>
+            </table>';
+
+            // Seguimiento de Estados
+            if (!empty($result['seguimiento_estados'])) {
+                $html .= '<h3>Seguimiento de Estados</h3>';
+                $html .= '<table>
+                    <tr>
+                        <th>Estado Inicial</th>
+                        <th>Estado Final</th>
+                        <th>Responsable</th>
+                        <th>Fecha de Actualización</th>
+                    </tr>';
+                foreach ($result['seguimiento_estados'] as $estado) {
+                    $html .= '<tr>
+                        <td>' . $estado['estados_firma_inicial'] . '</td>
+                        <td>' . $estado['estados_firma_final'] . '</td>
+                        <td>' . $estado['responsable_inicial'] . '</td>
+                        <td>' . $estado['actualiza_registro'] . '</td>
+                    </tr>';
+                }
+                $html .= '</table>';
+            }
+
+            // Contratos
+            if (!empty($result['contrato'])) {
+                $html .= '<h3>Contratos</h3>';
+                $html .= '<table>
+                    <tr>
+                        <th>Estado</th>
+                        <th>Firmado por Cliente</th>
+                        <th>Firmado por Empresa</th>
+                    </tr>';
+                foreach ($result['contrato'] as $contrato) {
+                    $html .= '<tr>
+                        <td>' . $contrato['estado_contrato'] . '</td>
+                        <td>' . ($contrato['firmado_cliente'] ? 'Sí' : 'No') . '</td>
+                        <td>' . ($contrato['firmado_empresa'] ? 'Sí' : 'No') . '</td>
+                    </tr>';
+                }
+                $html .= '</table>';
+            }
+
+            // Cargos
+            if (!empty($result['cargos'])) {
+                $html .= '<h3>Cargos</h3>';
+                foreach ($result['cargos'] as $cargo) {
+                    $html .= '<div class="section-title">Cargo: ' . $cargo['cargo'] . '</div>';
+                    $html .= '<p>Riesgo Laboral: ' . $cargo['riesgo_laboral'] . '</p>';
+                    if (!empty($cargo['requisitos'])) {
+                        $html .= '<div class="section-title">Requisitos:</div><ul>';
+                        foreach ($cargo['requisitos'] as $requisito) {
+                            $html .= '<li>' . $requisito['nombre'] . '</li>';
+                        }
+                        $html .= '</ul>';
+                    }
+                    if (!empty($cargo['examenes'])) {
+                        $html .= '<div class="section-title">Exámenes:</div><ul>';
+                        foreach ($cargo['examenes'] as $examen) {
+                            $html .= '<li>' . $examen['nombre'] . '</li>';
+                        }
+                        $html .= '</ul>';
+                    }
+                }
+            }
+
+            // Accionistas
+            if (!empty($result['accionistas'])) {
+                $html .= '<h3>Accionistas</h3>';
+                $html .= '<table>
+                    <tr>
+                        <th>Nombre</th>
+                        <th>Participación (%)</th>
+                    </tr>';
+                foreach ($result['accionistas'] as $accionista) {
+                    $html .= '<tr>
+                        <td>' . $accionista['socio'] . '</td>
+                        <td>' . $accionista['participacion'] . '</td>
+                    </tr>';
+                }
+                $html .= '</table>';
+            }
+
+            // Generar PDF
+            $pdf->writeHTML($html, true, false, true, false, '');
+            $filename = 'Reporte_Cliente_' . $id . '.pdf';
+            $pdf->Output($filename, 'I'); // 'I' para mostrar en navegador, 'D' para descargar directamente
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Error al generar el PDF: ' . $e->getMessage()], 500);
+        }
     }
 }

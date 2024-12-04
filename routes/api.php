@@ -618,6 +618,8 @@ Route::group([
   Route::get('/actualizaestadofirma/{item_id}/{estado_id}/{responsable_id}', [formularioDebidaDiligenciaController::class, 'actualizaestadofirma']);
   Route::get('/versiondebidadiligencia', [formularioDebidaDiligenciaController::class, 'versionformulario']);
 
+  Route::get('/formulariocliente/generarpdf/{id}', [formularioDebidaDiligenciaController::class, 'generarPdf']);
+
   Route::get('/consultaformulariocliente/{cantidad}', [formularioDebidaDiligenciaController::class, 'consultacliente']);
   Route::get('/clientesactivos', [formularioDebidaDiligenciaController::class, 'clientesactivos']);
   Route::get('/consultaformularioclientefiltro/{cadena}', [formularioDebidaDiligenciaController::class, 'filtro']);
