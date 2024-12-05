@@ -2271,15 +2271,263 @@ class formularioDebidaDiligenciaController extends Controller
         </tr>';
 
             $html .= '</table>';
-
             $html .= '<h3>Datos Generales</h3>';
             $html .= '<table>
-                <tr><th>Razón Social</th><td>' . $result['razon_social'] . '</td></tr>
-                <tr><th>NIT</th><td>' . $result['nit'] . '-' . $result['digito_verificacion'] . '</td></tr>
-                <tr><th>Número Radicado</th><td>' . $result['numero_radicado'] . '</td></tr>
-                <tr><th>Teléfono</th><td>' . $result['telefono_empresa'] . '</td></tr>
-                <tr><th>Correo</th><td>' . $result['correo_empresa'] . '</td></tr>
+                <tr><th><b>Número de radicado:</b></th><td>' . $result['numero_radicado'] . '</td></tr>
+                <tr><th><b>Tipo de operación:</b></th><td>' . $result['tipo_operacion'] . '</td></tr>
+                <tr><th><b>Tipo de cliente:</b></th><td>' . $result['tipo_cliente'] . '</td></tr>';
+            $html .=  '<tr><th><b>Tipo de proveedor:</b></th><td>' . $result['tipo_proveedor'] . '</td></tr>
+                <tr><th><b>Tipo de persona:</b></th><td>' . $result['tipo_persona'] . '</td></tr>
+                <tr><th><b>Tipo de identificación:</b></th><td>' . $result['tipo_identificacion'] . '</td></tr>
+                <tr><th><b>Número de identificación:</b></th><td>' . $result['numero_identificacion'] . '</td></tr>
+                <tr><th><b>Fecha de expedición:</b></th><td>' . $result['fecha_exp_documento'] . '</td></tr>
+                <tr><th><b>Nombre completo/Razón social:</b></th><td>' . $result['razon_social'] . '</td></tr>
+                <tr><th><b>NIT:</b></th><td>' . $result['nit'] . '-' . $result['digito_verificacion'] . '</td></tr>
+                <tr><th><b>Teléfono:</b></th><td>' . $result['telefono_empresa'] . '</td></tr>
+                <tr><th><b>Número celular:</b></th><td>' . $result['celular_empresa'] . '</td></tr>
+                <tr><th><b>Correo:</b></th><td>' . $result['correo_empresa'] . '</td></tr>
+                <tr><th><b>Fecha de constitución:</b></th><td>' . $result['fecha_constitucion'] . '</td></tr>
+                <tr><th><b>Número de empleados:</b></th><td>' . $result['numero_empleados'] . '</td></tr>
+                <tr><th><b>Código ciiu:</b></th><td>' . $result['codigo_ciiu'] . '</td></tr>
+                <tr><th><b>Actividad ciiu:</b></th><td>' . $result['codigo_actividad_ciiu'] . '</td></tr>
+                <tr><th><b>Estrato socio económico (ubicación empresa):</b></th><td>' . $result['estrato'] . '</td></tr>
+                <tr><th><b>Departamento del rut:</b></th><td>' . $result['departamento_rut'] . '</td></tr>
+                <tr><th><b>Ciudad del rut:</b></th><td>' . $result['municipio_rut'] . '</td></tr>
+                <tr><th><b>Pais de ubicación:</b></th><td>' . $result['pais'] . '</td></tr>
+                <tr><th><b>Departamento de ubicación:</b></th><td>' . $result['departamento'] . '</td></tr>
+                <tr><th><b>Ciudad de ubicación:</b></th><td>' . $result['municipio'] . '</td></tr>
+                <tr><th><b>Dirección de la empresa:</b></th><td>' . $result['direccion_empresa'] . '</td></tr>
+                <tr><th><b>Persona de contacto:</b></th><td>' . $result['contacto_empresa'] . '</td></tr>
+                <tr><th><b>Sociedad comercial:</b></th><td>' . $result['sociedad_comercial'] . '</td></tr>
+                <tr><th><b>Otra ¿Cuál?:</b></th><td>' . $result['otra'] . '</td></tr>
+                <tr><th><b>Periocidad de pagos:</b></th><td>' . $result['periodicidad_liquidacion'] . '</td></tr>
+                <tr><th><b>Plazo pagos(días):</b></th><td>' . $result['plazo_pago'] . '</td></tr>
+                <tr><th><b>Pais prestación servicio:</b></th><td>' . $result['pais_prestacion_servicio'] . '</td></tr>
+                <tr><th><b>Departamento prestación servicio:</b></th><td>' . $result['departamento_prestacion_servicio'] . '</td></tr>
+                <tr><th><b>Municipio prestación servicio:</b></th><td>' . $result['municipio_prestacion_servicio'] . '</td></tr>
+                <tr><th><b>AIU negociado:</b></th><td>' . $result['aiu_negociado'] . '</td></tr>
+                <tr><th><b>Ejecutivo comercial:</b></th><td>' . $result['vendedor'] . '</td></tr>
+                <tr><th><b>Observaciones acuerdos comerciales:</b></th><td>' . $result['acuerdo_comercial'] . '</td></tr>
+                <tr><th><b>Jornada laboral:</b></th><td>' . $result['jornada_laboral'] . '</td></tr>
+                <tr><th><b>Rotación de personal:</b></th><td>' . $result['rotacion_personal'] . '</td></tr>
+                <tr><th><b>La empresa es extranjera:</b></th><td>' . $result['empresa_extranjera'] . '</td></tr>
+                <tr><th><b>¿Es empresa del exterior radicada en colombia?:</b></th><td>' . $result['empresa_en_exterior'] . '</td></tr>
+                <tr><th><b>¿Tiene vinculos con alguna empresa activa en saitemp?:</b></th><td>' . $result['vinculos_empresa'] . '</td></tr>
+                <tr><th><b>Empleados directos empresa usuaria:</b></th><td>' . $result['numero_empleados_directos'] . '</td></tr>
+                <tr><th><b>¿Actualmente tienen personal vinculado con empresa temporal?:</b></th><td>' . $result['vinculado_empresa_temporal'] . '</td></tr>
+                <tr><th><b>¿Se realizó la visita presencial a las instalaciones del cliente?:</b></th><td>' . $result['visita_presencial'] . '</td></tr>
             </table>';
+            $html .= '<h3>Servicios solicitados</h3>
+            <table>';
+            if ($result['contratacion_directa'] == 1) {
+
+                $html .= ' <tr><th><b>Contratacion directa: </b></th><td>Si</td></tr> ';
+            } else {
+                $html .= ' <tr><th><b>Contratacion directa: </b></th><td>No</td></tr> ';
+            }
+            if ($result['atraccion_seleccion'] == 1) {
+
+                $html .= ' <tr><th><b>Atracción y selección de talento: </b></th><td>Si</td></tr></table> ';
+            } else {
+                $html .= ' <tr><th><b>Atracción y selección de talento: </b></th><td>No</td></tr></table> ';
+            }
+            $html .= '<h3>Contratación</h3>';
+            $html .= '<table>
+            <tr><th><b>Contacto notificación ingreso personal:</b></th><td>' . $result['contratacion_contacto'] . '</td></tr>
+            <tr><th><b>Cargo del contacto:</b></th><td>' . $result['contratacion_cargo'] . '</td></tr>
+            <tr><th><b>Teléfono del contacto:</b></th><td>' . $result['contratacion_telefono'] . '</td></tr>
+            <tr><th><b>Número celular del contacto:</b></th><td>' . $result['contratacion_celular'] . '</td></tr>
+            <tr><th><b>Número celular del contacto:</b></th><td>' . $result['contratacion_hora_ingreso'] . '</td></tr>
+            <tr><th><b>Hora límite para confirmar ingreso de personal:</b></th><td>' . $result['contratacion_hora_confirmacion'] . '</td></tr>
+            <tr><th><b>Correo electrónico notificación ingreso personal:</b></th><td>' . $result['contratacion_correo'] . '</td></tr>
+            ';
+            if (count($result['otrosi']) > 0) {
+                $html .= '<tr><th><b>Otro si solicitados:</b></th><td>-' . $result['otrosi'][0]->nombre . '</td></tr>';
+                for ($i = 1; $i < count($result['otrosi']); $i++) {
+
+                    $html .= '<tr><th></th><td>-' . $result['otrosi'][$i]->nombre . '</td></tr>';
+                }
+            }
+
+            $html .= '
+            <tr><th><b>¿Necesita carnet de manipulación de alimentos?:</b></th><td>' . $result['contratacion_manipulacion_alimentos'] . '</td></tr>
+            <tr><th><b>¿se require carnet corporativo con especificaciones distintas?:</b></th><td>' . $result['contratacion_carnet_corporativo'] . '</td></tr>
+            <tr><th><b>¿Se requieren tallas de uniformes?:</b></th><td>' . $result['contratacion_tallas_uniforme'] . '</td></tr>
+            <tr><th><b>¿Empresa suministra transporte?:</b></th><td>' . $result['contratacion_suministra_transporte'] . '</td></tr>
+            <tr><th><b>¿La empresa suministra alimentación?:</b></th><td>' . $result['contratacion_suministra_alimentacion'] . '</td></tr>';
+            if (count($result['convenios_banco']) > 0) {
+                $html .= '<tr><th><b>Convenio bancos:</b></th><td>-' . $result['convenios_banco'][0]->nombre . '</td></tr>';
+                for ($i = 1; $i < count($result['convenios_banco']); $i++) {
+
+                    $html .= '<tr><th></th><td>-' . $result['convenios_banco'][$i]->nombre . '</td></tr>';
+                }
+            }
+
+            $html .= '
+            <tr><th><b>¿Realiza pago en efectivo?:</b></th><td>' . $result['contratacion_pago_efectivo'] . '</td></tr>';
+            if (count($result['tipos_contrato']) > 0) {
+                $html .= '<tr><th><b>Tipos de contrato:</b></th><td>-' . $result['tipos_contrato'][0]->nombre . '</td></tr>';
+                for ($i = 1; $i < count($result['tipos_contrato']); $i++) {
+
+                    $html .= '<tr><th></th><td>-' . $result['tipos_contrato'][$i]->nombre . '</td></tr>';
+                }
+            }
+            $html .= '<tr><th><b>¿La empresa paga los días 31?:</b></th><td>' . $result['contratacion_pagos_31'] . '</td></tr>';
+            if (count($result['ubicacion_laboratorio']) > 0) {
+                $html .= '<tr><th><b>País ubicación laboratorio médico:</b></th><td>' . $result['ubicacion_laboratorio'][0]['pais'] . '</td></tr>
+                 <tr><th><b>Departamento ubicación laboratorio médico:</b></th><td>' . $result['ubicacion_laboratorio'][0]['departamento'] . '</td></tr>
+                 <tr><th><b>Ciudad ubicación laboratorio médico:</b></th><td>' . $result['ubicacion_laboratorio'][0]['municipio'] . '</td></tr>
+                 ';
+            }
+
+            if (count($result['laboratorios_agregados']) > 0) {
+                $html .= '<tr><th><b>Laboratorios médicos:</b></th><td>-' . $result['laboratorios_agregados'][0]->nombre . '</td></tr>';
+                for ($i = 1; $i < count($result['laboratorios_agregados']); $i++) {
+
+                    $html .= '<tr><th></th><td>-' . $result['laboratorios_agregados'][$i]->nombre . '</td></tr>';
+                }
+            }
+            $html .= '</table>';
+
+            $html .= '<h3>Facturación</h3>';
+            $html .= '<table>
+            <tr><th><b>Contacto:</b></th><td>' . $result['facturacion_contacto'] . '</td></tr>
+            <tr><th><b>Cargo:</b></th><td>' . $result['facturacion_cargo'] . '</td></tr>
+            <tr><th><b>Teléfono:</b></th><td>' . $result['facturacion_telefono'] . '</td></tr>
+            <tr><th><b>Celular:</b></th><td>' . $result['facturacion_celular'] . '</td></tr>
+            <tr><th><b>Correo electrónico:</b></th><td>' . $result['facturacion_correo'] . '</td></tr>
+            <tr><th><b>Factura única o por CECO:</b></th><td>' . $result['facturacion_factura_unica'] . '</td></tr>
+            <tr><th><b>Fecha de corte para recibir las facturas:</b></th><td>' . $result['facturacion_fecha_corte'] . '</td></tr>
+            <tr><th><b>Persona encargada de recibir la factura:</b></th><td>' . $result['facturacion_encargado_factura'] . '</td></tr>
+            <tr><th><b>¿Requiere anexo de la factura?:</b></th><td>' . $result['requiere_anexo_factura'] . '</td></tr>
+            </table>';
+
+            $html .= '<h3>Seguridad y salud en el trabajo</h3>';
+
+            $html .= '<table>
+            <tr><th><b>Riesgo de la empresa(ARL):</b></th><td>' . $result['riesgo_cliente'] . '</td></tr>
+            <tr><th><b>¿Realizan trabajo de alto riesgo?:</b></th><td>' . $result['trabajo_alto_riesgo'] . '</td></tr>
+            <tr><th><b>Accidentalidad:</b></th><td>' . $result['accidentalidad'] . '</td></tr>
+            <tr><th><b>Cuenta con persona encargada de SST:</b></th><td>' . $result['encargado_sst'] . '</td></tr>
+            <tr><th><b>Nombre encargado SST:</b></th><td>' . $result['nombre_encargado_sst'] . '</td></tr>
+            <tr><th><b>Cargo analista SST:</b></th><td>' . $result['cargo_encargado_sst'] . '</td></tr>
+            <tr><th><b>¿Realizan inducción y entrenamiento?:</b></th><td>' . $result['induccion_entrenamiento'] . '</td></tr>
+            <tr><th><b>¿Entregan dotación?:</b></th><td>' . $result['entrega_dotacion'] . '</td></tr>
+            <tr><th><b>¿Fue evaluado el SGST por la ARL?:</b></th><td>' . $result['evaluado_arl'] . '</td></tr>
+            <tr><th><b>¿Entrega EPP?:</b></th><td>' . $result['entrega_epp'] . '</td></tr>
+            </table>';
+
+            $html .= '<h3>Cargos</h3>';
+            if (count($result['cargos2']) > 0) {
+                $html .= '<table><tr><th><b>Número de cargos registrados:</b></th><td>' . count($result['cargos2']) . '</td></tr></table>';
+                foreach ($result['cargos2'] as $index => $cargo) {
+                    $html .= '<h4 style="text-align:center;">Cargo: ' . $index + 1 . '</h4>';
+                    $html .= '<table>
+                    <tr><th><b>Tipo de cargo:</b></th><td>' . $cargo['tipo_cargo'] . '</td></tr>
+                    <tr><th><b>Categoria del cargo:</b></th><td>' . $cargo['categoria'] . '</td></tr>
+                    <tr><th><b>Cargo:</b></th><td>' . $cargo['cargo'] . '</td></tr>
+                    <tr><th><b>Riesgo del cargo(ARL):</b></th><td>' . $cargo['riesgo_laboral'] . '</td></tr>
+                    <tr><th><b>Funciones del cargo:</b></th><td>' . $cargo['funcion_cargo'] . '</td></tr>';
+                    if (count($cargo['examenes']) > 0) {
+                        $html .= '<tr><th><b>Exámenes:</b></th><td>-' . $cargo['examenes'][0]['nombre'] . '</td></tr>';
+                        for ($i = 1; $i < count($cargo['examenes']); $i++) {
+
+                            $html .= '<tr><th></th><td>-' . $cargo['examenes'][$i]['nombre'] . '</td></tr>';
+                        }
+                    }
+                    if (count($cargo['recomendaciones']) > 0) {
+                        $html .= '<table><tr><th></th><td></td></tr>';
+                        $html .= '<table><tr><th><b>Orientaciones específicas para los exámenes:</b></th><td>-' . $cargo['recomendaciones'][0]['recomendacion1'] . '.</td></tr>';
+                        $html .= '<table><tr><th></th><td></td></tr>';
+                        $html .= '<tr><th><b>Patologías que restringen la labor:</b></th><td style="margin:20px; ">-' . $cargo['recomendaciones'][0]['recomendacion2'] . '.</td></tr>';
+                    }
+                }
+
+                $html .= ' </table>';
+            }
+
+            $html .= '<h3>Información financiera:</h3>';
+
+
+            if (count($result['accionistas']) > 0) {
+                $html .= '<table>';
+                foreach ($result['accionistas'] as $index => $accionista) {
+                    $html .= '<h4 style="text-align:center;">Accionista ' . $index + 1 . '</h4>';
+                    $html .= '<tr><th><b>Tipo de identificación:</b></th><td>' . $accionista['des_tip'] . '</td></tr>';
+                    $html .= '<tr><th><b>Identificación:</b></th><td>' . $accionista['identificacion'] . '</td></tr>';
+                    $html .= '<tr><th><b>Socio/accionista:</b></th><td>' . $accionista['socio'] . '</td></tr>';
+                    $html .= '<tr><th><b>Porcentaje participación:</b></th><td>' . $accionista['participacion'] . '</td></tr>';
+                    $html .= '<table><tr><th></th><td></td></tr>';
+                }
+                $html .= '</table>';
+            }
+
+            $html .= '<h3>Representantes legales:</h3>';
+
+            if (count($result['representantes_legales']) > 0) {
+                $html .= '<table>';
+                foreach ($result['representantes_legales'] as $index => $representante) {
+                    $html .= '<h4 style="text-align:center;">Representante legal ' . $index + 1 . '</h4>';
+                    $html .= '<tr><th><b>Tipo de identificación:</b></th><td>' . $representante['des_tip'] . '</td></tr>';
+                    $html .= '<tr><th><b>Identificación:</b></th><td>' . $representante['identificacion'] . '</td></tr>';
+                    $html .= '<tr><th><b>Nombre:</b></th><td>' . $representante['nombre'] . '</td></tr>';
+                    $html .= '<tr><th><b>Correo electrónico:</b></th><td>' . $representante['pais'] . '</td></tr>';
+                    $html .= '<tr><th><b>Correo electrónico:</b></th><td>' . $representante['departamento'] . '</td></tr>';
+                    $html .= '<tr><th><b>Correo electrónico:</b></th><td>' . $representante['ciudad_expedicion'] . '</td></tr>';
+                    $html .= '<tr><th><b>Número celular:</b></th><td>' . $representante['telefono'] . '</td></tr>';
+                    $html .= '<tr><th><b>Correo electrónico:</b></th><td>' . $representante['correo'] . '</td></tr>';
+                    $html .= '<table><tr><th></th><td></td></tr>';
+                }
+                $html .= '</table>';
+            }
+            $html .= '<h3>Miembros junta directiva:</h3>';
+            if (count($result['junta_directiva']) > 0) {
+                $html .= '<table>';
+                foreach ($result['junta_directiva'] as $index => $miembro) {
+                    $html .= '<h4 style="text-align:center;">' . $index + 1 . '</h4>';
+                    $html .= '<tr><th><b>Tipo de identificación:</b></th><td>' . $miembro['des_tip'] . '</td></tr>';
+                    $html .= '<tr><th><b>Identificación:</b></th><td>' . $miembro['identificacion'] . '</td></tr>';
+                    $html .= '<tr><th><b>Nombre:</b></th><td>' . $miembro['nombre'] . '</td></tr>';
+                    $html .= '<table><tr><th></th><td></td></tr>';
+                }
+                $html .= '<table>';
+            } else {
+                $html .= '<table><tr><th><p>La empresa cuenta con Junta directiva</p></th><td></td></tr>';
+            }
+
+            $html .= '<h3>Calidad tributaria:</h3>';
+            $html .= '<table>';
+            if ($result['responsable_inpuesto_ventas'] == 1) {
+                $html .= '<tr><th><b>Responsable de Impuestos a las Ventas:</b></th><td>Si</td></tr>';
+            } else {
+                $html .= '<tr><th><b>Responsable de Impuestos a las Ventas:</b></th><td>No</td></tr>';
+            }
+            $html .= '<tr><th><b>Correo para factura electrónica:</b></th><td>' . $result['correo_facturacion_electronica'] . '</td></tr>';
+            $html .= '<tr><th><b>Sucursal de facturación:</b></th><td>' . $result['sucursal_facturacion'] . '</td></tr>';
+            if ($result['calidad_tributaria'][0]['gran_contribuyente'] == 1) {
+                $html .= '<tr><th><b>¿Es Gran Contribuyente?:</b></th><td>Si</td></tr>';
+                $html .= '<tr><th><b>Número de resolución gran contribuyente:</b></th><td>' . $result['calidad_tributaria'][0]['resolucion_gran_contribuyente'] . '</td></tr>';
+                $html .= '<tr><th><b>Fecha de resolución gran contribuyente:</b></th><td>' . $result['calidad_tributaria'][0]['fecha_gran_contribuyente'] . '</td></tr>';
+            } else {
+                $html .= '<tr><th><b>¿Es Gran Contribuyente?:</b></th><td>No</td></tr>';
+            }
+            if ($result['calidad_tributaria'][0]['auto_retenedor'] == 1) {
+                $html .= '<tr><th><b>¿Es auto-retenedor?:</b></th><td>Si</td></tr>';
+                $html .= '<tr><th><b>Número de resolución auto-retenedor:</b></th><td>' . $result['calidad_tributaria'][0]['resolucion_auto_retenedor'] . '</td></tr>';
+                $html .= '<tr><th><b>Fecha de resolución auto-retenedor:</b></th><td>' . $result['calidad_tributaria'][0]['fecha_auto_retenedor'] . '</td></tr>';
+            } else {
+                $html .= '<tr><th><b>¿Es auto-retenedor?:</b></th><td>No</td></tr>';
+            }
+            if ($result['calidad_tributaria'][0]['resolucion_exento_impuesto_rent'] == 1) {
+                $html .= '<tr><th><b>¿Exento de Impuesto a la Renta?:</b></th><td>Si</td></tr>';
+                $html .= '<tr><th><b>Número de resolución impuesto a la renta:</b></th><td>' . $result['calidad_tributaria'][0]['resolucion_exento_impuesto_rent'] . '</td></tr>';
+                $html .= '<tr><th><b>Fecha de resolución impuesto a la renta:</b></th><td>' . $result['calidad_tributaria'][0]['fecha_exento_impuesto_rent'] . '</td></tr>';
+            } else {
+                $html .= '<tr><th><b>¿Exento de Impuesto a la Renta?:</b></th><td>No</td></tr>';
+            }
+            $html .= '</table>';
+
+            $html .= '<h3>Datos del contador</h3> ';
 
             // Seguimiento de Estados
             if (!empty($result['seguimiento_estados'])) {
