@@ -2191,6 +2191,55 @@ class formularioDebidaDiligenciaController extends Controller
             // Obtener los datos
             $versiones = $this->versionformulario(false);
             $result = $this->getbyid($id, false);
+
+            $resultGenerales = [
+                'Número de radicado:' => $result['numero_radicado'],
+                'Tipo de operación:' => $result['tipo_operacion'],
+                'Tipo de cliente:' => $result['tipo_cliente'],
+                'Tipo de proveedor' => $result['tipo_proveedor'],
+                'Tipo de persona:' => $result['tipo_persona'],
+                'Tipo de identificación:' => $result['tipo_identificacion'],
+                'Número de identificación:' => $result['numero_identificacion'],
+                'Fecha de expedición:' => $result['fecha_exp_documento'],
+                'Nombre completo/Razón social:' => $result['razon_social'],
+                'NIT:' => $result['nit'] . '-' . $result['digito_verificacion'],
+                'Teléfono:' => $result['telefono_empresa'],
+                'Número celular:' => $result['celular_empresa'],
+                'Correo:' => $result['correo_empresa'],
+                'Fecha de constitución:' => $result['fecha_constitucion'],
+                'Número de empleados:' => $result['numero_empleados'],
+                'Código ciiu:' => $result['codigo_ciiu'],
+                'Actividad ciiu:' => $result['codigo_actividad_ciiu'],
+                'Estrato socio económico (ubicación empresa):' => $result['estrato'],
+                'Departamento del rut:' => $result['departamento_rut'],
+                'Ciudad del rut:' => $result['municipio_rut'],
+                'Pais de ubicación:' => $result['pais'],
+                'Departamento de ubicación:' => $result['departamento'],
+                'Ciudad de ubicación:' => $result['municipio'],
+                'Dirección de la empresa:' => $result['direccion_empresa'],
+                'Persona de contacto:' => $result['contacto_empresa'],
+                'Sociedad comercial:' => $result['sociedad_comercial'],
+                'Otra ¿Cuál?:' => $result['otra'],
+                'Periocidad de pagos:' => $result['periodicidad_liquidacion'],
+                'Plazo pagos(días):' => $result['plazo_pago'],
+                'Pais prestación servicio:' => $result['pais_prestacion_servicio'],
+                'Departamento prestación servicio:' => $result['departamento_prestacion_servicio'],
+                'Municipio prestación servicio:' => $result['municipio_prestacion_servicio'],
+                'AIU negociado:' => $result['aiu_negociado'],
+                'Ejecutivo comercial:' => $result['vendedor'],
+                'Observaciones acuerdos comerciales:' => $result['acuerdo_comercial'],
+                'Jornada laboral:' => $result['jornada_laboral'],
+                'Rotación de personal:' => $result['rotacion_personal'],
+                'La empresa es extranjera:' => $result['empresa_extranjera'],
+                '¿Es empresa del exterior radicada en colombia?:' => $result['empresa_en_exterior'],
+                '¿Tiene vinculos con alguna empresa activa en saitemp?:' => $result['vinculos_empresa'],
+                'Empleados directos empresa usuaria:' => $result['numero_empleados_directos'],
+                '¿Actualmente tienen personal vinculado con empresa temporal?:' => $result['vinculado_empresa_temporal'],
+                '¿Se realizó la visita presencial a las instalaciones del cliente?:' => $result['visita_presencial'],
+            ];
+
+
+
             if (!$result) {
                 return response()->json(['error' => 'Cliente no encontrado'], 404);
             }
@@ -2269,181 +2318,305 @@ class formularioDebidaDiligenciaController extends Controller
 
             $html .= '</td>
         </tr>';
-
+            $indiceGenerales = 0;
             $html .= '</table>';
             $html .= '<h3>Datos Generales</h3>';
-            $html .= '<table>
-                <tr><th><b>Número de radicado:</b></th><td>' . $result['numero_radicado'] . '</td></tr>
-                <tr><th><b>Tipo de operación:</b></th><td>' . $result['tipo_operacion'] . '</td></tr>
-                <tr><th><b>Tipo de cliente:</b></th><td>' . $result['tipo_cliente'] . '</td></tr>';
-            $html .=  '<tr><th><b>Tipo de proveedor:</b></th><td>' . $result['tipo_proveedor'] . '</td></tr>
-                <tr><th><b>Tipo de persona:</b></th><td>' . $result['tipo_persona'] . '</td></tr>
-                <tr><th><b>Tipo de identificación:</b></th><td>' . $result['tipo_identificacion'] . '</td></tr>
-                <tr><th><b>Número de identificación:</b></th><td>' . $result['numero_identificacion'] . '</td></tr>
-                <tr><th><b>Fecha de expedición:</b></th><td>' . $result['fecha_exp_documento'] . '</td></tr>
-                <tr><th><b>Nombre completo/Razón social:</b></th><td>' . $result['razon_social'] . '</td></tr>
-                <tr><th><b>NIT:</b></th><td>' . $result['nit'] . '-' . $result['digito_verificacion'] . '</td></tr>
-                <tr><th><b>Teléfono:</b></th><td>' . $result['telefono_empresa'] . '</td></tr>
-                <tr><th><b>Número celular:</b></th><td>' . $result['celular_empresa'] . '</td></tr>
-                <tr><th><b>Correo:</b></th><td>' . $result['correo_empresa'] . '</td></tr>
-                <tr><th><b>Fecha de constitución:</b></th><td>' . $result['fecha_constitucion'] . '</td></tr>
-                <tr><th><b>Número de empleados:</b></th><td>' . $result['numero_empleados'] . '</td></tr>
-                <tr><th><b>Código ciiu:</b></th><td>' . $result['codigo_ciiu'] . '</td></tr>
-                <tr><th><b>Actividad ciiu:</b></th><td>' . $result['codigo_actividad_ciiu'] . '</td></tr>
-                <tr><th><b>Estrato socio económico (ubicación empresa):</b></th><td>' . $result['estrato'] . '</td></tr>
-                <tr><th><b>Departamento del rut:</b></th><td>' . $result['departamento_rut'] . '</td></tr>
-                <tr><th><b>Ciudad del rut:</b></th><td>' . $result['municipio_rut'] . '</td></tr>
-                <tr><th><b>Pais de ubicación:</b></th><td>' . $result['pais'] . '</td></tr>
-                <tr><th><b>Departamento de ubicación:</b></th><td>' . $result['departamento'] . '</td></tr>
-                <tr><th><b>Ciudad de ubicación:</b></th><td>' . $result['municipio'] . '</td></tr>
-                <tr><th><b>Dirección de la empresa:</b></th><td>' . $result['direccion_empresa'] . '</td></tr>
-                <tr><th><b>Persona de contacto:</b></th><td>' . $result['contacto_empresa'] . '</td></tr>
-                <tr><th><b>Sociedad comercial:</b></th><td>' . $result['sociedad_comercial'] . '</td></tr>
-                <tr><th><b>Otra ¿Cuál?:</b></th><td>' . $result['otra'] . '</td></tr>
-                <tr><th><b>Periocidad de pagos:</b></th><td>' . $result['periodicidad_liquidacion'] . '</td></tr>
-                <tr><th><b>Plazo pagos(días):</b></th><td>' . $result['plazo_pago'] . '</td></tr>
-                <tr><th><b>Pais prestación servicio:</b></th><td>' . $result['pais_prestacion_servicio'] . '</td></tr>
-                <tr><th><b>Departamento prestación servicio:</b></th><td>' . $result['departamento_prestacion_servicio'] . '</td></tr>
-                <tr><th><b>Municipio prestación servicio:</b></th><td>' . $result['municipio_prestacion_servicio'] . '</td></tr>
-                <tr><th><b>AIU negociado:</b></th><td>' . $result['aiu_negociado'] . '</td></tr>
-                <tr><th><b>Ejecutivo comercial:</b></th><td>' . $result['vendedor'] . '</td></tr>
-                <tr><th><b>Observaciones acuerdos comerciales:</b></th><td>' . $result['acuerdo_comercial'] . '</td></tr>
-                <tr><th><b>Jornada laboral:</b></th><td>' . $result['jornada_laboral'] . '</td></tr>
-                <tr><th><b>Rotación de personal:</b></th><td>' . $result['rotacion_personal'] . '</td></tr>
-                <tr><th><b>La empresa es extranjera:</b></th><td>' . $result['empresa_extranjera'] . '</td></tr>
-                <tr><th><b>¿Es empresa del exterior radicada en colombia?:</b></th><td>' . $result['empresa_en_exterior'] . '</td></tr>
-                <tr><th><b>¿Tiene vinculos con alguna empresa activa en saitemp?:</b></th><td>' . $result['vinculos_empresa'] . '</td></tr>
-                <tr><th><b>Empleados directos empresa usuaria:</b></th><td>' . $result['numero_empleados_directos'] . '</td></tr>
-                <tr><th><b>¿Actualmente tienen personal vinculado con empresa temporal?:</b></th><td>' . $result['vinculado_empresa_temporal'] . '</td></tr>
-                <tr><th><b>¿Se realizó la visita presencial a las instalaciones del cliente?:</b></th><td>' . $result['visita_presencial'] . '</td></tr>
-            </table>';
-            $html .= '<h3>Servicios solicitados</h3>
-            <table>';
-            if ($result['contratacion_directa'] == 1) {
+            $html .= '<table>';
+            $clavePrev = "";
+            $valorPrev = "";
+            foreach ($resultGenerales as  $clave => $valor) {
 
-                $html .= ' <tr><th><b>Contratacion directa: </b></th><td>Si</td></tr> ';
-            } else {
-                $html .= ' <tr><th><b>Contratacion directa: </b></th><td>No</td></tr> ';
-            }
-            if ($result['atraccion_seleccion'] == 1) {
-
-                $html .= ' <tr><th><b>Atracción y selección de talento: </b></th><td>Si</td></tr></table> ';
-            } else {
-                $html .= ' <tr><th><b>Atracción y selección de talento: </b></th><td>No</td></tr></table> ';
-            }
-            $html .= '<h3>Contratación</h3>';
-            $html .= '<table>
-            <tr><th><b>Contacto notificación ingreso personal:</b></th><td>' . $result['contratacion_contacto'] . '</td></tr>
-            <tr><th><b>Cargo del contacto:</b></th><td>' . $result['contratacion_cargo'] . '</td></tr>
-            <tr><th><b>Teléfono del contacto:</b></th><td>' . $result['contratacion_telefono'] . '</td></tr>
-            <tr><th><b>Número celular del contacto:</b></th><td>' . $result['contratacion_celular'] . '</td></tr>
-            <tr><th><b>Número celular del contacto:</b></th><td>' . $result['contratacion_hora_ingreso'] . '</td></tr>
-            <tr><th><b>Hora límite para confirmar ingreso de personal:</b></th><td>' . $result['contratacion_hora_confirmacion'] . '</td></tr>
-            <tr><th><b>Correo electrónico notificación ingreso personal:</b></th><td>' . $result['contratacion_correo'] . '</td></tr>
-            ';
-            if (count($result['otrosi']) > 0) {
-                $html .= '<tr><th><b>Otro si solicitados:</b></th><td>-' . $result['otrosi'][0]->nombre . '</td></tr>';
-                for ($i = 1; $i < count($result['otrosi']); $i++) {
-
-                    $html .= '<tr><th></th><td>-' . $result['otrosi'][$i]->nombre . '</td></tr>';
+                if ($indiceGenerales % 2 == 0) {
+                    $clavePrev = $clave;
+                    $valorPrev = $valor;
+                } else {
+                    $html .= '<tr><td style="font-size:10px;"><b>' . $clavePrev . '</b> ' . $valorPrev . '</td><td style="font-size:10px;"><b>' . $clave . '</b> ' . $valor . '</td></tr>';
                 }
+
+                $html .= '<tr><th></th><td></td></tr>';
+                $indiceGenerales++;
             }
 
-            $html .= '
-            <tr><th><b>¿Necesita carnet de manipulación de alimentos?:</b></th><td>' . $result['contratacion_manipulacion_alimentos'] . '</td></tr>
-            <tr><th><b>¿se require carnet corporativo con especificaciones distintas?:</b></th><td>' . $result['contratacion_carnet_corporativo'] . '</td></tr>
-            <tr><th><b>¿Se requieren tallas de uniformes?:</b></th><td>' . $result['contratacion_tallas_uniforme'] . '</td></tr>
-            <tr><th><b>¿Empresa suministra transporte?:</b></th><td>' . $result['contratacion_suministra_transporte'] . '</td></tr>
-            <tr><th><b>¿La empresa suministra alimentación?:</b></th><td>' . $result['contratacion_suministra_alimentacion'] . '</td></tr>';
-            if (count($result['convenios_banco']) > 0) {
-                $html .= '<tr><th><b>Convenio bancos:</b></th><td>-' . $result['convenios_banco'][0]->nombre . '</td></tr>';
-                for ($i = 1; $i < count($result['convenios_banco']); $i++) {
-
-                    $html .= '<tr><th></th><td>-' . $result['convenios_banco'][$i]->nombre . '</td></tr>';
-                }
-            }
-
-            $html .= '
-            <tr><th><b>¿Realiza pago en efectivo?:</b></th><td>' . $result['contratacion_pago_efectivo'] . '</td></tr>';
-            if (count($result['tipos_contrato']) > 0) {
-                $html .= '<tr><th><b>Tipos de contrato:</b></th><td>-' . $result['tipos_contrato'][0]->nombre . '</td></tr>';
-                for ($i = 1; $i < count($result['tipos_contrato']); $i++) {
-
-                    $html .= '<tr><th></th><td>-' . $result['tipos_contrato'][$i]->nombre . '</td></tr>';
-                }
-            }
-            $html .= '<tr><th><b>¿La empresa paga los días 31?:</b></th><td>' . $result['contratacion_pagos_31'] . '</td></tr>';
-            if (count($result['ubicacion_laboratorio']) > 0) {
-                $html .= '<tr><th><b>País ubicación laboratorio médico:</b></th><td>' . $result['ubicacion_laboratorio'][0]['pais'] . '</td></tr>
-                 <tr><th><b>Departamento ubicación laboratorio médico:</b></th><td>' . $result['ubicacion_laboratorio'][0]['departamento'] . '</td></tr>
-                 <tr><th><b>Ciudad ubicación laboratorio médico:</b></th><td>' . $result['ubicacion_laboratorio'][0]['municipio'] . '</td></tr>
-                 ';
-            }
-
-            if (count($result['laboratorios_agregados']) > 0) {
-                $html .= '<tr><th><b>Laboratorios médicos:</b></th><td>-' . $result['laboratorios_agregados'][0]->nombre . '</td></tr>';
-                for ($i = 1; $i < count($result['laboratorios_agregados']); $i++) {
-
-                    $html .= '<tr><th></th><td>-' . $result['laboratorios_agregados'][$i]->nombre . '</td></tr>';
-                }
+            if ($indiceGenerales % 2 == 1) {
+                $html .= '<tr><td style="font-size:10px;"><b>' . $clavePrev . '</b> ' . $valorPrev . '</td></tr>';
+                $html .= '<tr><th></th><td></td></tr>';
             }
             $html .= '</table>';
 
-            $html .= '<h3>Facturación</h3>';
-            $html .= '<table>
-            <tr><th><b>Contacto:</b></th><td>' . $result['facturacion_contacto'] . '</td></tr>
-            <tr><th><b>Cargo:</b></th><td>' . $result['facturacion_cargo'] . '</td></tr>
-            <tr><th><b>Teléfono:</b></th><td>' . $result['facturacion_telefono'] . '</td></tr>
-            <tr><th><b>Celular:</b></th><td>' . $result['facturacion_celular'] . '</td></tr>
-            <tr><th><b>Correo electrónico:</b></th><td>' . $result['facturacion_correo'] . '</td></tr>
-            <tr><th><b>Factura única o por CECO:</b></th><td>' . $result['facturacion_factura_unica'] . '</td></tr>
-            <tr><th><b>Fecha de corte para recibir las facturas:</b></th><td>' . $result['facturacion_fecha_corte'] . '</td></tr>
-            <tr><th><b>Persona encargada de recibir la factura:</b></th><td>' . $result['facturacion_encargado_factura'] . '</td></tr>
-            <tr><th><b>¿Requiere anexo de la factura?:</b></th><td>' . $result['requiere_anexo_factura'] . '</td></tr>
-            </table>';
+            if ($result['tipo_cliente_id'] == 1) {
+                $html .= '<h3>Servicios solicitados</h3>
+            <table>';
+                if ($result['contratacion_directa'] == 1) {
+                    $contratacionDirecta = "Si";
+                } else {
+                    $contratacionDirecta = "No";
+                }
+                if ($result['atraccion_seleccion'] == 1) {
+                    $atraccionSeleccion = "Si";
+                } else {
+                    $atraccionSeleccion = "No";
+                }
+                $html .= ' <tr><th style="font-size:10px;"><b>Contratacion directa:</b> ' . $contratacionDirecta . '</th><td style="font-size:10px;"><b>Atracción y selección de talento:</b> ' . $atraccionSeleccion . '</td></tr> ';
+                $html .= '<h3>Contratación</h3>';
 
-            $html .= '<h3>Seguridad y salud en el trabajo</h3>';
+                $resultContratacion = [
+                    'Contacto notificación ingreso personal:' => $result['contratacion_contacto'],
+                    'Cargo del contacto:' => $result['contratacion_cargo'],
+                    'Teléfono del contacto:' => $result['contratacion_telefono'],
+                    'Número celular del contacto:' => $result['contratacion_celular'],
+                    'Hora de ingreso del personal primer día:' => $result['contratacion_hora_ingreso'],
+                    'Hora límite para confirmar ingreso de personal:' => $result['contratacion_hora_confirmacion'],
+                    'Correo electrónico notificación ingreso personal:' => $result['contratacion_correo'],
+                    '¿Necesita carnet de manipulación de alimentos?:' => $result['contratacion_manipulacion_alimentos'],
+                    '¿se require carnet corporativo con especificaciones distintas?:' => $result['contratacion_carnet_corporativo'],
+                    '¿Se requieren tallas de uniformes?:' => $result['contratacion_tallas_uniforme'],
+                    '¿Empresa suministra transporte?:' => $result['contratacion_suministra_transporte'],
+                    '¿La empresa suministra alimentación?:' => $result['contratacion_suministra_alimentacion'],
+                    '¿Realiza pago en efectivo?:' => $result['contratacion_pago_efectivo'],
+                    '¿La empresa paga los días 31?:' => $result['contratacion_pagos_31'],
 
-            $html .= '<table>
-            <tr><th><b>Riesgo de la empresa(ARL):</b></th><td>' . $result['riesgo_cliente'] . '</td></tr>
-            <tr><th><b>¿Realizan trabajo de alto riesgo?:</b></th><td>' . $result['trabajo_alto_riesgo'] . '</td></tr>
-            <tr><th><b>Accidentalidad:</b></th><td>' . $result['accidentalidad'] . '</td></tr>
-            <tr><th><b>Cuenta con persona encargada de SST:</b></th><td>' . $result['encargado_sst'] . '</td></tr>
-            <tr><th><b>Nombre encargado SST:</b></th><td>' . $result['nombre_encargado_sst'] . '</td></tr>
-            <tr><th><b>Cargo analista SST:</b></th><td>' . $result['cargo_encargado_sst'] . '</td></tr>
-            <tr><th><b>¿Realizan inducción y entrenamiento?:</b></th><td>' . $result['induccion_entrenamiento'] . '</td></tr>
-            <tr><th><b>¿Entregan dotación?:</b></th><td>' . $result['entrega_dotacion'] . '</td></tr>
-            <tr><th><b>¿Fue evaluado el SGST por la ARL?:</b></th><td>' . $result['evaluado_arl'] . '</td></tr>
-            <tr><th><b>¿Entrega EPP?:</b></th><td>' . $result['entrega_epp'] . '</td></tr>
-            </table>';
+                ];
+                $indiceContratacion = 0;
+                $claveConPrev = "";
+                $valorConPrev = "";
+                $html .= '<table>';
+                foreach ($resultContratacion as $clave => $valor) {
+                    if ($indiceContratacion % 2 == 0) {
+                        $claveConPrev = $clave;
+                        $valorConPrev = $valor;
+                    } else {
+                        $html .= '<tr><td style="font-size:10px;"><b>' . $claveConPrev . '</b> ' . $valorConPrev . '</td><td style="font-size:10px;"><b>' . $clave . '</b> ' . $valor . '</td></tr>';
+                    }
+                    $html .= '<tr><th></th><td></td></tr>';
+                    $indiceContratacion++;
+                }
 
-            $html .= '<h3>Cargos</h3>';
-            if (count($result['cargos2']) > 0) {
-                $html .= '<table><tr><th><b>Número de cargos registrados:</b></th><td>' . count($result['cargos2']) . '</td></tr></table>';
-                foreach ($result['cargos2'] as $index => $cargo) {
-                    $html .= '<h4 style="text-align:center;">Cargo: ' . $index + 1 . '</h4>';
-                    $html .= '<table>
-                    <tr><th><b>Tipo de cargo:</b></th><td>' . $cargo['tipo_cargo'] . '</td></tr>
-                    <tr><th><b>Categoria del cargo:</b></th><td>' . $cargo['categoria'] . '</td></tr>
-                    <tr><th><b>Cargo:</b></th><td>' . $cargo['cargo'] . '</td></tr>
-                    <tr><th><b>Riesgo del cargo(ARL):</b></th><td>' . $cargo['riesgo_laboral'] . '</td></tr>
-                    <tr><th><b>Funciones del cargo:</b></th><td>' . $cargo['funcion_cargo'] . '</td></tr>';
-                    if (count($cargo['examenes']) > 0) {
-                        $html .= '<tr><th><b>Exámenes:</b></th><td>-' . $cargo['examenes'][0]['nombre'] . '</td></tr>';
-                        for ($i = 1; $i < count($cargo['examenes']); $i++) {
+                if ($indiceContratacion % 2 == 1) {
+                    $html .= '<tr><td style="font-size:10px;"><b>' . $claveConPrev . '</b> ' . $valorConPrev . '</td></tr>';
+                    $html .= '<tr><th></th><td></td></tr>';
+                }
+                $html .= '<tr><th><b>Otro si solicitados:</b></th></tr>';
 
-                            $html .= '<tr><th></th><td>-' . $cargo['examenes'][$i]['nombre'] . '</td></tr>';
+                $otroSiIndice = 0;
+                $otroSiValPrev = "";
+
+                if (count($result['otrosi']) > 0) {
+
+                    foreach ($result['otrosi'] as $index => $otro) {
+                        if ($index % 2 == 0) {
+                            $otroSiValPrev = $otro['nombre'];
+                        } else {
+                            $html .= '<tr><td style="font-size:10px;">-' . $otroSiValPrev . '</td><td style="font-size:10px;">-' . $otro['nombre'] . '</td></tr>';
+                            $html .= '<tr><th></th><td></td></tr>';
                         }
+
+                        $otroSiIndice++;
                     }
-                    if (count($cargo['recomendaciones']) > 0) {
-                        $html .= '<table><tr><th></th><td></td></tr>';
-                        $html .= '<table><tr><th><b>Orientaciones específicas para los exámenes:</b></th><td>-' . $cargo['recomendaciones'][0]['recomendacion1'] . '.</td></tr>';
-                        $html .= '<table><tr><th></th><td></td></tr>';
-                        $html .= '<tr><th><b>Patologías que restringen la labor:</b></th><td style="margin:20px; ">-' . $cargo['recomendaciones'][0]['recomendacion2'] . '.</td></tr>';
+
+                    if ($otroSiIndice % 2 == 1) {
+                        $html .= '<tr><td style="font-size:10px;">-' . $otroSiValPrev . '</td></tr>';
+                        $html .= '<tr><th></th><td></td></tr>';
                     }
+                }
+
+
+                $convBancIndice = 0;
+                $convBancValPrev = "";
+
+                $html .= '<tr><th><b>Convenio bancos:</b></th></tr>';
+                if (count($result['convenios_banco']) > 0) {
+                    foreach ($result['convenios_banco'] as $index => $banco) {
+                        if ($index % 2 == 0) {
+                            $convBancValPrev = $banco['nombre'];
+                        } else {
+                            $html .= '<tr><td style="font-size:10px;">-' . $convBancValPrev . '</td><td style="font-size:10px;">-' . $banco['nombre'] . '</td></tr>';
+                            $html .= '<tr><th></th><td></td></tr>';
+                        }
+
+                        $convBancIndice++;
+                    }
+
+
+                    if ($convBancIndice % 2 == 1) {
+                        $html .= '<tr><td style="font-size:10px;">-' . $convBancValPrev . '</td></tr>';
+                        $html .= '<tr><th></th><td></td></tr>';
+                    }
+                }
+
+                $tipoConIndice = 0;
+                $tipoConValPrev = "";
+                $html .= '<tr><th><b>Tipos de contrato:</b></th></tr>';
+                if (count($result['tipos_contrato']) > 0) {
+                    foreach ($result['tipos_contrato'] as $index => $contrato) {
+                        if ($index % 2 == 0) {
+                            $tipoConValPrev = $contrato['nombre'];
+                        } else {
+                            $html .= '<tr><td style="font-size:10px;">-' . $tipoConValPrev . '</td><td style="font-size:10px;">-' . $contrato['nombre'] . '</td></tr>';
+                            $html .= '<tr><th></th><td></td></tr>';
+                        }
+
+                        $tipoConIndice++;
+                    }
+
+
+                    if ($tipoConIndice % 2 == 1) {
+                        $html .= '<tr><td style="font-size:10px;">-' . $tipoConValPrev . '</td></tr>';
+                        $html .= '<tr><th></th><td></td></tr>';
+                    }
+                }
+
+
+                if (count($result['ubicacion_laboratorio']) > 0) {
+                    $html .= '<tr><th style="font-size:10px;"><b>País ubicación laboratorio médico: </b> ' . $result['ubicacion_laboratorio'][0]['pais'] . '</th><td style="font-size:10px;"><b>Departamento ubicación laboratorio médico:</b> ' . $result['ubicacion_laboratorio'][0]['departamento'] . '</td></tr>
+                 <tr><th style="font-size:10px;"><b>Ciudad ubicación laboratorio médico:</b>' . $result['ubicacion_laboratorio'][0]['municipio'] . '</th><td></td></tr>
+                <tr><th></th><td></td></tr>';
+                }
+
+                $labMedIndice = 0;
+                $labMedValPrev = "";
+
+                $html .= '<tr><th><b>Laboratorios médicos:</b></th></tr>';
+                if (count($result['laboratorios_agregados']) > 0) {
+                    foreach ($result['laboratorios_agregados'] as $index => $lab) {
+                        if ($index % 2 == 0) {
+                            $labMedValPrev = $lab['nombre'];
+                        } else {
+                            $html .= '<tr><td style="font-size:10px;">-' . $labMedValPrev . '</td><td style="font-size:10px;">-' . $lab['nombre'] . '</td></tr>';
+                            $html .= '<tr><th></th><td></td></tr>';
+                        }
+
+                        $labMedIndice++;
+                    }
+
+
+                    if ($labMedIndice % 2 == 1) {
+                        $html .= '<tr><td style="font-size:10px;">-' . $labMedValPrev . '</td></tr>';
+                        $html .= '<tr><th></th><td></td></tr>';
+                    }
+                }
+
+                $resultFacturacion = [
+                    'Contacto:' => $result['facturacion_contacto'],
+                    'Cargo:' => $result['facturacion_cargo'],
+                    'Teléfono:' => $result['facturacion_telefono'],
+                    'Celular:' => $result['facturacion_celular'],
+                    'Correo electrónico:' => $result['facturacion_correo'],
+                    'Factura única o por CECO:' => $result['facturacion_factura_unica'],
+                    'Fecha de corte para recibir las facturas:' => $result['facturacion_fecha_corte'],
+                    'Persona encargada de recibir la factura:' => $result['facturacion_encargado_factura'],
+                    '¿Requiere anexo de la factura?:' => $result['requiere_anexo_factura'],
+                ];
+
+                $indiceFactura = 0;
+                $claveFacPrev = "";
+                $valorFacPrev = "";
+                $html .= '</table>';
+
+                $html .= '<h3>Facturación</h3>';
+                $html .= '<table>';
+
+                foreach ($resultFacturacion as $clave => $valor) {
+                    if ($indiceFactura % 2 == 0) {
+                        $claveFacPrev = $clave;
+                        $valorFacPrev = $valor;
+                    } else {
+                        $html .= '<tr><td style="font-size:10px;"><b>' . $claveFacPrev . '</b> ' . $valorFacPrev . '</td><td style="font-size:10px;"><b>' . $clave . '</b> ' . $valor . '</td></tr>';
+                    }
+                    $html .= '<tr><th></th><td></td></tr>';
+                    $indiceFactura++;
+                }
+
+                if ($indiceFactura % 2 == 1) {
+                    $html .= '<tr><td style="font-size:10px;"><b>' . $claveFacPrev . '</b> ' . $valorFacPrev . '</td></tr>';
+                    $html .= '<tr><th></th><td></td></tr>';
+                }
+
+                $resultSST = [
+                    'Riesgo de la empresa(ARL):' => $result['riesgo_cliente'],
+                    '¿Realizan trabajo de alto riesgo?:' => $result['trabajo_alto_riesgo'],
+                    'Accidentalidad:' => $result['accidentalidad'],
+                    'Cuenta con persona encargada de SST:' => $result['encargado_sst'],
+                    'Nombre encargado SST:' => $result['nombre_encargado_sst'],
+                    'Cargo analista SST:' => $result['cargo_encargado_sst'],
+                    '¿Realizan inducción y entrenamiento?:' => $result['induccion_entrenamiento'],
+                    '¿Entregan dotación?:' => $result['entrega_dotacion'],
+                    '¿Fue evaluado el SGST por la ARL?:' => $result['evaluado_arl'],
+                    '¿Entrega EPP?:' => $result['entrega_epp'],
+                ];
+
+                $indiceSST = 0;
+                $claveSSTPrev = "";
+                $valorSSTPrev = "";
+
+                $html .= '</table>';
+                $html .= '<h3>Seguridad y salud en el trabajo</h3>';
+                $html .= '<table>';
+
+                foreach ($resultSST as $clave => $valor) {
+                    if ($indiceSST % 2 == 0) {
+                        $claveSSTPrev = $clave;
+                        $valorSSTPrev = $valor;
+                    } else {
+                        $html .= '<tr><td style="font-size:10px;"><b>' . $claveSSTPrev . '</b> ' . $valorSSTPrev . '</td><td style="font-size:10px;"><b>' . $clave . '</b> ' . $valor . '</td></tr>';
+                    }
+                    $html .= '<tr><th></th><td></td></tr>';
+                    $indiceSST++;
+                }
+
+                if ($indiceSST % 2 == 1) {
+                    $html .= '<tr><td style="font-size:10px;"><b>' . $claveSSTPrev . '</b> ' . $valorSSTPrev . '</td></tr>';
+                    $html .= '<tr><th></th><td></td></tr>';
                 }
 
                 $html .= ' </table>';
+
+                $html .= '<h3>Cargos</h3>';
+                if (count($result['cargos2']) > 0) {
+                    $html .= '<table><tr><th><b>Número de cargos registrados:</b></th><td>' . count($result['cargos2']) . '</td></tr></table>';
+                    foreach ($result['cargos2'] as $index => $cargo) {
+                        $html .= '<h4>Cargo: ' . $index + 1 . '</h4>';
+                        $html .= '<table>
+                    <tr><th style="font-size:10px;"><b>Tipo de cargo:</b> ' . $cargo['tipo_cargo'] . '</th><td style="font-size:10px;"> <b>Categoria del cargo:</b>' . $cargo['categoria'] . '</td> </tr>
+                    <tr><th style="font-size:10px;"></th><td></td></tr>
+                    <tr><th style="font-size:10px;"><b>Cargo:</b> ' . $cargo['cargo'] . '</th><td style="font-size:10px;"><b>Riesgo del cargo(ARL): </b>' . $cargo['riesgo_laboral'] . '</td></tr>
+                    <tr><th style="font-size:10px;"></th><td></td></tr>
+                    <tr><th style="font-size:10px;"><b>Funciones del cargo:</b>' . $cargo['funcion_cargo'] . '</th><td></td></tr>
+                    <tr><th style="font-size:10px;"></th><td></td></tr>';
+
+
+                        $examIndice = 0;
+                        $examValPrev = "";
+                        $html .= '<tr><th><b>Exámenes:</b></th><td style="text-align:justify;"></td></tr>';
+                        if (count($cargo['examenes']) > 0) {
+                            foreach ($cargo['examenes'] as $index => $examen) {
+                                if ($index % 2 == 0) {
+                                    $examValPrev = $examen['nombre'];
+                                } else {
+                                    $html .= '<tr><td style="font-size:10px;">-' . $examValPrev . '</td><td style="font-size:10px;">-' . $examen['nombre'] . '</td></tr>';
+                                    $html .= '<tr><th></th><td></td></tr>';
+                                }
+
+                                $examIndice++;
+                            }
+
+
+                            if ($examIndice % 2 == 1) {
+                                $html .= '<tr><td style="font-size:10px;">-' . $examValPrev . '</td></tr>';
+                                $html .= '<tr><th></th><td></td></tr>';
+                            }
+                        }
+
+
+                        if (count($cargo['recomendaciones']) > 0) {
+                            $html .= '<tr><th></th><td></td></tr>';
+                            $html .= '<table><tr><th style="text-align:justify; font-size:10px; margin:20px;"><b>Orientaciones específicas para los exámenes:</b> ' . $cargo['recomendaciones'][0]['recomendacion1'] . '</th></tr>';
+                            $html .= '<tr><th></th><td></td></tr>';
+                            $html .= '<table><tr><th style="text-align:justify; font-size:10px; margin:20px;"><b>Patologías que restringen la labor:</b> ' . $cargo['recomendaciones'][0]['recomendacion2'] . '</th></tr>';
+                        }
+                    }
+
+                    $html .= ' </table>';
+                }
             }
 
             $html .= '<h3>Información financiera:</h3>';
@@ -2452,7 +2625,7 @@ class formularioDebidaDiligenciaController extends Controller
             if (count($result['accionistas']) > 0) {
                 $html .= '<table>';
                 foreach ($result['accionistas'] as $index => $accionista) {
-                    $html .= '<h4 style="text-align:center;">Accionista ' . $index + 1 . '</h4>';
+                    $html .= '<h4>Accionista ' . $index + 1 . '</h4>';
                     $html .= '<tr><th><b>Tipo de identificación:</b></th><td>' . $accionista['des_tip'] . '</td></tr>';
                     $html .= '<tr><th><b>Identificación:</b></th><td>' . $accionista['identificacion'] . '</td></tr>';
                     $html .= '<tr><th><b>Socio/accionista:</b></th><td>' . $accionista['socio'] . '</td></tr>';
@@ -2467,7 +2640,7 @@ class formularioDebidaDiligenciaController extends Controller
             if (count($result['representantes_legales']) > 0) {
                 $html .= '<table>';
                 foreach ($result['representantes_legales'] as $index => $representante) {
-                    $html .= '<h4 style="text-align:center;">Representante legal ' . $index + 1 . '</h4>';
+                    $html .= '<h4>Representante legal ' . $index + 1 . '</h4>';
                     $html .= '<tr><th><b>Tipo de identificación:</b></th><td>' . $representante['des_tip'] . '</td></tr>';
                     $html .= '<tr><th><b>Identificación:</b></th><td>' . $representante['identificacion'] . '</td></tr>';
                     $html .= '<tr><th><b>Nombre:</b></th><td>' . $representante['nombre'] . '</td></tr>';
@@ -2484,7 +2657,7 @@ class formularioDebidaDiligenciaController extends Controller
             if (count($result['junta_directiva']) > 0) {
                 $html .= '<table>';
                 foreach ($result['junta_directiva'] as $index => $miembro) {
-                    $html .= '<h4 style="text-align:center;">' . $index + 1 . '</h4>';
+                    $html .= '<h4>' . $index + 1 . '</h4>';
                     $html .= '<tr><th><b>Tipo de identificación:</b></th><td>' . $miembro['des_tip'] . '</td></tr>';
                     $html .= '<tr><th><b>Identificación:</b></th><td>' . $miembro['identificacion'] . '</td></tr>';
                     $html .= '<tr><th><b>Nombre:</b></th><td>' . $miembro['nombre'] . '</td></tr>';
@@ -2528,9 +2701,203 @@ class formularioDebidaDiligenciaController extends Controller
             $html .= '</table>';
 
             $html .= '<h3>Datos del contador</h3> ';
+            $html .= '<table>';
+            $html .= '<tr><th><b>Tipo de identificación:</b></th><td>' . $result['tipo_identificacion_contador'] . '</td></tr>';
+            $html .= '<tr><th><b>Identificación:</b></th><td>' . $result['identificacion_contador'] . '</td></tr>';
+            $html .= '<tr><th><b>Nombre:</b></th><td>' . $result['nombre_contador'] . '</td></tr>';
+            $html .= '<tr><th><b>Teléfono:</b></th><td>' . $result['telefono_contador'] . '</td></tr>';
+            $html .= '</table>';
+
+            $html .= '<h3>Datos del tesorero</h3> ';
+            $html .= '<table>';
+            $html .= '<tr><th><b>Nombre:</b></th><td>' . $result['nombre_tesorero'] . '</td></tr>';
+            $html .= '<tr><th><b>Teléfono:</b></th><td>' . $result['telefono_tesorero'] . '</td></tr>';
+            $html .= '<tr><th><b>Teléfono:</b></th><td>' . $result['correo_tesorero'] . '</td></tr>';
+            $html .= '</table>';
+
+            $html .= '<h3>Último periodo contable</h3> ';
+            $html .= '<table>';
+            $html .= '<tr><th><b>Ingreso mensual:</b></th><td>' . $result['ingreso_mensual'] . '</td></tr>';
+            $html .= '<tr><th><b>Costos y Gastos Mensual:</b></th><td>' . $result['costos_gastos_mensual'] . '</td></tr>';
+            $html .= '<tr><th><b>Activos:</b></th><td>' . $result['activos'] . '</td></tr>';
+            $html .= '<tr><th><b>Otros ingresos:</b></th><td>' . $result['otros_ingresos'] . '</td></tr>';
+            $html .= '<tr><th><b>Detalle de otros ingresos:</b></th><td>' . $result['detalle_otros_ingresos'] . '</td></tr>';
+            $html .= '<tr><th><b>Pasivos:</b></th><td>' . $result['pasivos'] . '</td></tr>';
+            $html .= '<tr><th><b>Total ingresos:</b></th><td>' . $result['total_ingresos'] . '</td></tr>';
+            $html .= '<tr><th><b>Reintegro de costos y gastos:</b></th><td>' . $result['reintegro_costos_gastos'] . '</td></tr>';
+            $html .= '<tr><th><b>Patrimonio:</b></th><td>' . $result['patrimonio'] . '</td></tr>';
+            $html .= '</table>';
+
+            $html .= '<h3>operaciones internacionales</h3> ';
+            $html .= '<table>';
+            if ($result['operaciones_internacionales'] == 1) {
+                $html .= '<tr><th><b>¿Realiza operaciones en moneda extranjera?:</b></th><td>Si</td></tr>';
+            } else {
+                $html .= '<tr><th><b>¿Realiza operaciones en moneda extranjera?:</b></th><td>No</td></tr>';
+            }
+            $html .= '<tr><th><b>¿Cuál?:</b></th><td>' . $result['tipo_operacion_internacional'] . '</td></tr>';
+            $html .= '</table>';
+
+            $html .= '<h3>Referencias bancarias</h3> ';
+            $html .= '<table>';
+            if (count($result['referencia_bancaria'])) {
+                foreach ($result['referencia_bancaria'] as $index => $referencia) {
+                    $html .= '<h4>Referencia ' . $index + 1 . ' </h4> ';
+                    $html .= '<tr><th><b>Banco:</b></th><td>' . $referencia['banco'] . '</td></tr>';
+                    $html .= '<tr><th><b>Número de cuenta:</b></th><td>' . $referencia['numero_cuenta'] . '</td></tr>';
+                    $html .= '<tr><th><b>Tipo cuenta:</b></th><td>' . $referencia['tipo_cuenta'] . '</td></tr>';
+                    $html .= '<tr><th><b>Sucursal:</b></th><td>' . $referencia['sucursal'] . '</td></tr>';
+                    $html .= '<tr><th><b>Teléfono:</b></th><td>' . $referencia['telefono'] . '</td></tr>';
+                    $html .= '<tr><th><b>Contacto:</b></th><td>' . $referencia['contacto'] . '</td></tr>';
+                    $html .= '<tr><th></th><td></td></tr>';
+                }
+            }
+
+            $html .= '</table>';
+
+            $html .= '<h3>Referencias comerciales</h3> ';
+            $html .= '<table>';
+            if (count($result['referencia_comercial'])) {
+                foreach ($result['referencia_comercial'] as $index => $referencia) {
+                    $html .= '<h4>Referencia ' . $index + 1 . ' </h4> ';
+                    $html .= '<tr><th><b>Nombre:</b></th><td>' . $referencia['nombre'] . '</td></tr>';
+                    $html .= '<tr><th><b>Contacto:</b></th><td>' . $referencia['contacto'] . '</td></tr>';
+                    $html .= '<tr><th><b>Teléfono:</b></th><td>' . $referencia['telefono'] . '</td></tr>';
+                    $html .= '<tr><th></th><td></td></tr>';
+                }
+            }
+            $html .= '</table>';
+
+            $html .= '<h3>Declaraciones y autorizaciones</h3> ';
+            $html .= '<p style="text-align:justify;">Cumplo con alguno de los siguientes atributos o tengo un vínculo familiar (cónyuge o compañero permanente, padres, abuelos, hijos, nietos, cuñados, adoptantes o adoptivos) con una persona que:</p>
+
+            <p>-Esté expuesta políticamente según la legislación nacional.</p>
+
+            <p>-Tenga la representación legal de un organismo internacional.</p>
+
+            <p>-Goce de reconocimiento público generalizado.</p>
+
+            <p>-En afirmativo indique que le aplica y diligencie la siguiente información.</p>';
+
+            if ($result['declaraciones_autorizaciones'] == 1) {
+                $html .= '<input type="radio" name="radioquestion" id="rqb" value="1" checked="checked"/> <label for="rqb">Si acepto</label><br /> <input type="radio" name="radioquestion" id="rqb" value="0" /> <label for="rqb">No acepto</label><br />';
+            } else {
+                $html .= '<input type="radio" name="radioquestion" id="rqb" value="1"/> <label for="rqb">Si acepto</label><br /> <input type="radio" name="radioquestion" id="rqb" value="0" checked="checked" /> <label for="rqb">No acepto</label><br />';
+            }
+
+            $html .= '<table>';
+            $html .= '<h3>Datos de personas expuestas politicamente</h3> ';
+            if (count($result['personas_expuestas']) > 0) {
+                foreach ($result['personas_expuestas'] as $index => $persona) {
+                    $html .= '<h4>Referencia ' . $index + 1 . ' </h4> ';
+                    $html .= '<tr><th><b>Tipo de identificación:</b></th><td>' . $persona['des_tip'] . '</td></tr>';
+                    $html .= '<tr><th><b>Identificación:</b></th><td>' . $persona['identificacion'] . '</td></tr>';
+                    $html .= '<tr><th><b>Nombre:</b></th><td>' . $persona['nombre'] . '</td></tr>';
+                    $html .= '<tr><th><b>Parentesco:</b></th><td>' . $persona['parentesco'] . '</td></tr>';
+                    $html .= '<tr><th></th><td></td></tr>';
+                }
+            }
+            $html .= '</table>';
+
+            $html .= '<h3>Declaración de Origen de Fondos</h3> ';
+            $html .= '<p style="text-align:justify;">Quien suscribe la presente solicitud obrando en nombre propio y/o en representación legal de la persona 
+            jurídica que represento, de manera voluntaria y dando certeza de que todo lo aquí consignado es cierto, veraz y verificable, 
+            realizo la siguiente declaración de fuente de bienes y/o fondos, con el propósito de dar cumplimiento a lo señalado
+            al respecto a las normas legales vigentes y concordantes.</p>
+
+            <p style="text-align:justify;">A. Declaro que yo y/o la persona jurídica que represento es beneficiaria efectiva de los recursos
+            y son compatibles con mis actividades y situación patrimonial.</p>
+
+            <p style="text-align:justify;">B. Que los recursos que se entreguen de mi parte en desarrollo de cualquiera de las relaciones contractuales que tenga
+             con los destinatarios de la presente declaración, provienen de mi patrimonio y/o de la sociedad que represento y no de 
+            terceros, y se derivan de las siguientes fuentes: (detalle de la actividad o negocio del que provienen los recursos)</p>
+
+            <p><pre><b>' . $result['origen_fondos']->origen_fondos . '</b> <label>    Otra¿Cuál?</label> <b>' . $result['origen_fondos']->otro_origen . '</b> </pre></p>
+
+            <p style="text-align:justify;">C. Declaro que los recursos no provienen de ninguna actividad ilícita de las contempladas en el Código Penal Colombiano o 
+            en cualquier norma que lo modifique o adicione.</p>
+
+            <p style="text-align:justify;">D. No se admitirá que terceros efectúen depósitos a mis cuentas y/o de la Entidad que represento con fondos provenientes 
+            de las actividades ilícitas contempladas en el Código penal Colombiano o en cualquier norma que lo modifique, sustituya o adicione,
+            ni se efectuarán transacciones destinadas a tales actividades o a favor de personas relacionadas con las mismas.</p>
+
+            <p>E. Los recursos que recibo de mis contrapartes principalmente los capto por: </p>
+            
+            <p><pre><b>' . $result['origen_fondos']->origen_medios . '</b>   <b>' . $result['origen_fondos']->origen_medios2 . '</b> </pre></p>
+            
+            <p>F. Las operaciones que realizo por mi actividad implican un alto manejo de efectivo:</p>';
+
+            if ($result['origen_fondos']->alto_manejo_efectivo == 1) {
+                $html .= '<p><pre><b>Si</b></pre></p> ';
+            } else {
+                $html .= '<p><pre><b>No</b></pre></p> ';
+            }
+
+            $html .= '<p style="text-align:justify;">En nombre propio y/o de mi representado, declaro que no estoy impedido para realizar cualquier tipo de operación y 
+            que conozco y acepto las normas que regulan el comercio colombiano y me obligo a cumplirlas. Conozco y acepto los riesgos que puedan 
+            presentarse frente a las instrucciones y órdenes que imparta, derivados de la utilización de los medios y canales de distribución de 
+            productos y servicios, tales como Internet, correos electrónicos u otros mecanismos similares, mensajería instantánea, teléfono, fax, 
+            medios digitales entre otros. Autorizo a realizar los traslados de recursos y/o valores, previo cumplimiento de los procedimientos 
+            establecidos por la entidad; así mismo, autorizo la realización de transferencias bancarias y conozco los riesgos de su utilización.
+             Conozco y acepto las políticas establecidas para todos los productos ofrecidos, incluyendo los servicios de Internet. Bajo la gravedad 
+            de juramento manifiesto que todos los datos acá consignados, incluidos los números de identificación tributaria, son ciertos, que la 
+            información que adjunto es veraz, fidedigna, completa y verificable y autorizo su verificación ante cualquier persona natural o jurídica,
+             pública o privada, sin limitación alguna, desde ahora y mientras subsista alguna relación comercial y que toda declaración falsa o 
+             inexacta podrá ser sancionada, por las autoridades de conformidad con la legislación aplicable. Me comprometo a actualizar la información
+              y documentación de acuerdo con la solicitud que se me haga, a proporcionar toda la información adicional y de apoyo que sea necesaria y 
+              requerida, por lo menos cada año y cada vez que se presenten modificaciones respecto de cualquiera de mis datos, esto con el fin de dar 
+              cumplimiento a la normatividad vigente para el efecto, y por tanto, autorizo, entre otras, a reportar la información fiscal, a verificar
+               la autenticidad de mis firmas y de mis ordenantes y/o a validar los poderes y facultades de mis representantes. A su vez declaro que
+                asumiré la responsabilidad civil, administrativa y/o penal derivada de cualquier información errónea, falsa o inexacta que llegaré
+                 a suministrar o que dejare de suministrar oportunamente. De igual forma, declaro que resarciré a La empresa por cualquier multa,
+                  perdida o daño que pudiera llegar a sufrir como consecuencia de la inexactitud o falsedad de dicha información Autorizo a La empresa
+                   a suministrar la información contenida ente documento, al igual que sus anexos, a las autoridades administrativas y gubernamentales
+                    correspondientes, incluidas las autoridades de mi país de residencia o de nacionalidad, de conformidad con la regulación vigente,
+                     entre ellos, los Convenios Internacionales firmados por Colombia. Manifiesto que yo y/o la empresa que represento y sus empleados
+                      conocen bien las normas referentes a la prevención del Lavado de Activos y Financiación del Terrorismo, todos aportamos con el
+                       fin de no ser cómplices de la violación de las normas de esta ley. Igualmente, que no he pertenecido ni pertenezco a ningún
+                        tipo de grupos ilegales al margen de la Ley, no les he auxiliado o colaborado en el desarrollo de sus actividades ilícitas,
+                         como tampoco he realizado actividades de lavados de activos en Colombia o fuera de ella y que los bienes que conforman mi 
+                         patrimonio han sido adquiridos por vías legales en desarrollo de mi profesión o actividad. De la misma manera, declaro que 
+                         no tengo vínculos de parentesco con personas que estén o hayan estado incluidas en listas públicas como sospechosos de Lavado de 
+                         Activos/Financiación de terrorismo o las empresas de las cuales sean accionistas, o que desarrollen o hayan desarrollado, apoyado 
+                         o financiado cualquiera de las actividades descritas en el párrafo precedente. Todos los datos aquí consignados y los documentos 
+                         anexos a él, son ciertos, la información que adjunto es veraz y verificable, y autorizo su verificación ante cualquier persona natural 
+                         o jurídica, privada o pública, sin limitación alguna, desde ahora y mientras subsista alguna relación comercial con cualquiera de las 
+                         entidades que pertenezcan a SAITEMP S.A. o con quien represente sus derechos, y me comprometo a actualizar la información y/o 
+                         documentación al menos una vez cada 2 años o cada vez que se me indique. Así mismo, autorizo a SAITEMP S.A., o a quien represente 
+                         sus derechos, en forma permanente e irrevocable, para que con fines estadísticos y de información financiera o comercial, consulte, 
+                         informe, reporte, procese o divulgue, a las entidades de consulta de bases de datos o Centrales de Información y Riesgo, todo 
+                         lo referente a mi comportamiento como cliente en general.</p> ';
+
+            $html .= '<h3>Autorización de Tratamiento de Datos Personales</h3> ';
+
+            $html .= '<p style="text-align:justify;">La Sociedad SAITEMP S.A., en cumplimiento de lo definido por la Ley 1581 de 2012, el decreto reglamentario 1377 de 2013 y 
+            nuestra política de protección de datos personales, le informan que los datos personales que usted suministre en cualquiera de nuestros 
+            establecimientos en desarrollo de cualquier operación comercial, serán tratados mediante el uso y mantenimiento de medidas de seguridad 
+            técnicas, físicas y administrativas a fin de impedir que terceros no autorizados accedan a los mismos, lo anterior de conformidad con 
+            lo establecido en la ley. El responsable del tratamiento de sus datos personales es SAITEMP S.A. sociedad legalmente existente de 
+            acuerdo con la leyes Colombianas, domiciliado en la ciudad de MEDELLÍN, en la CALLE 51 # 49-11 PISO 10, quien recogerá dichos datos a 
+            través de sus diferentes canales y serán usados para a) Ofrecer o informarle productos b) Para hacerle llegar información publicitaria 
+            sobre promociones c) Atender o formalizar cualquier solicitud relacionada con nuestro objeto social e) Controles estadísticos sobre 
+            proveedores, clientes f) Establecer rotación de los empleados. Usted podrá ejercer los derechos que la ley prevé, siguiendo los 
+            procedimientos establecidos en nuestras políticas y procedimientos de Protección de datos Personales publicados en la página web de la 
+            empresa, http://www.saitempsa.com, o solicitando la información que requiera a través de nuestro correo misdatos@saitempsa.com o llamando 
+            al teléfono: (4) 4485744 Tenga en cuenta que el ejercicio de sus derechos no es requisito previo ni impide el ejercicio de otros 
+            derechos y que cualquier modificación al presente aviso le será avisado a través de nuestra página Web. Leído lo anterior, autorizo 
+            de manera previa, explicita e inequívoca a la sociedad SAITEMP S.A., para el tratamiento de los datos personales suministrados por mi 
+            persona para las finalidades aquí establecidas. Declaro que soy el titular de la información reportada en este formato para autorizar 
+            el tratamiento de datos personales y que la he suministrado de forma voluntaria y es completa, veraz, exacta y verídica.</p> ';
+
+            if ($result['tratamiento_datos_personales'] == 1) {
+                $html .= '<input type="radio" name="radioquestion2" id="rqb2" value="1" checked="checked"/> <label for="rqb2">Si acepto</label><br /> <input type="radio" name="radioquestion2" id="rqb3" value="0" /> <label for="rqb3">No acepto</label><br />';
+            } else {
+                $html .= '<input type="radio" name="radioquestion2" id="rqb2" value="1" checked="checked"/> <label for="rqb2">Si acepto</label><br /> <input type="radio" name="radioquestion2" id="rqb3" value="0" /> <label for="rqb3">No acepto</label><br />';
+            }
+
 
             // Seguimiento de Estados
-            if (!empty($result['seguimiento_estados'])) {
+            /*   if (!empty($result['seguimiento_estados'])) {
                 $html .= '<h3>Seguimiento de Estados</h3>';
                 $html .= '<table>
                     <tr>
@@ -2608,7 +2975,7 @@ class formularioDebidaDiligenciaController extends Controller
                 }
                 $html .= '</table>';
             }
-
+ */
             // Generar PDF
             $pdf->writeHTML($html, true, false, true, false, '');
             $filename = 'Reporte_Cliente_' . $id . '.pdf';
