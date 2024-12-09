@@ -9,6 +9,8 @@ use App\Models\cliente;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use App\Models\HistoricoContratosDDModel;
+use App\Http\Controllers\formularioDebidaDiligenciaController;
+use setasign\Fpdi\Fpdi;
 
 class ApiFirmaElectronicaController extends Controller
 
@@ -53,35 +55,66 @@ class ApiFirmaElectronicaController extends Controller
 
         if ($takenToken['status'] == 'success') {
             $token = $takenToken['token']['token'];
+
             if (!$request->hasFile('file')) {
                 return response()->json([
                     'status' => 'error',
                     'message' => 'Archivo no encontrado en la solicitud.'
                 ], 400);
             }
+
             $file = $request->file('file');
+
             try {
+                // Generar el PDF adicional llamando a `generarPdf`
+                $controllerDD = new formularioDebidaDiligenciaController;
+                $generatedPdfPath = $controllerDD->generarPdf($id, false);
+
+                // Combinar PDFs usando FPDI
+                $fpdi = new Fpdi();
+                $outputPdfPath = tempnam(sys_get_temp_dir(), 'fpdi_') . '.pdf';
+
+                // Importar el PDF recibido y agregar sus páginas
+                $fpdi->setSourceFile($file->getPathname());
+                $pageCount = $fpdi->setSourceFile($file->getPathname()); // Retorna el número de páginas
+                for ($i = 1; $i <= $pageCount; $i++) {
+                    $fpdi->AddPage();
+                    $templateId = $fpdi->importPage($i);
+                    $fpdi->useTemplate($templateId);
+                }
+
+                // Importar el PDF generado y agregar sus páginas
+                $pageCount = $fpdi->setSourceFile($generatedPdfPath);
+                for ($i = 1; $i <= $pageCount; $i++) {
+                    $fpdi->AddPage();
+                    $templateId = $fpdi->importPage($i);
+                    $fpdi->useTemplate($templateId);
+                }
+
+                // Guardar el PDF combinado
+                $fpdi->Output($outputPdfPath, 'F');
+
+                // Subir el PDF combinado
                 $response = Http::withHeaders([
                     'Authorization' => 'Bearer ' . $token
                 ])
                     ->asMultipart()
                     ->post($url_validart . $end_point, [
-                        'file' => fopen($file->getPathname(), 'r'),
-                        'filename' => $file->getClientOriginalName(),
+                        'file' => fopen($outputPdfPath, 'r'),
+                        'filename' => 'combined_' . $file->getClientOriginalName(),
                     ]);
 
                 if ($response->successful()) {
-                    try {
-                        DB::table('usr_app_historico_contratos_dd')
-                            ->where('cliente_id', $id)
-                            ->update(['activo' => 0]);
-                    } catch (\Exception $e) {
-                    }
+                    DB::table('usr_app_historico_contratos_dd')
+                        ->where('cliente_id', $id)
+                        ->update(['activo' => 0]);
+
                     $contrato = new HistoricoContratosDDModel();
                     $contrato->contrato_firma_id = $response->json()['id'];
                     $contrato->cliente_id = $id;
                     $contrato->activo = 1;
                     $contrato->save();
+
                     return [
                         'status' => 'success',
                         'response' => $response->json(),

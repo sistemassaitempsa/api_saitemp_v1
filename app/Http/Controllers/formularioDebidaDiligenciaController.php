@@ -83,11 +83,15 @@ class formularioDebidaDiligenciaController extends Controller
 
         $user = auth()->user();
         $year_actual = date('Y');
+
         $result = cliente::join('gen_vendedor as ven', 'ven.cod_ven', '=', 'usr_app_clientes.vendedor_id')
             ->leftJoin('usr_app_estados_firma as estf', 'estf.id', '=', 'usr_app_clientes.estado_firma_id')
             ->whereYear('usr_app_clientes.created_at', $year_actual)
             ->when(!in_array('39', $permisos), function ($query) use ($user) {
-                return $query->where('usr_app_clientes.vendedor_id', $user->vendedor_id);
+                return $query->where(function ($subQuery) use ($user) {
+                    $subQuery->where('usr_app_clientes.vendedor_id', $user->vendedor_id)
+                        ->orWhere('usr_app_clientes.responsable_id', $user->id);
+                });
             })
             ->select(
                 'usr_app_clientes.id',
@@ -102,10 +106,10 @@ class formularioDebidaDiligenciaController extends Controller
                 'estf.color as color_estado_firma',
                 /* 'estf.id as estado_firma_id', */
                 'usr_app_clientes.responsable'
-
             )
             ->orderby('usr_app_clientes.numero_radicado', 'DESC')
             ->paginate($cantidad);
+
         return response()->json($result);
     }
 
@@ -529,8 +533,11 @@ class formularioDebidaDiligenciaController extends Controller
             $result['cargos2'] = $resultados;
             // **************************************************************************************
 
-            $clientes_epps = ClienteEpp::where('cliente_id', $id)
-                ->select('epp_id')
+            $clientes_epps = ClienteEpp::where('cliente_id', $id)->leftjoin('usr_app_elementos_pp as epp', DB::raw('epp.id'), '=', DB::raw('usr_app_cliente_epp.epp_id + 1'))
+                ->select(
+                    'epp_id',
+                    'epp.nombre as nombre'
+                )
                 ->get();
             $result['clientes_epps'] = $clientes_epps;
 
@@ -2045,7 +2052,7 @@ class formularioDebidaDiligenciaController extends Controller
         $permisos = $this->validaPermiso();
 
 
-        if ($registro_ingreso->responsable_id != null && $registro_ingreso->responsable_id != $user->id && !in_array('31', $permisos)) {
+        if ($registro_ingreso->responsable_id != null && $registro_ingreso->responsable_id != $user->id && !in_array('34', $permisos)) {
             return response()->json(['status' => 'error', 'message' => 'Solo el responsable puede realizar esta acción.']);
         }
 
@@ -2089,7 +2096,7 @@ class formularioDebidaDiligenciaController extends Controller
             $permisos = $this->validaPermiso();
 
 
-            if ($registro_ingreso->responsable_id != null && $registro_ingreso->responsable_id != $user->id && !in_array('31', $permisos)) {
+            if ($registro_ingreso->responsable_id != null && $registro_ingreso->responsable_id != $user->id && !in_array('34', $permisos)) {
                 return response()->json(['status' => 'error', 'message' => 'Solo el responsable puede realizar esta acción.']);
             }
 
@@ -2184,7 +2191,7 @@ class formularioDebidaDiligenciaController extends Controller
         }
         return;
     }
-    public function generarPdf($id)
+    public function generarPdf($id, $outputToBrowser = true)
     {
 
         try {
@@ -2247,7 +2254,7 @@ class formularioDebidaDiligenciaController extends Controller
             // Iniciar TCPDF
             $pdf = new \TCPDF();
             $pdf->SetCreator(PDF_CREATOR);
-            $pdf->SetAuthor('Tu Empresa');
+            $pdf->SetAuthor('Saitemp SAS');
             $pdf->SetTitle('Reporte de Cliente');
             $pdf->SetSubject('Detalle del Cliente');
             $pdf->SetMargins(15, 10, 15);
@@ -2321,7 +2328,7 @@ class formularioDebidaDiligenciaController extends Controller
             $indiceGenerales = 0;
             $html .= '</table>';
             $html .= '<h3>Datos Generales</h3>';
-            $html .= '<table>';
+            $html .= '<table >';
             $clavePrev = "";
             $valorPrev = "";
             foreach ($resultGenerales as  $clave => $valor) {
@@ -2570,6 +2577,24 @@ class formularioDebidaDiligenciaController extends Controller
 
                 $html .= ' </table>';
 
+                $eppMedIndice = 0;
+                $eppMedValPrev = "";
+                if ($result['entrega_epp'] == "Si") {
+                    $html .= '<table>';
+                    $html .= '<tr><th><b>Epp solicitados:</b></th></tr>';
+                    $html .= '<tr><th></th><td></td></tr>';
+                    if (count($result['clientes_epps']) > 0) {
+                        foreach ($result['clientes_epps'] as $index => $epp) {
+
+                            $html .= '<tr><td style="font-size:10px;">-' . $epp['nombre'] . '</td></tr>';
+                            $html .= '<tr><th></th><td></td></tr>';
+
+                            $eppMedIndice++;
+                        }
+                    }
+                    $html .= '</table>';
+                }
+
                 $html .= '<h3>Cargos</h3>';
                 if (count($result['cargos2']) > 0) {
                     $html .= '<table><tr><th><b>Número de cargos registrados:</b></th><td>' . count($result['cargos2']) . '</td></tr></table>';
@@ -2626,14 +2651,15 @@ class formularioDebidaDiligenciaController extends Controller
                 $html .= '<table>';
                 foreach ($result['accionistas'] as $index => $accionista) {
                     $html .= '<h4>Accionista ' . $index + 1 . '</h4>';
-                    $html .= '<tr><th><b>Tipo de identificación:</b></th><td>' . $accionista['des_tip'] . '</td></tr>';
-                    $html .= '<tr><th><b>Identificación:</b></th><td>' . $accionista['identificacion'] . '</td></tr>';
-                    $html .= '<tr><th><b>Socio/accionista:</b></th><td>' . $accionista['socio'] . '</td></tr>';
-                    $html .= '<tr><th><b>Porcentaje participación:</b></th><td>' . $accionista['participacion'] . '</td></tr>';
-                    $html .= '<table><tr><th></th><td></td></tr>';
+                    $html .= '<tr><th style="font-size:10px;"><b>Tipo de identificación: </b> ' . $accionista['des_tip'] . '</th><td style="font-size:10px;"><b>Identificación:</b> ' . $accionista['identificacion'] . '</td></tr>';
+                    $html .= '<tr><th></th><td></td></tr>';
+                    $html .= '<tr><th style="font-size:10px;"><b>Socio/accionista: </b>' . $accionista['socio'] . '</th><td style="font-size:10px;"><b>Porcentaje participación:</b>' . $accionista['participacion'] . '</td></tr>';
+                    $html .= '<tr><th></th><td></td></tr>';
+                    $html .= '<table>';
                 }
                 $html .= '</table>';
             }
+
 
             $html .= '<h3>Representantes legales:</h3>';
 
@@ -2641,15 +2667,15 @@ class formularioDebidaDiligenciaController extends Controller
                 $html .= '<table>';
                 foreach ($result['representantes_legales'] as $index => $representante) {
                     $html .= '<h4>Representante legal ' . $index + 1 . '</h4>';
-                    $html .= '<tr><th><b>Tipo de identificación:</b></th><td>' . $representante['des_tip'] . '</td></tr>';
-                    $html .= '<tr><th><b>Identificación:</b></th><td>' . $representante['identificacion'] . '</td></tr>';
-                    $html .= '<tr><th><b>Nombre:</b></th><td>' . $representante['nombre'] . '</td></tr>';
-                    $html .= '<tr><th><b>Correo electrónico:</b></th><td>' . $representante['pais'] . '</td></tr>';
-                    $html .= '<tr><th><b>Correo electrónico:</b></th><td>' . $representante['departamento'] . '</td></tr>';
-                    $html .= '<tr><th><b>Correo electrónico:</b></th><td>' . $representante['ciudad_expedicion'] . '</td></tr>';
-                    $html .= '<tr><th><b>Número celular:</b></th><td>' . $representante['telefono'] . '</td></tr>';
-                    $html .= '<tr><th><b>Correo electrónico:</b></th><td>' . $representante['correo'] . '</td></tr>';
-                    $html .= '<table><tr><th></th><td></td></tr>';
+                    $html .= '<tr><th style="font-size:10px;"><b>Tipo de identificación:</b> ' . $representante['des_tip'] . '</th><td style="font-size:10px;"><b>Identificación:</b> ' . $representante['identificacion'] . '</td></tr>';
+                    $html .= '<tr><th></th><td></td></tr>';
+                    $html .= '<tr><th style="font-size:10px;"><b>Nombre:</b> ' . $representante['nombre'] . '</th><td style="font-size:10px;"><b>Correo electrónico:</b> ' . $representante['pais'] . '</td></tr>';
+                    $html .= '<tr><th></th><td></td></tr>';
+                    $html .= '<tr><th style="font-size:10px;"><b>Correo electrónico:</b> ' . $representante['departamento'] . '</th><td style="font-size:10px;"><b>Correo electrónico:</b>' . $representante['ciudad_expedicion'] . '</td></tr>';
+                    $html .= '<tr><th></th><td></td></tr>';
+                    $html .= '<tr><th style="font-size:10px;"><b>Número celular:</b> ' . $representante['telefono'] . '</th><td style="font-size:10px;"><b>Correo electrónico:</b>' . $representante['correo'] . '</td></tr>';
+                    $html .= '<tr><th></th><td></td></tr>';
+                    $html .= '<table>';
                 }
                 $html .= '</table>';
             }
@@ -2657,10 +2683,10 @@ class formularioDebidaDiligenciaController extends Controller
             if (count($result['junta_directiva']) > 0) {
                 $html .= '<table>';
                 foreach ($result['junta_directiva'] as $index => $miembro) {
-                    $html .= '<h4>' . $index + 1 . '</h4>';
-                    $html .= '<tr><th><b>Tipo de identificación:</b></th><td>' . $miembro['des_tip'] . '</td></tr>';
-                    $html .= '<tr><th><b>Identificación:</b></th><td>' . $miembro['identificacion'] . '</td></tr>';
-                    $html .= '<tr><th><b>Nombre:</b></th><td>' . $miembro['nombre'] . '</td></tr>';
+                    $html .= '<h4>Miembro ' . $index + 1 . '</h4>';
+                    $html .= '<tr><th style="font-size:10px;"><b>Tipo de identificación: </b>' . $miembro['des_tip'] . '</th><td style="font-size:10px;"><b>Identificación:</b> ' . $miembro['identificacion'] . '</td></tr>';
+                    $html .= '<tr><th></th><td></td></tr>';
+                    $html .= '<tr><th style="font-size:10px;"><b>Nombre:</b> ' . $miembro['nombre'] . '</th><td></td></tr>';
                     $html .= '<table><tr><th></th><td></td></tr>';
                 }
                 $html .= '<table>';
@@ -2671,71 +2697,123 @@ class formularioDebidaDiligenciaController extends Controller
             $html .= '<h3>Calidad tributaria:</h3>';
             $html .= '<table>';
             if ($result['responsable_inpuesto_ventas'] == 1) {
-                $html .= '<tr><th><b>Responsable de Impuestos a las Ventas:</b></th><td>Si</td></tr>';
+                $html .= '<tr><th style="font-size:10px;"><b>Responsable de Impuestos a las Ventas:</b> Si</th><td style="font-size:10px;"><b>Correo para factura electrónica:</b> ' . $result['correo_facturacion_electronica'] . '</td></tr>';
             } else {
-                $html .= '<tr><th><b>Responsable de Impuestos a las Ventas:</b></th><td>No</td></tr>';
+                $html .= '<tr><th style="font-size:10px;"><b>Responsable de Impuestos a las Ventas:</b> No</th><td style="font-size:10px;"><b>Correo para factura electrónica:</b> ' . $result['correo_facturacion_electronica'] . '</td></tr>';
             }
-            $html .= '<tr><th><b>Correo para factura electrónica:</b></th><td>' . $result['correo_facturacion_electronica'] . '</td></tr>';
-            $html .= '<tr><th><b>Sucursal de facturación:</b></th><td>' . $result['sucursal_facturacion'] . '</td></tr>';
+            $html .= '<tr><th></th><td></td></tr>';
+
             if ($result['calidad_tributaria'][0]['gran_contribuyente'] == 1) {
-                $html .= '<tr><th><b>¿Es Gran Contribuyente?:</b></th><td>Si</td></tr>';
-                $html .= '<tr><th><b>Número de resolución gran contribuyente:</b></th><td>' . $result['calidad_tributaria'][0]['resolucion_gran_contribuyente'] . '</td></tr>';
-                $html .= '<tr><th><b>Fecha de resolución gran contribuyente:</b></th><td>' . $result['calidad_tributaria'][0]['fecha_gran_contribuyente'] . '</td></tr>';
+                $html .= '<tr><th style="font-size:10px;"><b>Sucursal de facturación:</b>' . $result['sucursal_facturacion'] . '</th><td style="font-size:10px;"><b>¿Es Gran Contribuyente?:</b> Si</td></tr>';
+                $html .= '<tr><th></th><td></td></tr>';
+                $html .= '<tr><th style="font-size:10px;"><b>Fecha de resolución gran contribuyente:</b>' . $result['calidad_tributaria'][0]['fecha_gran_contribuyente'] . '</th><td style="font-size:10px;"><b>Número de resolución gran contribuyente:</b>' . $result['calidad_tributaria'][0]['resolucion_gran_contribuyente'] . '</td></tr>';
+                $html .= '<tr><th></th><td></td></tr>';
             } else {
-                $html .= '<tr><th><b>¿Es Gran Contribuyente?:</b></th><td>No</td></tr>';
+                $html .= '<tr><th style="font-size:10px;"><b>Sucursal de facturación:</b>' . $result['sucursal_facturacion'] . '</th><td style="font-size:10px;"><b>¿Es Gran Contribuyente?: </b> No</td></tr>';
+                $html .= '<tr><th></th><td></td></tr>';
             }
             if ($result['calidad_tributaria'][0]['auto_retenedor'] == 1) {
-                $html .= '<tr><th><b>¿Es auto-retenedor?:</b></th><td>Si</td></tr>';
-                $html .= '<tr><th><b>Número de resolución auto-retenedor:</b></th><td>' . $result['calidad_tributaria'][0]['resolucion_auto_retenedor'] . '</td></tr>';
-                $html .= '<tr><th><b>Fecha de resolución auto-retenedor:</b></th><td>' . $result['calidad_tributaria'][0]['fecha_auto_retenedor'] . '</td></tr>';
+                $html .= '<tr><th style="font-size:10px;"><b>¿Es auto-retenedor?:</b> Si</th><td style="font-size:10px;"><b>Número de resolución auto-retenedor:</b> ' . $result['calidad_tributaria'][0]['resolucion_auto_retenedor'] . '</td></tr>';
+                $html .= '<tr><th></th><td></td></tr>';
+                $html .= '<tr><th style="font-size:10px;"><b>Fecha de resolución auto-retenedor:</b>' . $result['calidad_tributaria'][0]['fecha_auto_retenedor'] . '</th><td></td></tr>';
             } else {
-                $html .= '<tr><th><b>¿Es auto-retenedor?:</b></th><td>No</td></tr>';
+                $html .= '<tr><th style="font-size:10px;"><b>¿Es auto-retenedor?:</b> No</th><td></td></tr>';
+                $html .= '<tr><th></th><td></td></tr>';
             }
             if ($result['calidad_tributaria'][0]['resolucion_exento_impuesto_rent'] == 1) {
-                $html .= '<tr><th><b>¿Exento de Impuesto a la Renta?:</b></th><td>Si</td></tr>';
-                $html .= '<tr><th><b>Número de resolución impuesto a la renta:</b></th><td>' . $result['calidad_tributaria'][0]['resolucion_exento_impuesto_rent'] . '</td></tr>';
-                $html .= '<tr><th><b>Fecha de resolución impuesto a la renta:</b></th><td>' . $result['calidad_tributaria'][0]['fecha_exento_impuesto_rent'] . '</td></tr>';
+                $html .= '<tr><th style="font-size:10px;"><b>¿Exento de Impuesto a la Renta?:</b> Si</th><td style="font-size:10px;"><b>Número de resolución impuesto a la renta:</b>' . $result['calidad_tributaria'][0]['resolucion_exento_impuesto_rent'] . '</td></tr>';
+                $html .= '<tr><th></th><td></td></tr>';
+                $html .= '<tr><th style="font-size:10px;"><b>Fecha de resolución impuesto a la renta:</b> ' . $result['calidad_tributaria'][0]['fecha_exento_impuesto_rent'] . '</th><td></td></tr>';
             } else {
-                $html .= '<tr><th><b>¿Exento de Impuesto a la Renta?:</b></th><td>No</td></tr>';
+                $html .= '<tr><th style="font-size:10px;"><b>¿Exento de Impuesto a la Renta?:</b> No</th><td></td></tr>';
+                $html .= '<tr><th></th><td></td></tr>';
             }
             $html .= '</table>';
 
+            $resultContador = [
+                'Tipo de identificación:' => $result['tipo_identificacion_contador'],
+                'Identificación:' => $result['identificacion_contador'],
+                'Nombre:' => $result['nombre_contador'],
+                'Teléfono:' => $result['telefono_contador'],
+            ];
+
+            $indiceContador = 0;
+            $claveContaPrev = "";
+            $valorContaPrev = "";
+
             $html .= '<h3>Datos del contador</h3> ';
             $html .= '<table>';
-            $html .= '<tr><th><b>Tipo de identificación:</b></th><td>' . $result['tipo_identificacion_contador'] . '</td></tr>';
-            $html .= '<tr><th><b>Identificación:</b></th><td>' . $result['identificacion_contador'] . '</td></tr>';
-            $html .= '<tr><th><b>Nombre:</b></th><td>' . $result['nombre_contador'] . '</td></tr>';
-            $html .= '<tr><th><b>Teléfono:</b></th><td>' . $result['telefono_contador'] . '</td></tr>';
+            foreach ($resultContador as  $clave => $valor) {
+
+                if ($indiceContador % 2 == 0) {
+                    $claveContaPrev = $clave;
+                    $valorContaPrev = $valor;
+                } else {
+                    $html .= '<tr><td style="font-size:10px;"><b>' . $claveContaPrev . '</b> ' . $valorContaPrev . '</td><td style="font-size:10px;"><b>' . $clave . '</b> ' . $valor . '</td></tr>';
+                }
+
+                $html .= '<tr><th></th><td></td></tr>';
+                $indiceContador++;
+            }
+
+            if ($indiceContador % 2 == 1) {
+                $html .= '<tr><td style="font-size:10px;"><b>' . $claveContaPrev . '</b> ' . $valorContaPrev . '</td></tr>';
+                $html .= '<tr><th></th><td></td></tr>';
+            }
             $html .= '</table>';
 
             $html .= '<h3>Datos del tesorero</h3> ';
             $html .= '<table>';
-            $html .= '<tr><th><b>Nombre:</b></th><td>' . $result['nombre_tesorero'] . '</td></tr>';
-            $html .= '<tr><th><b>Teléfono:</b></th><td>' . $result['telefono_tesorero'] . '</td></tr>';
-            $html .= '<tr><th><b>Teléfono:</b></th><td>' . $result['correo_tesorero'] . '</td></tr>';
+            $html .= '<tr><th style="font-size:10px;"><b>Nombre:</b> ' . $result['nombre_tesorero'] . '</th><td style="font-size:10px;"><b>Teléfono:</b> ' . $result['telefono_tesorero'] . '</td></tr>';
+            $html .= '<tr><th></th><td></td></tr>';
+            $html .= '<tr><th style="font-size:10px;"><b>Correo:</b> ' . $result['correo_tesorero'] . '</th><td></td></tr>';
             $html .= '</table>';
+
+            $resulUltimoPeriodo = [
+                'Ingreso mensual:' => $result['ingreso_mensual'],
+                'Costos y Gastos Mensual:' => $result['costos_gastos_mensual'],
+                'Activos:' => $result['activos'],
+                'Otros ingresos:' => $result['otros_ingresos'],
+                'Detalle de otros ingresos:' => $result['detalle_otros_ingresos'],
+                'Pasivos:' => $result['pasivos'],
+                'Total ingresos:' => $result['total_ingresos'],
+                'Reintegro de costos y gastos:' => $result['reintegro_costos_gastos'],
+                'Patrimonio:' => $result['patrimonio'],
+            ];
+
+            $indiceUltimoPeriodo = 0;
+            $claveUltimoPrev = "";
+            $valorUltimoPrev = "";
 
             $html .= '<h3>Último periodo contable</h3> ';
             $html .= '<table>';
-            $html .= '<tr><th><b>Ingreso mensual:</b></th><td>' . $result['ingreso_mensual'] . '</td></tr>';
-            $html .= '<tr><th><b>Costos y Gastos Mensual:</b></th><td>' . $result['costos_gastos_mensual'] . '</td></tr>';
-            $html .= '<tr><th><b>Activos:</b></th><td>' . $result['activos'] . '</td></tr>';
-            $html .= '<tr><th><b>Otros ingresos:</b></th><td>' . $result['otros_ingresos'] . '</td></tr>';
-            $html .= '<tr><th><b>Detalle de otros ingresos:</b></th><td>' . $result['detalle_otros_ingresos'] . '</td></tr>';
-            $html .= '<tr><th><b>Pasivos:</b></th><td>' . $result['pasivos'] . '</td></tr>';
-            $html .= '<tr><th><b>Total ingresos:</b></th><td>' . $result['total_ingresos'] . '</td></tr>';
-            $html .= '<tr><th><b>Reintegro de costos y gastos:</b></th><td>' . $result['reintegro_costos_gastos'] . '</td></tr>';
-            $html .= '<tr><th><b>Patrimonio:</b></th><td>' . $result['patrimonio'] . '</td></tr>';
+            foreach ($resulUltimoPeriodo as  $clave => $valor) {
+
+                if ($indiceUltimoPeriodo % 2 == 0) {
+                    $claveUltimoPrev = $clave;
+                    $valorUltimoPrev = $valor;
+                } else {
+                    $html .= '<tr><td style="font-size:10px;"><b>' . $claveUltimoPrev . '</b> ' . $valorUltimoPrev . '</td><td style="font-size:10px;"><b>' . $clave . '</b> ' . $valor . '</td></tr>';
+                }
+
+                $html .= '<tr><th></th><td></td></tr>';
+                $indiceUltimoPeriodo++;
+            }
+
+            if ($indiceUltimoPeriodo % 2 == 1) {
+                $html .= '<tr><td style="font-size:10px;"><b>' . $claveUltimoPrev . '</b> ' . $valorUltimoPrev . '</td></tr>';
+                $html .= '<tr><th></th><td></td></tr>';
+            }
             $html .= '</table>';
 
             $html .= '<h3>operaciones internacionales</h3> ';
             $html .= '<table>';
             if ($result['operaciones_internacionales'] == 1) {
-                $html .= '<tr><th><b>¿Realiza operaciones en moneda extranjera?:</b></th><td>Si</td></tr>';
+                $html .= '<tr><th style="font-size:10px;"><b>¿Realiza operaciones en moneda extranjera?:</b> Si</th><td style="font-size:10px;"><b>¿Cuál?:</b>' . $result['tipo_operacion_internacional'] . '</td></tr>';
             } else {
-                $html .= '<tr><th><b>¿Realiza operaciones en moneda extranjera?:</b></th><td>No</td></tr>';
+                $html .= '<tr><th style="font-size:10px;"><b>¿Realiza operaciones en moneda extranjera?:</b> No</th><td style="font-size:10px;"><b>¿Cuál?:</b>' . $result['tipo_operacion_internacional'] . '</td></tr>';
             }
-            $html .= '<tr><th><b>¿Cuál?:</b></th><td>' . $result['tipo_operacion_internacional'] . '</td></tr>';
+            $html .= '<tr><th></th><td></td></tr>';
             $html .= '</table>';
 
             $html .= '<h3>Referencias bancarias</h3> ';
@@ -2743,13 +2821,12 @@ class formularioDebidaDiligenciaController extends Controller
             if (count($result['referencia_bancaria'])) {
                 foreach ($result['referencia_bancaria'] as $index => $referencia) {
                     $html .= '<h4>Referencia ' . $index + 1 . ' </h4> ';
-                    $html .= '<tr><th><b>Banco:</b></th><td>' . $referencia['banco'] . '</td></tr>';
-                    $html .= '<tr><th><b>Número de cuenta:</b></th><td>' . $referencia['numero_cuenta'] . '</td></tr>';
-                    $html .= '<tr><th><b>Tipo cuenta:</b></th><td>' . $referencia['tipo_cuenta'] . '</td></tr>';
-                    $html .= '<tr><th><b>Sucursal:</b></th><td>' . $referencia['sucursal'] . '</td></tr>';
-                    $html .= '<tr><th><b>Teléfono:</b></th><td>' . $referencia['telefono'] . '</td></tr>';
-                    $html .= '<tr><th><b>Contacto:</b></th><td>' . $referencia['contacto'] . '</td></tr>';
-                    $html .= '<tr><th></th><td></td></tr>';
+                    $html .= '<tr style="font-size:10px;"><th><b>Banco:</b>' . $referencia['banco'] . '</th><td><b>Número de cuenta:</b> ' . $referencia['numero_cuenta'] . '</td></tr>';
+                    $html .= '<tr style="font-size:10px;"><th></th><td></td></tr>';
+                    $html .= '<tr style="font-size:10px;"><th><b>Tipo cuenta:</b> ' . $referencia['tipo_cuenta'] . '</th><td><b>Sucursal:</b>' . $referencia['sucursal'] . '</td></tr>';
+                    $html .= '<tr style="font-size:10px;"><th></th><td></td></tr>';
+                    $html .= '<tr style="font-size:10px;"><th><b>Teléfono:</b>' . $referencia['telefono'] . '</th><td><b>Contacto:</b>' . $referencia['contacto'] . '</td></tr>';
+                    $html .= '<tr style="font-size:10px;"><th></th><td></td></tr>';
                 }
             }
 
@@ -2760,29 +2837,29 @@ class formularioDebidaDiligenciaController extends Controller
             if (count($result['referencia_comercial'])) {
                 foreach ($result['referencia_comercial'] as $index => $referencia) {
                     $html .= '<h4>Referencia ' . $index + 1 . ' </h4> ';
-                    $html .= '<tr><th><b>Nombre:</b></th><td>' . $referencia['nombre'] . '</td></tr>';
-                    $html .= '<tr><th><b>Contacto:</b></th><td>' . $referencia['contacto'] . '</td></tr>';
-                    $html .= '<tr><th><b>Teléfono:</b></th><td>' . $referencia['telefono'] . '</td></tr>';
-                    $html .= '<tr><th></th><td></td></tr>';
+                    $html .= '<tr style="font-size:10px;"><th><b>Nombre:</b>' . $referencia['nombre'] . '</th><td><b>Contacto:</b> ' . $referencia['contacto'] . '</td></tr>';
+                    $html .= '<tr style="font-size:10px;"><th></th><td></td></tr>';
+                    $html .= '<tr style="font-size:10px;"><th><b>Teléfono:</b> ' . $referencia['telefono'] . '</th><td></td></tr>';
+                    $html .= '<tr style="font-size:10px;"><th></th><td></td></tr>';
                 }
             }
             $html .= '</table>';
 
             $html .= '<h3>Declaraciones y autorizaciones</h3> ';
-            $html .= '<p style="text-align:justify;">Cumplo con alguno de los siguientes atributos o tengo un vínculo familiar (cónyuge o compañero permanente, padres, abuelos, hijos, nietos, cuñados, adoptantes o adoptivos) con una persona que:</p>
+            $html .= '<p style="text-align:justify; font-size:10px;">Cumplo con alguno de los siguientes atributos o tengo un vínculo familiar (cónyuge o compañero permanente, padres, abuelos, hijos, nietos, cuñados, adoptantes o adoptivos) con una persona que:</p>
 
-            <p>-Esté expuesta políticamente según la legislación nacional.</p>
+            <p style="font-size:10px;">-Esté expuesta políticamente según la legislación nacional.</p>
 
-            <p>-Tenga la representación legal de un organismo internacional.</p>
+            <p style="font-size:10px;">-Tenga la representación legal de un organismo internacional.</p>
 
-            <p>-Goce de reconocimiento público generalizado.</p>
+            <p style="font-size:10px;">-Goce de reconocimiento público generalizado.</p>
 
-            <p>-En afirmativo indique que le aplica y diligencie la siguiente información.</p>';
+            <p style="font-size:10px;">-En afirmativo indique que le aplica y diligencie la siguiente información.</p>';
 
             if ($result['declaraciones_autorizaciones'] == 1) {
-                $html .= '<input type="radio" name="radioquestion" id="rqb" value="1" checked="checked"/> <label for="rqb">Si acepto</label><br /> <input type="radio" name="radioquestion" id="rqb" value="0" /> <label for="rqb">No acepto</label><br />';
+                $html .= '<label style="font-size:10px;"  for="rqb2"><span style="font-size:10px;">X </span>Si acepto</label><br/><label style="font-size:10px;"><span style="font-size:10px;">   </span>No acepto</label><br />';
             } else {
-                $html .= '<input type="radio" name="radioquestion" id="rqb" value="1"/> <label for="rqb">Si acepto</label><br /> <input type="radio" name="radioquestion" id="rqb" value="0" checked="checked" /> <label for="rqb">No acepto</label><br />';
+                $html .= '<label  for="rqb2"><span style="font-size:20px;">°</span>Si acepto</label><br />  <label  for="rqb3"><span style="font-size:20px;">*</span> No acepto</label><br />';
             }
 
             $html .= '<table>';
@@ -2790,50 +2867,52 @@ class formularioDebidaDiligenciaController extends Controller
             if (count($result['personas_expuestas']) > 0) {
                 foreach ($result['personas_expuestas'] as $index => $persona) {
                     $html .= '<h4>Referencia ' . $index + 1 . ' </h4> ';
-                    $html .= '<tr><th><b>Tipo de identificación:</b></th><td>' . $persona['des_tip'] . '</td></tr>';
-                    $html .= '<tr><th><b>Identificación:</b></th><td>' . $persona['identificacion'] . '</td></tr>';
-                    $html .= '<tr><th><b>Nombre:</b></th><td>' . $persona['nombre'] . '</td></tr>';
-                    $html .= '<tr><th><b>Parentesco:</b></th><td>' . $persona['parentesco'] . '</td></tr>';
-                    $html .= '<tr><th></th><td></td></tr>';
+                    $html .= '<tr style="font-size:10px;"><th><b>Tipo de identificación:</b>' . $persona['des_tip'] . '</th><td><b>Identificación:</b>' . $persona['identificacion'] . '</td></tr>';
+                    $html .= '<tr style="font-size:10px;"><th></th><td></td></tr>';
+                    $html .= '<tr style="font-size:10px;"><th><b>Nombre:</b> ' . $persona['nombre'] . '</th><td><b>Parentesco:</b>' . $persona['parentesco'] . '</td></tr>';
+
+                    $html .= '<tr style="font-size:10px;"><th></th><td></td></tr>';
                 }
             }
             $html .= '</table>';
 
             $html .= '<h3>Declaración de Origen de Fondos</h3> ';
-            $html .= '<p style="text-align:justify;">Quien suscribe la presente solicitud obrando en nombre propio y/o en representación legal de la persona 
+            $html .= '<p style="text-align:justify; font-size:10px;">Quien suscribe la presente solicitud obrando en nombre propio y/o en representación legal de la persona 
             jurídica que represento, de manera voluntaria y dando certeza de que todo lo aquí consignado es cierto, veraz y verificable, 
             realizo la siguiente declaración de fuente de bienes y/o fondos, con el propósito de dar cumplimiento a lo señalado
             al respecto a las normas legales vigentes y concordantes.</p>
 
-            <p style="text-align:justify;">A. Declaro que yo y/o la persona jurídica que represento es beneficiaria efectiva de los recursos
+            <p style="text-align:justify; font-size:10px;">A. Declaro que yo y/o la persona jurídica que represento es beneficiaria efectiva de los recursos
             y son compatibles con mis actividades y situación patrimonial.</p>
 
-            <p style="text-align:justify;">B. Que los recursos que se entreguen de mi parte en desarrollo de cualquiera de las relaciones contractuales que tenga
+            <p style="text-align:justify; font-size:10px;">B. Que los recursos que se entreguen de mi parte en desarrollo de cualquiera de las relaciones contractuales que tenga
              con los destinatarios de la presente declaración, provienen de mi patrimonio y/o de la sociedad que represento y no de 
-            terceros, y se derivan de las siguientes fuentes: (detalle de la actividad o negocio del que provienen los recursos)</p>
+            terceros, y se derivan de las siguientes fuentes: (detalle de la actividad o negocio del que provienen los recursos)</p>';
 
-            <p><pre><b>' . $result['origen_fondos']->origen_fondos . '</b> <label>    Otra¿Cuál?</label> <b>' . $result['origen_fondos']->otro_origen . '</b> </pre></p>
-
-            <p style="text-align:justify;">C. Declaro que los recursos no provienen de ninguna actividad ilícita de las contempladas en el Código Penal Colombiano o 
+            $html .= '<tr style="font-size:10px;"><th><b>- ' . $result['origen_fondos']->origen_fondos . '</b></th><td>Otra¿Cuál?<b>' . $result['origen_fondos']->otro_origen . '</b></td></tr>';
+            $html .= '<tr style="font-size:10px;"><th></th><td></td></tr>';
+            $html .= '
+            <p style="text-align:justify; font-size:10px;">C. Declaro que los recursos no provienen de ninguna actividad ilícita de las contempladas en el Código Penal Colombiano o 
             en cualquier norma que lo modifique o adicione.</p>
 
-            <p style="text-align:justify;">D. No se admitirá que terceros efectúen depósitos a mis cuentas y/o de la Entidad que represento con fondos provenientes 
+            <p style="text-align:justify; font-size:10px;">D. No se admitirá que terceros efectúen depósitos a mis cuentas y/o de la Entidad que represento con fondos provenientes 
             de las actividades ilícitas contempladas en el Código penal Colombiano o en cualquier norma que lo modifique, sustituya o adicione,
             ni se efectuarán transacciones destinadas a tales actividades o a favor de personas relacionadas con las mismas.</p>
 
-            <p>E. Los recursos que recibo de mis contrapartes principalmente los capto por: </p>
-            
-            <p><pre><b>' . $result['origen_fondos']->origen_medios . '</b>   <b>' . $result['origen_fondos']->origen_medios2 . '</b> </pre></p>
-            
-            <p>F. Las operaciones que realizo por mi actividad implican un alto manejo de efectivo:</p>';
+            <p  style="font-size:10px;">E. Los recursos que recibo de mis contrapartes principalmente los capto por: </p>';
+
+            $html .= '<tr style="font-size:10px;"><th><b>- ' . $result['origen_fondos']->origen_medios . '</b></th><td><b>- ' . $result['origen_fondos']->origen_medios2 . '</b></td></tr>';
+            $html .= '<tr style="font-size:10px;"><th></th><td></td></tr>';
+            $html .= '         
+            <p  style="font-size:10px;">F. Las operaciones que realizo por mi actividad implican un alto manejo de efectivo:</p>';
 
             if ($result['origen_fondos']->alto_manejo_efectivo == 1) {
-                $html .= '<p><pre><b>Si</b></pre></p> ';
+                $html .= '<p style="font-size:10px;"><b>Si</b></p> ';
             } else {
-                $html .= '<p><pre><b>No</b></pre></p> ';
+                $html .= '<p style="font-size:10px;"><b>No</b></p> ';
             }
 
-            $html .= '<p style="text-align:justify;">En nombre propio y/o de mi representado, declaro que no estoy impedido para realizar cualquier tipo de operación y 
+            $html .= '<p style="text-align:justify; font-size:10px;">En nombre propio y/o de mi representado, declaro que no estoy impedido para realizar cualquier tipo de operación y 
             que conozco y acepto las normas que regulan el comercio colombiano y me obligo a cumplirlas. Conozco y acepto los riesgos que puedan 
             presentarse frente a las instrucciones y órdenes que imparta, derivados de la utilización de los medios y canales de distribución de 
             productos y servicios, tales como Internet, correos electrónicos u otros mecanismos similares, mensajería instantánea, teléfono, fax, 
@@ -2872,7 +2951,7 @@ class formularioDebidaDiligenciaController extends Controller
 
             $html .= '<h3>Autorización de Tratamiento de Datos Personales</h3> ';
 
-            $html .= '<p style="text-align:justify;">La Sociedad SAITEMP S.A., en cumplimiento de lo definido por la Ley 1581 de 2012, el decreto reglamentario 1377 de 2013 y 
+            $html .= '<p style="text-align:justify; font-size:10px; ">La Sociedad SAITEMP S.A., en cumplimiento de lo definido por la Ley 1581 de 2012, el decreto reglamentario 1377 de 2013 y 
             nuestra política de protección de datos personales, le informan que los datos personales que usted suministre en cualquiera de nuestros 
             establecimientos en desarrollo de cualquier operación comercial, serán tratados mediante el uso y mantenimiento de medidas de seguridad 
             técnicas, físicas y administrativas a fin de impedir que terceros no autorizados accedan a los mismos, lo anterior de conformidad con 
@@ -2890,96 +2969,24 @@ class formularioDebidaDiligenciaController extends Controller
             el tratamiento de datos personales y que la he suministrado de forma voluntaria y es completa, veraz, exacta y verídica.</p> ';
 
             if ($result['tratamiento_datos_personales'] == 1) {
-                $html .= '<input type="radio" name="radioquestion2" id="rqb2" value="1" checked="checked"/> <label for="rqb2">Si acepto</label><br /> <input type="radio" name="radioquestion2" id="rqb3" value="0" /> <label for="rqb3">No acepto</label><br />';
+                $html .= '<label style="font-size:10px;"  for="rqb2"><span style="font-size:10px;">X </span>Si acepto</label><br/><label style="font-size:10px;"><span style="font-size:10px;">   </span>No acepto</label><br />';
             } else {
-                $html .= '<input type="radio" name="radioquestion2" id="rqb2" value="1" checked="checked"/> <label for="rqb2">Si acepto</label><br /> <input type="radio" name="radioquestion2" id="rqb3" value="0" /> <label for="rqb3">No acepto</label><br />';
+                $html .= '<label  for="rqb2"><span style="font-size:10px;">   </span>Si acepto</label><br />  <label  for="rqb3"><span style="font-size:10px;">X</span> No acepto</label><br />';
             }
 
 
-            // Seguimiento de Estados
-            /*   if (!empty($result['seguimiento_estados'])) {
-                $html .= '<h3>Seguimiento de Estados</h3>';
-                $html .= '<table>
-                    <tr>
-                        <th>Estado Inicial</th>
-                        <th>Estado Final</th>
-                        <th>Responsable</th>
-                        <th>Fecha de Actualización</th>
-                    </tr>';
-                foreach ($result['seguimiento_estados'] as $estado) {
-                    $html .= '<tr>
-                        <td>' . $estado['estados_firma_inicial'] . '</td>
-                        <td>' . $estado['estados_firma_final'] . '</td>
-                        <td>' . $estado['responsable_inicial'] . '</td>
-                        <td>' . $estado['actualiza_registro'] . '</td>
-                    </tr>';
-                }
-                $html .= '</table>';
-            }
 
-            // Contratos
-            if (!empty($result['contrato'])) {
-                $html .= '<h3>Contratos</h3>';
-                $html .= '<table>
-                    <tr>
-                        <th>Estado</th>
-                        <th>Firmado por Cliente</th>
-                        <th>Firmado por Empresa</th>
-                    </tr>';
-                foreach ($result['contrato'] as $contrato) {
-                    $html .= '<tr>
-                        <td>' . $contrato['estado_contrato'] . '</td>
-                        <td>' . ($contrato['firmado_cliente'] ? 'Sí' : 'No') . '</td>
-                        <td>' . ($contrato['firmado_empresa'] ? 'Sí' : 'No') . '</td>
-                    </tr>';
-                }
-                $html .= '</table>';
-            }
-
-            // Cargos
-            if (!empty($result['cargos'])) {
-                $html .= '<h3>Cargos</h3>';
-                foreach ($result['cargos'] as $cargo) {
-                    $html .= '<div class="section-title">Cargo: ' . $cargo['cargo'] . '</div>';
-                    $html .= '<p>Riesgo Laboral: ' . $cargo['riesgo_laboral'] . '</p>';
-                    if (!empty($cargo['requisitos'])) {
-                        $html .= '<div class="section-title">Requisitos:</div><ul>';
-                        foreach ($cargo['requisitos'] as $requisito) {
-                            $html .= '<li>' . $requisito['nombre'] . '</li>';
-                        }
-                        $html .= '</ul>';
-                    }
-                    if (!empty($cargo['examenes'])) {
-                        $html .= '<div class="section-title">Exámenes:</div><ul>';
-                        foreach ($cargo['examenes'] as $examen) {
-                            $html .= '<li>' . $examen['nombre'] . '</li>';
-                        }
-                        $html .= '</ul>';
-                    }
-                }
-            }
-
-            // Accionistas
-            if (!empty($result['accionistas'])) {
-                $html .= '<h3>Accionistas</h3>';
-                $html .= '<table>
-                    <tr>
-                        <th>Nombre</th>
-                        <th>Participación (%)</th>
-                    </tr>';
-                foreach ($result['accionistas'] as $accionista) {
-                    $html .= '<tr>
-                        <td>' . $accionista['socio'] . '</td>
-                        <td>' . $accionista['participacion'] . '</td>
-                    </tr>';
-                }
-                $html .= '</table>';
-            }
- */
             // Generar PDF
             $pdf->writeHTML($html, true, false, true, false, '');
-            $filename = 'Reporte_Cliente_' . $id . '.pdf';
-            $pdf->Output($filename, 'I'); // 'I' para mostrar en navegador, 'D' para descargar directamente
+            if ($outputToBrowser) {
+                // Enviar el PDF directamente al navegador
+                $pdf->Output('Reporte_Cliente_' . $id . '.pdf', 'I');
+            } else {
+                // Guardar el PDF en un archivo temporal y devolver su ruta
+                $tempFilePath = tempnam(sys_get_temp_dir(), 'tcpdf_') . '.pdf';
+                $pdf->Output($tempFilePath, 'F');
+                return $tempFilePath;
+            }
         } catch (\Exception $e) {
             return response()->json(['error' => 'Error al generar el PDF: ' . $e->getMessage()], 500);
         }
