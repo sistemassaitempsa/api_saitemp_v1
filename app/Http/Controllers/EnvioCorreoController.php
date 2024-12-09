@@ -79,10 +79,9 @@ class EnvioCorreoController extends Controller
         </style>
     </head>
     <body>
-        <p>Contenido del correo...</p>
         <img src='cid:logo_firma1' class='firma'>
         <img src='cid:logo_firma2' class='firma'>
-        <p>Más contenido...</p>
+
     </body>
     </html>
 ";
