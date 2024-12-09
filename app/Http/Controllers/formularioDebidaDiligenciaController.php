@@ -104,8 +104,8 @@ class formularioDebidaDiligenciaController extends Controller
                 'usr_app_clientes.created_at',
                 'estf.nombre as nombre_estado_firma',
                 'estf.color as color_estado_firma',
-                /* 'estf.id as estado_firma_id', */
-                'usr_app_clientes.responsable'
+                'usr_app_clientes.responsable',
+                'estf.id as estado_firma_id',
             )
             ->orderby('usr_app_clientes.numero_radicado', 'DESC')
             ->paginate($cantidad);
@@ -1446,6 +1446,16 @@ class formularioDebidaDiligenciaController extends Controller
                 $seguimiento_estado->save(); 
             }
  */
+            $nombres = str_replace("null", "", $user->nombres);
+            $apellidos = str_replace("null", "", $user->apellidos);
+            $registroCambio = new RegistroCambio;
+            $registroCambio->observaciones = $request['registro_cambios']['observaciones'];
+            $registroCambio->solicitante = $request['registro_cambios']['solicitante'];
+            $registroCambio->autoriza = $request['registro_cambios']['autoriza'];
+            $registroCambio->actualiza = $nombres . ' ' . $apellidos;
+            $registroCambio->cliente_id = $id;
+            $registroCambio->save();
+
             $cargo = Cargo2::where('cliente_id', '=', $id)
                 ->select()
                 ->get();
