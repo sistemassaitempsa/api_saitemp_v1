@@ -2213,7 +2213,7 @@ class formularioDebidaDiligenciaController extends Controller
                 'Número de radicado:' => $result['numero_radicado'],
                 'Tipo de operación:' => $result['tipo_operacion'],
                 'Tipo de cliente:' => $result['tipo_cliente'],
-                'Tipo de proveedor' => $result['tipo_proveedor'],
+                'Tipo de proveedor:' => $result['tipo_proveedor'],
                 'Tipo de persona:' => $result['tipo_persona'],
                 'Tipo de identificación:' => $result['tipo_identificacion'],
                 'Número de identificación:' => $result['numero_identificacion'],
@@ -2267,7 +2267,7 @@ class formularioDebidaDiligenciaController extends Controller
             $pdf->SetAuthor('Saitemp SAS');
             $pdf->SetTitle('Reporte de Cliente');
             $pdf->SetSubject('Detalle del Cliente');
-            $pdf->SetMargins(15, 10, 15);
+            $pdf->SetMargins(10, 10, 10);
             $pdf->SetAutoPageBreak(TRUE, PDF_MARGIN_BOTTOM);
             $pdf->AddPage();
             $url = public_path('upload/logo1.png');
@@ -2314,23 +2314,20 @@ class formularioDebidaDiligenciaController extends Controller
                 }
             </style>
             ';
-
-            // Datos Generales
             $html = '<table border="1" cellpadding="5">
             <tr>
             <th style="text-align: center;"> <img style="margin: auto;" src="' . $imageSrc . '" alt="test alt attribute" width="50" height="50" border="0" /></th>
                 <th colspan="2" style="text-align: center;">
-                    <h4 >SAGRILAFT</h4>
-                    <h5>Sistema de Autocontrol y Gestión del Riesgo Integral de Lavado de Activos y Financiación del Terrorismo FORMATO ÚNICO DE VINCULACIÓN DE CONTRAPARTES</h5>
+                    <h5 >SAGRILAFT</h4>
+                    <h6>Sistema de Autocontrol y Gestión del Riesgo Integral de Lavado de Activos y Financiación del Terrorismo FORMATO ÚNICO DE VINCULACIÓN DE CONTRAPARTES.</h5>
                 </th>
             ';
 
-            // Aquí empieza el contenido dinámico del `<td>`
             $html .= '
             <td>';
 
             foreach ($versiones as $version) {
-                $html .= '<p style="font-size: 10px;">' . htmlspecialchars($version->descripcion) . '</p>'; // Escapar caracteres especiales si es necesario
+                $html .= '<p style="font-size: 8px;">' . htmlspecialchars($version->descripcion) . '</p>';
             }
 
             $html .= '</td>
@@ -2816,12 +2813,12 @@ class formularioDebidaDiligenciaController extends Controller
             }
             $html .= '</table>';
 
-            $html .= '<h3>operaciones internacionales</h3> ';
+            $html .= '<h3>Operaciones internacionales</h3> ';
             $html .= '<table>';
             if ($result['operaciones_internacionales'] == 1) {
-                $html .= '<tr><th style="font-size:10px;"><b>¿Realiza operaciones en moneda extranjera?:</b> Si</th><td style="font-size:10px;"><b>¿Cuál?:</b>' . $result['tipo_operacion_internacional'] . '</td></tr>';
+                $html .= '<tr><th style="font-size:10px;"><b>¿Realiza operaciones en moneda extranjera?:</b> Si</th><td style="font-size:10px;"><b>¿Cuál?:</b> ' . $result['tipo_operacion_internacional'] . '</td></tr>';
             } else {
-                $html .= '<tr><th style="font-size:10px;"><b>¿Realiza operaciones en moneda extranjera?:</b> No</th><td style="font-size:10px;"><b>¿Cuál?:</b>' . $result['tipo_operacion_internacional'] . '</td></tr>';
+                $html .= '<tr><th style="font-size:10px;"><b>¿Realiza operaciones en moneda extranjera?:</b> No</th><td style="font-size:10px;"><b>¿Cuál?:</b> ' . $result['tipo_operacion_internacional'] . '</td></tr>';
             }
             $html .= '<tr><th></th><td></td></tr>';
             $html .= '</table>';
@@ -2831,11 +2828,11 @@ class formularioDebidaDiligenciaController extends Controller
             if (count($result['referencia_bancaria'])) {
                 foreach ($result['referencia_bancaria'] as $index => $referencia) {
                     $html .= '<h4>Referencia ' . $index + 1 . ' </h4> ';
-                    $html .= '<tr style="font-size:10px;"><th><b>Banco:</b>' . $referencia['banco'] . '</th><td><b>Número de cuenta:</b> ' . $referencia['numero_cuenta'] . '</td></tr>';
+                    $html .= '<tr style="font-size:10px;"><th><b>Banco:</b> ' . $referencia['banco'] . '</th><td><b>Número de cuenta:</b> ' . $referencia['numero_cuenta'] . '</td></tr>';
                     $html .= '<tr style="font-size:10px;"><th></th><td></td></tr>';
-                    $html .= '<tr style="font-size:10px;"><th><b>Tipo cuenta:</b> ' . $referencia['tipo_cuenta'] . '</th><td><b>Sucursal:</b>' . $referencia['sucursal'] . '</td></tr>';
+                    $html .= '<tr style="font-size:10px;"><th><b>Tipo cuenta:</b> ' . $referencia['tipo_cuenta'] . '</th><td><b>Sucursal:</b> ' . $referencia['sucursal'] . '</td></tr>';
                     $html .= '<tr style="font-size:10px;"><th></th><td></td></tr>';
-                    $html .= '<tr style="font-size:10px;"><th><b>Teléfono:</b>' . $referencia['telefono'] . '</th><td><b>Contacto:</b>' . $referencia['contacto'] . '</td></tr>';
+                    $html .= '<tr style="font-size:10px;"><th><b>Teléfono:</b> ' . $referencia['telefono'] . '</th><td><b>Contacto:</b> ' . $referencia['contacto'] . '</td></tr>';
                     $html .= '<tr style="font-size:10px;"><th></th><td></td></tr>';
                 }
             }
@@ -2847,7 +2844,7 @@ class formularioDebidaDiligenciaController extends Controller
             if (count($result['referencia_comercial'])) {
                 foreach ($result['referencia_comercial'] as $index => $referencia) {
                     $html .= '<h4>Referencia ' . $index + 1 . ' </h4> ';
-                    $html .= '<tr style="font-size:10px;"><th><b>Nombre:</b>' . $referencia['nombre'] . '</th><td><b>Contacto:</b> ' . $referencia['contacto'] . '</td></tr>';
+                    $html .= '<tr style="font-size:10px;"><th><b>Nombre:</b> ' . $referencia['nombre'] . '</th><td><b>Contacto:</b> ' . $referencia['contacto'] . '</td></tr>';
                     $html .= '<tr style="font-size:10px;"><th></th><td></td></tr>';
                     $html .= '<tr style="font-size:10px;"><th><b>Teléfono:</b> ' . $referencia['telefono'] . '</th><td></td></tr>';
                     $html .= '<tr style="font-size:10px;"><th></th><td></td></tr>';
@@ -2877,7 +2874,7 @@ class formularioDebidaDiligenciaController extends Controller
             if (count($result['personas_expuestas']) > 0) {
                 foreach ($result['personas_expuestas'] as $index => $persona) {
                     $html .= '<h4>Referencia ' . $index + 1 . ' </h4> ';
-                    $html .= '<tr style="font-size:10px;"><th><b>Tipo de identificación:</b>' . $persona['des_tip'] . '</th><td><b>Identificación:</b>' . $persona['identificacion'] . '</td></tr>';
+                    $html .= '<tr style="font-size:10px;"><th><b>Tipo de identificación:</b> ' . $persona['des_tip'] . '</th><td><b>Identificación:</b> ' . $persona['identificacion'] . '</td></tr>';
                     $html .= '<tr style="font-size:10px;"><th></th><td></td></tr>';
                     $html .= '<tr style="font-size:10px;"><th><b>Nombre:</b> ' . $persona['nombre'] . '</th><td><b>Parentesco:</b>' . $persona['parentesco'] . '</td></tr>';
 
@@ -2899,7 +2896,7 @@ class formularioDebidaDiligenciaController extends Controller
              con los destinatarios de la presente declaración, provienen de mi patrimonio y/o de la sociedad que represento y no de 
             terceros, y se derivan de las siguientes fuentes: (detalle de la actividad o negocio del que provienen los recursos)</p>';
 
-            $html .= '<tr style="font-size:10px;"><th><b>- ' . $result['origen_fondos']->origen_fondos . '</b></th><td>Otra¿Cuál?<b>' . $result['origen_fondos']->otro_origen . '</b></td></tr>';
+            $html .= '<tr style="font-size:10px;"><th><b>- ' . $result['origen_fondos']->origen_fondos . '</b></th><td>Otra¿Cuál?<b> ' . $result['origen_fondos']->otro_origen . '</b></td></tr>';
             $html .= '<tr style="font-size:10px;"><th></th><td></td></tr>';
             $html .= '
             <p style="text-align:justify; font-size:10px;">C. Declaro que los recursos no provienen de ninguna actividad ilícita de las contempladas en el Código Penal Colombiano o 
@@ -2989,10 +2986,8 @@ class formularioDebidaDiligenciaController extends Controller
             // Generar PDF
             $pdf->writeHTML($html, true, false, true, false, '');
             if ($outputToBrowser) {
-                // Enviar el PDF directamente al navegador
                 $pdf->Output('Reporte_Cliente_' . $id . '.pdf', 'I');
             } else {
-                // Guardar el PDF en un archivo temporal y devolver su ruta
                 $tempFilePath = tempnam(sys_get_temp_dir(), 'tcpdf_') . '.pdf';
                 $pdf->Output($tempFilePath, 'F');
                 return $tempFilePath;
