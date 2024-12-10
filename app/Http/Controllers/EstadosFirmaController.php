@@ -29,7 +29,8 @@ class EstadosFirmaController extends Controller
             'nombre',
             'color',
             'tiempo_respuesta'
-        )
+        )->orderByRaw("
+        TRY_CAST(LEFT(nombre, CHARINDEX('.', nombre + '.') - 1) AS INT), nombre")
             ->get();
         return response()->json($result);
     }

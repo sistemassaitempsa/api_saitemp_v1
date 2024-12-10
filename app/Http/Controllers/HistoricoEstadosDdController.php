@@ -136,6 +136,25 @@ class HistoricoEstadosDdController extends Controller
                             default:
                                 break;
                         }
+                    } else if ($campo == "oportuno") {
+                        // Mapear valores
+                        $valorMapeado = null;
+                        if ($valor === 'Si') {
+                            $valorMapeado = 1;
+                        } elseif ($valor === 'No') {
+                            $valorMapeado = 0;
+                        } elseif ($valor === 'Estado pendiente') {
+                            $valorMapeado = 2;
+                        }
+
+                        // Aplicar filtro con el valor mapeado
+                        if ($valorMapeado !== null) {
+                            if ($comparacion === 'Igual a') {
+                                $query->where('usr_app_clientes_seguimiento_estado.oportuno', '=', $valorMapeado);
+                            } elseif ($comparacion === 'Contiene') {
+                                $query->where('usr_app_clientes_seguimiento_estado.oportuno', 'LIKE', '%' . $valorMapeado . '%');
+                            }
+                        }
                     } else {
                         // Otros filtros
                         switch ($comparacion) {
