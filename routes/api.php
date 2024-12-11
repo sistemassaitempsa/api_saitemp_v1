@@ -626,6 +626,7 @@ Route::group([
   Route::get('/actualizaResponsableCliente/{item}/{responsable_id}/{nombre}', [formularioDebidaDiligenciaController::class, 'actualizaResponsableCliente']);
   Route::get('/contrato/{id}', [ContratoController::class, 'index']);
   Route::post('/enviarCorreoDD/{registro_id}', [enviarCorreoDDController::class, 'enviarCorreosDD']);
+  Route::get('/formulariocliente/generarContratoDD/{id}', [formularioDebidaDiligenciaController::class, 'generarContrato2']);
 
   //Rutas para el historico de estados DD
   Route::get('/consultaHistoricoEstadosDd/{cantidad}', [HistoricoEstadosDdController::class, 'index']);

@@ -15,7 +15,7 @@ class ContratoController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index($id)
+    public function index($id, $asJson = true)
     {
         $municipio_expedicion = RepresentanteLegal::join('usr_app_municipios as mun', 'mun.id', '=', 'usr_app_representantes_legales.municipio_expedicion_id')
             ->where('usr_app_representantes_legales.cliente_id', '=', $id)
@@ -61,7 +61,9 @@ class ContratoController extends Controller
         $result->codigo_documento = $versionamiento[0]['descripcion'];
         $result->fecha_documento = $versionamiento[1]['descripcion'];
         $result->version_documento = $versionamiento[2]['descripcion'];
-
+        if (!$asJson) {
+            return $result;
+        }
         return response()->json($result);
     }
 
