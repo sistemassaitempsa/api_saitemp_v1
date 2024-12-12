@@ -2031,9 +2031,11 @@ class formularioDebidaDiligenciaController extends Controller
             }
 
             if ($tiempo_cumplimiento_laboral <= $tiempo_respuesta_segundos) {
+                $last_registro->tiempo_estimado = $estado_inicial_info->tiempo_respuesta;
                 $last_registro->oportuno = "1";
                 $last_registro->save();
             } else {
+                $last_registro->tiempo_estimado = $estado_inicial_info->tiempo_respuesta;
                 $last_registro->oportuno = "0";
                 $last_registro->save();
             }
@@ -2105,6 +2107,45 @@ class formularioDebidaDiligenciaController extends Controller
                 ->first();
 
             $permisos = $this->validaPermiso();
+
+            $last_registro = ClientesSeguimientoEstado::where('usr_app_clientes_seguimiento_estado.cliente_id', $item_id)
+                ->select()->orderBy('id', 'desc')->first();
+            if ($last_registro != null) {
+                $registro_ingreso = Cliente::where('usr_app_clientes.id', '=', $item_id)
+                    ->first();
+                $estado_inicial = $registro_ingreso->estado_firma_id;
+                $estadoController = new EstadosFirmaController;
+                $estado_inicial_info = $estadoController->byId($estado_inicial);
+                $tiempo_respuesta_segundos =  $estado_inicial_info->tiempo_respuesta * 60;
+                $fecha_actual = Carbon::now()->format('Y-m-d H:i:s');
+                $fin_semana_controller = new HorarioLaboralController;
+                $segundos_desde_unix = Carbon::parse($fecha_actual)->timestamp;
+                $fecha_last_registro = $last_registro->created_at;
+                $last_registro_segundos = $fecha_last_registro->timestamp;
+                $conteo_dia_fin_semana = $fin_semana_controller->cuentaFindes($fecha_last_registro, $fecha_actual);
+                $conteo_festivos = $fin_semana_controller->countHolidaysBetweenDates($fecha_last_registro, $fecha_actual);
+                $tiempo_cumplimiento_segundos = $segundos_desde_unix - $last_registro_segundos - ($conteo_dia_fin_semana * 86400) - ($conteo_festivos * 86400);
+
+                // 86400 corresponde a la cantidad de segundos que tiene un dia
+                $tiempo_cumplimiento_dias =  $tiempo_cumplimiento_segundos / 86400;
+
+                if ($tiempo_cumplimiento_dias >= 1) {
+                    // 28800 corresponde a 8 horas laborales en segundos
+                    $tiempo_cumplimiento_laboral =  $tiempo_cumplimiento_dias * 28800;
+                } else {
+                    $tiempo_cumplimiento_laboral =   $tiempo_cumplimiento_segundos;
+                }
+
+                if ($tiempo_cumplimiento_laboral <= $tiempo_respuesta_segundos) {
+                    $last_registro->tiempo_estimado = $estado_inicial_info->tiempo_respuesta;
+                    $last_registro->oportuno = "1";
+                    $last_registro->save();
+                } else {
+                    $last_registro->tiempo_estimado = $estado_inicial_info->tiempo_respuesta;
+                    $last_registro->oportuno = "0";
+                    $last_registro->save();
+                }
+            }
 
 
             if ($registro_ingreso->responsable_id != null && $registro_ingreso->responsable_id != $user->id && !in_array('34', $permisos)) {
