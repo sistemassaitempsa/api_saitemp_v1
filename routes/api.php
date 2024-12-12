@@ -640,7 +640,7 @@ Route::group([
   Route::get('/estadoOportunoMes/{anio}', [IndicadoresDDController::class, 'estadoOportunoMes']);
 
   //Api validart
-  Route::post('/uploadFileValidart/{id}', [ApiFirmaElectronicaController::class, 'uploadFileValidarT']);
+  Route::get('/uploadFileValidart/{id}', [ApiFirmaElectronicaController::class, 'uploadFileValidarT']);
   Route::post('/firmaValidart/{id}', [ApiFirmaElectronicaController::class, 'firmaEstandar']);
   Route::post('/callBackFirmado', [ApiFirmaElectronicaController::class, 'callBackFirmado']);
   Route::get('/reenviarFirma/{id}', [ApiFirmaElectronicaController::class, 'reenvioFirmantes']);

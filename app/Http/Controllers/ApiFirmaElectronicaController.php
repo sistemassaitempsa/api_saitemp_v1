@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Storage;
 use App\Models\HistoricoContratosDDModel;
 use App\Http\Controllers\formularioDebidaDiligenciaController;
 use setasign\Fpdi\Fpdi;
+use Illuminate\Support\Carbon;
 
 class ApiFirmaElectronicaController extends Controller
 
@@ -47,7 +48,7 @@ class ApiFirmaElectronicaController extends Controller
             ], 500);
         }
     }
-    public function uploadFileValidarT(Request $request, $id)
+    public function uploadFileValidarT($id)
     {
         $url_validart = Config::get('app.VALIDART_URL');
         $end_point = '/api/Transaccion/upload/doc';
@@ -56,27 +57,22 @@ class ApiFirmaElectronicaController extends Controller
         if ($takenToken['status'] == 'success') {
             $token = $takenToken['token']['token'];
 
-            if (!$request->hasFile('file')) {
-                return response()->json([
-                    'status' => 'error',
-                    'message' => 'Archivo no encontrado en la solicitud.'
-                ], 400);
-            }
 
-            $file = $request->file('file');
 
             try {
                 // Generar el PDF adicional llamando a `generarPdf`
                 $controllerDD = new formularioDebidaDiligenciaController;
                 $generatedPdfPath = $controllerDD->generarPdf($id, false);
+                $generatedContratoPath = $controllerDD->generarContrato2($id, false);
+
 
                 // Combinar PDFs usando FPDI
                 $fpdi = new Fpdi();
-                $outputPdfPath = tempnam(sys_get_temp_dir(), 'fpdi_') . '.pdf';
+                $outputPdfPath = tempnam(sys_get_temp_dir(), 'fpdi_' . Carbon::now()->timestamp) . '.pdf';
 
                 // Importar el PDF recibido y agregar sus páginas
-                $fpdi->setSourceFile($file->getPathname());
-                $pageCount = $fpdi->setSourceFile($file->getPathname()); // Retorna el número de páginas
+
+                $pageCount = $fpdi->setSourceFile($generatedContratoPath);
                 for ($i = 1; $i <= $pageCount; $i++) {
                     $fpdi->AddPage();
                     $templateId = $fpdi->importPage($i);
@@ -84,14 +80,15 @@ class ApiFirmaElectronicaController extends Controller
                 }
 
                 // Importar el PDF generado y agregar sus páginas
-                $pageCount = $fpdi->setSourceFile($generatedPdfPath);
-                for ($i = 1; $i <= $pageCount; $i++) {
+                $pageCount2 = $fpdi->setSourceFile($generatedPdfPath);
+                for ($i = 1; $i <= $pageCount2; $i++) {
                     $fpdi->AddPage();
                     $templateId = $fpdi->importPage($i);
                     $fpdi->useTemplate($templateId);
                 }
 
                 // Guardar el PDF combinado
+
                 $fpdi->Output($outputPdfPath, 'F');
 
                 // Subir el PDF combinado
@@ -101,7 +98,7 @@ class ApiFirmaElectronicaController extends Controller
                     ->asMultipart()
                     ->post($url_validart . $end_point, [
                         'file' => fopen($outputPdfPath, 'r'),
-                        'filename' => 'combined_' . $file->getClientOriginalName(),
+                        'filename' => 'combined_' . $id . Carbon::now()->timestamp,
                     ]);
 
                 if ($response->successful()) {
