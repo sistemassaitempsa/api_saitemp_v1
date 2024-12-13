@@ -23,7 +23,7 @@
             <td>{{ $estado->estado_created_at }}</td>
             <td>{{ $estado->estado_updated_at }}</td>
             <td>{{ $estado->tiempo }}</td>
-            <td>{{ $estado->oportunidad }}</td>
+            <td>{{ $estado->oportuno }}</td>
             <td>{{ $estado->estados_firma_inicial }}</td>
             <td>{{ $estado->estados_firma_final }}</td>
         </tr>

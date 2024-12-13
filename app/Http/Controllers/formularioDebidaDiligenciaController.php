@@ -87,6 +87,14 @@ class formularioDebidaDiligenciaController extends Controller
 
         $result = cliente::join('gen_vendedor as ven', 'ven.cod_ven', '=', 'usr_app_clientes.vendedor_id')
             ->leftJoin('usr_app_estados_firma as estf', 'estf.id', '=', 'usr_app_clientes.estado_firma_id')
+            ->leftJoin(
+                DB::raw('(SELECT cliente_id, estado_contrato 
+                             FROM usr_app_historico_contratos_dd 
+                             WHERE activo = 1) AS contratos'),
+                'contratos.cliente_id',
+                '=',
+                'usr_app_clientes.id'
+            )
             ->whereYear('usr_app_clientes.created_at', $year_actual)
             ->when(!in_array('39', $permisos), function ($query) use ($user) {
                 return $query->where(function ($subQuery) use ($user) {
@@ -107,6 +115,7 @@ class formularioDebidaDiligenciaController extends Controller
                 'estf.color as color_estado_firma',
                 'usr_app_clientes.responsable',
                 'estf.id as estado_firma_id',
+                'contratos.estado_contrato' // Estado del contrato como propiedad directa
             )
             ->orderby('usr_app_clientes.numero_radicado', 'DESC')
             ->paginate($cantidad);
@@ -768,6 +777,10 @@ class formularioDebidaDiligenciaController extends Controller
 
     public function filtro($cadena)
     {
+        $permisos = $this->validaPermiso();
+
+        $user = auth()->user();
+        $year_actual = date('Y');
         // $objeto = (object) [
         //     'mensaje' => 'Filtrando empresas',
         //     'componente' => 'navbar/debida-diligencia/clientes'
@@ -785,6 +798,21 @@ class formularioDebidaDiligenciaController extends Controller
 
             $query = cliente::join('gen_vendedor as ven', 'ven.cod_ven', '=', 'usr_app_clientes.vendedor_id')
                 ->leftJoin('usr_app_estados_firma as estf', 'estf.id', '=', 'usr_app_clientes.estado_firma_id')
+                ->leftJoin(
+                    DB::raw('(SELECT cliente_id, estado_contrato 
+                                 FROM usr_app_historico_contratos_dd 
+                                 WHERE activo = 1) AS contratos'),
+                    'contratos.cliente_id',
+                    '=',
+                    'usr_app_clientes.id'
+                )
+                ->whereYear('usr_app_clientes.created_at', $year_actual)
+                ->when(!in_array('39', $permisos), function ($query) use ($user) {
+                    return $query->where(function ($subQuery) use ($user) {
+                        $subQuery->where('usr_app_clientes.vendedor_id', $user->vendedor_id)
+                            ->orWhere('usr_app_clientes.responsable_id', $user->id);
+                    });
+                })
                 ->select(
                     'usr_app_clientes.id',
                     DB::raw('COALESCE(CONVERT(VARCHAR, usr_app_clientes.numero_radicado), CONVERT(VARCHAR, usr_app_clientes.id)) AS numero_radicado'),
@@ -795,7 +823,9 @@ class formularioDebidaDiligenciaController extends Controller
                     'usr_app_clientes.telefono_empresa',
                     'usr_app_clientes.created_at',
                     'estf.nombre as nombre_estado_firma',
-                    'estf.color as color_estado_firma'
+                    'estf.color as color_estado_firma',
+                    'estf.id as estado_firma_id',
+                    'contratos.estado_contrato'
                 )
                 ->orderby('id', 'DESC');
 
@@ -1992,11 +2022,17 @@ class formularioDebidaDiligenciaController extends Controller
             $usuarioComercial = User::where('usr_app_usuarios.vendedor_id', '=', $registro_ingreso->vendedor_id)
                 ->select()
                 ->first();
-            $correoResponsable = $usuarioResponsable->usuario;
-            $correoCOmercial = $usuarioComercial->usuario;
+            if ($usuarioComercial != null) {
+                $correoCOmercial = $usuarioComercial->usuario;
+                if ($correoCOmercial != null) {
+                    $enviarCorreoDDController->enviarCorreo($correoCOmercial, $registro_ingreso, $registro_ingreso->id, 15, "", $user->usuario, false, true);
+                }
+            }
 
-            $enviarCorreoDDController->enviarCorreo($correoResponsable, $registro_ingreso, $registro_ingreso->id, 15, "", $user->usuario, false, true);
-            $enviarCorreoDDController->enviarCorreo($correoCOmercial, $registro_ingreso, $registro_ingreso->id, 15, "", $user->usuario, false, true);
+            $correoResponsable = $usuarioResponsable->usuario;
+            if ($correoResponsable != null) {
+                $enviarCorreoDDController->enviarCorreo($correoResponsable, $registro_ingreso, $registro_ingreso->id, 15, "", $user->usuario, false, true);
+            }
         }
 
 

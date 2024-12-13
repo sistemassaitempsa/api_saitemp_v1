@@ -11,6 +11,11 @@ class cliente extends Model
     use HasFactory;
     protected $table = 'usr_app_clientes';
 
+    public function contratos()
+    {
+        return $this->hasMany(HistoricoContratosDDModel::class, 'cliente_id', 'id')
+            ->where('activo', 1);
+    }
 
     public function fromDateTime($value)
     {

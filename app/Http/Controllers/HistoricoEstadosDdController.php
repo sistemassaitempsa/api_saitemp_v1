@@ -238,7 +238,12 @@ class HistoricoEstadosDdController extends Controller
             'usr_app_clientes_seguimiento_estado.cliente_id',
             'usr_app_clientes_seguimiento_estado.created_at as estado_created_at',
             'usr_app_clientes_seguimiento_estado.updated_at as estado_updated_at',
-            'usr_app_clientes_seguimiento_estado.oportuno',
+            DB::raw("CASE 
+            WHEN usr_app_clientes_seguimiento_estado.oportuno = 0 THEN 'No'
+            WHEN usr_app_clientes_seguimiento_estado.oportuno = 1 THEN 'Si'
+            WHEN usr_app_clientes_seguimiento_estado.oportuno = 2 THEN 'Estado pendiente'
+            ELSE 'Desconocido'
+        END as oportuno"),
             'usr_app_clientes_seguimiento_estado.inactivo',
             'cliente.numero_radicado as radicado',
             'estado.nombre as nombre_estado',
