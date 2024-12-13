@@ -191,8 +191,7 @@ class HistoricoEstadosDdController extends Controller
         }
 
         // Obtener resultados paginados
-        $estados = $query->orderby('usr_app_clientes_seguimiento_estado.cliente_id', 'DESC')
-            ->paginate($cantidad);
+
 
         // Calcular porcentajes
         $totalRegistros = $query->count();
@@ -204,10 +203,15 @@ class HistoricoEstadosDdController extends Controller
 
         $porcentajeOportuno = $totalRegistros > 0 ? round(($oportunos / $totalRegistros) * 100, 2) : 0;
         $porcentajeNoOportuno = $totalRegistros > 0 ? round(($noOportunos / $totalRegistros) * 100, 2) : 0;
-        $porcentajePendiente = 100 - ($porcentajeOportuno + $porcentajeNoOportuno);
+        $porcentajePendiente = round((100 - ($porcentajeOportuno + $porcentajeNoOportuno)), 2);
 
+        $estados = $query->orderby('usr_app_clientes_seguimiento_estado.cliente_id', 'DESC')
+            ->paginate($cantidad);
         // Preparar la respuesta
         $response = $estados->toArray();
+        $response['total_oportuno'] = $oportunos;
+        $response['total_no_oportuno'] = $noOportunos;
+        $response['total_pendientes'] = $pendientes;
         $response['porcentaje_oportuno'] = $porcentajeOportuno;
         $response['porcentaje_no_oportuno'] = $porcentajeNoOportuno;
         $response['porcentaje_pendientes'] = $porcentajePendiente;
