@@ -48,6 +48,7 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\enviarCorreoDDController;
+use App\Models\NovedadesDD;
 // use App\Events\EventoPrueba2;
 
 
@@ -344,6 +345,19 @@ class formularioDebidaDiligenciaController extends Controller
                 ->orderby('usr_app_clientes_seguimiento_guardado.id', 'desc')
                 ->get();
             $result['seguimiento'] = $seguimiento;
+
+            $novedades = NovedadesDD::join('usr_app_usuarios as usuario', 'usuario.id', 'usr_app_novedades_dd.usuario_corrige')
+                ->where('usr_app_novedades_dd.registro_cliente_id', $id)
+                ->select(
+                    'usr_app_novedades_dd.registro_cliente_id',
+                    'usr_app_novedades_dd.observaciones',
+                    'usr_app_novedades_dd.usuario_guarda',
+                    'usr_app_novedades_dd.usuario_corrige',
+                    'usr_app_novedades_dd.created_at',
+                    DB::raw("CONCAT(usuario.nombres,' ',usuario.apellidos)  AS nombre_usuario_corrige")
+                )
+                ->get();
+            $result['novedades'] = $novedades;
 
             $contrato = HistoricoContratosDDModel::join('usr_app_usuarios as usuario', 'usuario.id', '=', 'usr_app_historico_contratos_dd.usuario_envia')
                 ->where('usr_app_historico_contratos_dd.cliente_id', $id)->where('usr_app_historico_contratos_dd.activo', '=', 1)
@@ -1432,6 +1446,16 @@ class formularioDebidaDiligenciaController extends Controller
             $cliente->responsable = $request->responsable;
             $cliente->responsable_id = $request->responsable_id; */
             $cliente->save();
+
+
+            if ($request['novedad_servicio'] == 17) {
+                $novedad = new NovedadesDD();
+                $novedad->registro_cliente_id =  $cliente->id;
+                $novedad->observaciones = $request['afectacion_servicio'];
+                $novedad->usuario_guarda = $user->nombres . ' ' . $user->apellidos;
+                $novedad->usuario_corrige = $request['usuario_corregir_id'];
+                $novedad->save();
+            }
 
 
             $ids = [];
