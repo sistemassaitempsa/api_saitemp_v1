@@ -324,6 +324,10 @@ class ApiFirmaElectronicaController extends Controller
                     ], $response->status());
                 }
             } catch (\Exception $e) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => $e->getMessage(),
+                ], 500);
             }
         } else {
             return response()->json([
@@ -340,6 +344,7 @@ class ApiFirmaElectronicaController extends Controller
         $url_validart = Config::get('app.VALIDART_URL');
         $end_point = '/api/Transaccion/firmantes/' . $id;
         $takenToken = $this->takeTokenValidart();
+
         if ($takenToken['status'] == 'success') {
             $token = $takenToken['token']['token'];
             try {
@@ -349,11 +354,14 @@ class ApiFirmaElectronicaController extends Controller
                     foreach ($firmantes as $firmante) {
                         if ($firmante['email'] == $contrato->correo_enviado_empresa && $firmante['estado'] == 1) {
                             $contrato->firmado_empresa = 1;
+                            $contrato->estado_contrato = "Firmado";
                         }
                         if ($firmante['email'] == $contrato->correo_enviado_cliente && $firmante['estado'] == 1) {
                             $contrato->firmado_cliente = 1;
+                            $contrato->estado_contrato = "Firmado por el cliente";
                         }
                     }
+                    $contrato->save();
                     return [
                         'status' => 'success',
                         'response' => $response->json(),
@@ -377,5 +385,76 @@ class ApiFirmaElectronicaController extends Controller
                 'message' => $takenToken['message'] ?? 'No se pudo obtener el token'
             ]);
         }
+    }
+    public function consultaProcesoFirma($id)
+    {
+        $contrato = HistoricoContratosDDModel::where('usr_app_historico_contratos_dd.transaccion_id', '=', $id)->where('activo', '=', 1)
+            ->first();
+        $url_validart = Config::get('app.VALIDART_URL');
+        $end_point = '/api/Transaccion/' . $id;
+        $takenToken = $this->takeTokenValidart();
+        if ($takenToken['status'] == 'success') {
+            $token = $takenToken['token']['token'];
+            try {
+                $response = Http::withHeaders(['Authorization' => 'Bearer ' . $token])->get($url_validart . $end_point);
+                if ($response->successful()) {
+                    if ($response['estado'] == true) {
+                        $url = $response['url'];
+                        $respuesta = Http::get($url);
+                        if ($respuesta->successful()) {
+                            $fileContent = $respuesta->body();
+                            $fileName = $id . '_evidencia.pdf';
+                            $filePath = public_path('upload/contratosFirmados/' . $fileName);
+                            if (!file_exists(public_path('upload/contratosFirmados'))) {
+                                mkdir(public_path('upload/contratosFirmados'), 0755, true);
+                            }
+                            file_put_contents($filePath, $fileContent);
+                            $relativePath = 'upload/contratosFirmados/' . $fileName;
+                            $contrato->ruta_contrato = $relativePath;
+                            $contrato->firmado_empresa = 1;
+                            $contrato->firmado_cliente = 1;
+                            $contrato->estado_contrato =  "Firmado";
+                            $contrato->save();
+                            return response()->json([
+                                'status' => 'success',
+                                'message' => 'Archivo descargado y guardado exitosamente',
+                                'file_path' => asset($relativePath),
+                            ]);
+                        } else {
+                            return response()->json([
+                                'status' => 'error',
+                                'message' => 'No se pudo descargar el archivo desde la URL proporcionada',
+                            ], 400);
+                        }
+                    } else {
+                        return response()->json([
+                            'status' => 'error',
+                            'message' => 'El archivo no se encuentra firmado',
+                        ], 400);
+                    }
+                }
+            } catch (\Exception $e) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => $e->getMessage(),
+                ], 500);
+            }
+        }
+    }
+    public function verContrato($id)
+    {
+        $contrato = HistoricoContratosDDModel::where('usr_app_historico_contratos_dd.transaccion_id', '=', $id)->where('activo', '=', 1)
+            ->first();
+        if ($contrato) {
+            $rutaArchivo = public_path($contrato->ruta_contrato);
+
+            if (file_exists($rutaArchivo)) {
+                return response()->file($rutaArchivo, [
+                    'Content-Type' => 'application/pdf',
+                    'Content-Disposition' => 'inline; filename="' . basename($rutaArchivo) . '"',
+                ]);
+            }
+        }
+        return response()->json(['error' => 'Archivo no encontrado']);
     }
 }

@@ -2072,6 +2072,21 @@ class formularioDebidaDiligenciaController extends Controller
             $fecha_actual = Carbon::now()->format('Y-m-d H:i:s');
             $last_registro = ClientesSeguimientoEstado::where('usr_app_clientes_seguimiento_estado.cliente_id', $item_id)
                 ->select()->orderBy('id', 'desc')->first();
+            if (!$last_registro) {
+                // Si no hay registro previo, crear uno predeterminado
+                $last_registro = new ClientesSeguimientoEstado();
+                $last_registro->cliente_id = $item_id;
+                $last_registro->responsable_inicial = 'N/A';
+                $last_registro->responsable_final = 'N/A';
+                $last_registro->estados_firma_inicial = $estado_inicial ?? 0; // Estado inicial predeterminado
+                $last_registro->estados_firma_final = $estado_inicial ?? 0; // Estado final predeterminado
+                $last_registro->actualiza_registro = 'Sistema';
+                $last_registro->oportuno = '2';
+                $last_registro->created_at = now();
+                $last_registro->updated_at = now();
+
+                $last_registro->save();
+            }
 
             $segundos_desde_unix = Carbon::parse($fecha_actual)->timestamp;
             $fecha_last_registro = $last_registro->created_at;
