@@ -16,6 +16,8 @@ use App\Models\TemasVisitaCrm;
 use App\Models\CompromisosVisitaCrm;
 use App\Models\AsistenciaVisitaCrm;
 use TCPDF;
+use App\Exports\CrmExport;
+use Maatwebsite\Excel\Facades\Excel;
 use ZipArchive;
 use App\Models\AtencionInteraccion;
 
@@ -1546,5 +1548,40 @@ class SeguimientoCrmController extends Controller
         }
         $ruta_zip_archivo = ltrim($carpetaDestino, '.') . $zipNombre . '_' . $nuevoNombre;
         return $ruta_zip_archivo;
+    }
+    public function exportarExcelCrm()
+    {
+        $result = SeguimientoCrm::join('usr_app_sedes_saitemp as sede', 'sede.id', 'usr_app_seguimiento_crm.sede_id')
+            ->join('usr_app_procesos as proces', 'proces.id', 'usr_app_seguimiento_crm.proceso_id')
+            ->join('usr_app_atencion_interacion as inter', 'inter.id', 'usr_app_seguimiento_crm.tipo_atencion_id')
+            ->join('usr_app_estado_cierre_crm as cierre', 'cierre.id', 'usr_app_seguimiento_crm.estado_id')
+            ->join('usr_app_pqrsf_crm as pqrsf', 'pqrsf.id', 'usr_app_seguimiento_crm.pqrsf_id')
+            ->join('usr_app_solicitante_crm as soli', 'soli.id', 'usr_app_seguimiento_crm.solicitante_id')
+            ->where('usr_app_seguimiento_crm.pqrsf_id', '!=', 6) // Condición para excluir registros con pqrsf_id = 6
+            ->select(
+                'usr_app_seguimiento_crm.id',
+                'usr_app_seguimiento_crm.numero_radicado',
+                'sede.nombre as sede',
+                'proces.nombre as proceso',
+                'soli.nombre as solicitante',
+                'usr_app_seguimiento_crm.nombre_contacto',
+                'inter.nombre as iteraccion',
+                'pqrsf.nombre as pqrsf',
+                'usr_app_seguimiento_crm.telefono',
+                'usr_app_seguimiento_crm.correo',
+                'cierre.nombre as estado',
+                'usr_app_seguimiento_crm.observacion',
+                'usr_app_seguimiento_crm.created_at',
+            )
+            ->orderby('usr_app_seguimiento_crm.id', 'DESC')
+            ->get();
+
+        // Convertir 'observacion' a texto plano
+        $result = $result->map(function ($item) {
+            $item->observacion = strip_tags($item->observacion); // Eliminar HTML del campo 'observacion'
+            return $item;
+        });
+
+        return Excel::download(new CrmExport($result), 'crm.xlsx');
     }
 }

@@ -1,5 +1,3 @@
-
-
 <?php
 try {
     // Parámetros de conexión a la base de datos
@@ -11,8 +9,6 @@ try {
     // Conectar a la base de datos usando PDO
     $conn = new PDO("sqlsrv:server=$serverName;Database=$database", $username, $password);
     $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-
-
 } catch (PDOException $e) {
     echo "Error de conexión a la base de datos: " . $e->getMessage() . PHP_EOL;
 } catch (SoapFault $e) {

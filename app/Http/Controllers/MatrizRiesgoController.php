@@ -23,7 +23,7 @@ class MatrizRiesgoController extends Controller
         $user = auth()->user();
 
         $result = MatrizRiesgo::join('usr_app_riesgos_tipos_proceso as tp', 'tp.id', 'usr_app_matriz_riesgo.tipo_proceso_id')
-        ->join('usr_app_riesgos_nombres_proceso as np', 'np.id', 'usr_app_matriz_riesgo.nombre_proceso_id')
+            ->join('usr_app_riesgos_nombres_proceso as np', 'np.id', 'usr_app_matriz_riesgo.nombre_proceso_id')
             ->join('usr_app_clasificacion_riesgo as cr', 'cr.id', 'usr_app_matriz_riesgo.amenaza')
             ->join('usr_app_clasificacion_riesgo as cr2', 'cr2.id', 'usr_app_matriz_riesgo.oportunidad_2')
             ->when(!in_array('34', $permisos), function ($query) use ($user) {
@@ -53,9 +53,10 @@ class MatrizRiesgoController extends Controller
                 'usr_app_matriz_riesgo.nombre_responsable',
                 'usr_app_matriz_riesgo.created_at',
             )
-            ->orderby('id','desc')
+            ->orderby('id', 'desc')
             ->paginate($cantidad);
-            $result = $this->colorCelda($result);
+        $result = $this->colorCelda($result);
+
 
         return response()->json($result);
     }
@@ -491,7 +492,8 @@ class MatrizRiesgoController extends Controller
         }
     }
 
-    public function colorCelda($result){
+    public function colorCelda($result)
+    {
         $result->getCollection()->transform(function ($item) {
             $color_a = $this->getColoresMatriz($item->a_total, 'usr_app_matriz_amenazas', 'peso_celda');
             $color_o = $this->getColoresMatriz($item->o_total, 'usr_app_matriz_oportunidades', 'peso_celda');
@@ -877,5 +879,21 @@ class MatrizRiesgoController extends Controller
     public function destroy($id)
     {
         //
+    }
+
+    public function updateRiesgo()
+    {
+
+
+        // Ejecutar la consulta de actualización
+        $actualizados = DB::table('usr_app_matriz_riesgo')
+            ->where('a_tratamiento', 'Evitar')
+            ->update(['a_tratamiento' => 'EVITAR']);
+
+        // Retornar la cantidad de filas afectadas
+        return response()->json([
+            'status' => 'success',
+            'message' => "Se actualizaron $actualizados registros.",
+        ]);
     }
 }

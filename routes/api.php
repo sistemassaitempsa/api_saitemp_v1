@@ -889,6 +889,7 @@ Route::group([
   Route::get('/compromisosGenerales', [SeguimientoCrmController::class, 'getAllCompromisos']);
   Route::delete('/compromisosGenerales/{id}', [SeguimientoCrmController::class, 'getAllCompromisos']);
   Route::get('/verEvidencia/{id}', [SeguimientoCrmController::class, 'verEvidencia']);
+  Route::get('/excelCrmPqrsf', [SeguimientoCrmController::class, 'exportarExcelCrm']);
 
   //Rutas para el dashBoard de CRM 
   Route::get('/filtroCRM/{anio}', [FiltroCrmController::class, 'getRadicadosMes']);
@@ -971,6 +972,9 @@ Route::group([
   Route::get('/buscarradicado/{radicado}', [MatrizRiesgoController::class, 'buscarradicado']);
   Route::get('/lideres', [MatrizRiesgoController::class, 'lideres']);
   Route::get('/clasificacionesriesgos', [ClasificacionRiesgoController::class, 'index']);
+
+  //Actualizar riesgo
+  Route::get('/updateRiesgoAlto', [MatrizRiesgoController::class, 'updateRiesgo']);
 
   Route::get('/tablasandroid', [VersionTablasAndroidController::class, 'index']);
   Route::get('/tablasandroid2', [VersionTablasAndroidController::class, 'index2']);

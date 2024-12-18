@@ -354,12 +354,14 @@ class ApiFirmaElectronicaController extends Controller
                     foreach ($firmantes as $firmante) {
                         if ($firmante['email'] == $contrato->correo_enviado_empresa && $firmante['estado'] == 1) {
                             $contrato->firmado_empresa = 1;
-                            $contrato->estado_contrato = "Firmado";
                         }
                         if ($firmante['email'] == $contrato->correo_enviado_cliente && $firmante['estado'] == 1) {
                             $contrato->firmado_cliente = 1;
                             $contrato->estado_contrato = "Firmado por el cliente";
                         }
+                    }
+                    if ($contrato->firmado_cliente == 1 && $contrato->firmado_empresa = 1) {
+                        $contrato->estado_contrato = "Firmado";
                     }
                     $contrato->save();
                     return [
