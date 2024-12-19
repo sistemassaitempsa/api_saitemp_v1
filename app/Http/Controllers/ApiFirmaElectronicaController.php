@@ -352,13 +352,31 @@ class ApiFirmaElectronicaController extends Controller
                 if ($response->successful()) {
                     $firmantes = $response->json();
                     foreach ($firmantes as $firmante) {
-                        if ($firmante['email'] == $contrato->correo_enviado_empresa && $firmante['estado'] == 1) {
-                            $contrato->firmado_empresa = 1;
-                            $contrato->estado_contrato = "Firmado";
+                        if ($firmante['email'] == $contrato->correo_enviado_empresa) {
+                            if ($firmante['estado'] == 1) {
+                                $contrato->firmado_empresa = 1;
+                                $contrato->estado_contrato = "Firmado";
+                                $fechaOriginal = $firmante['fecha'];
+                                $fechaConvertida = Carbon::parse($fechaOriginal)->format('Y-m-d H:i:s');
+                                $contrato->fecha_firma_empresa = $fechaConvertida;
+                            }
+                            if ($firmante['estado'] == 2) {
+                                $contrato->firmado_empresa = 0;
+                                $contrato->estado_contrato = "Anulado";
+                            }
                         }
-                        if ($firmante['email'] == $contrato->correo_enviado_cliente && $firmante['estado'] == 1) {
-                            $contrato->firmado_cliente = 1;
-                            $contrato->estado_contrato = "Firmado por el cliente";
+                        if ($firmante['email'] == $contrato->correo_enviado_cliente) {
+                            if ($firmante['estado'] == 1) {
+                                $contrato->firmado_cliente = 1;
+                                $fechaOriginal = $firmante['fecha'];
+                                $fechaConvertida = Carbon::parse($fechaOriginal)->format('Y-m-d H:i:s');
+                                $contrato->estado_contrato = "Firmado por el cliente";
+                                $contrato->fecha_firma_cliente = $fechaConvertida;
+                            }
+                            if ($firmante['estado'] == 2) {
+                                $contrato->firmado_cliente = 0;
+                                $contrato->estado_contrato = "Anulado";
+                            }
                         }
                     }
                     /* if ($contrato->firmado_cliente == 1 && $contrato->firmado_empresa = 1) {

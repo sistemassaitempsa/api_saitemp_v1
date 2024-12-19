@@ -113,10 +113,10 @@ class formularioDebidaDiligenciaController extends Controller
                 'usr_app_clientes.telefono_empresa',
                 'usr_app_clientes.created_at',
                 'estf.nombre as nombre_estado_firma',
+                'contratos.estado_contrato', // Estado del contrato como propiedad directa
                 'estf.color as color_estado_firma',
                 'usr_app_clientes.responsable',
                 'estf.id as estado_firma_id',
-                'contratos.estado_contrato' // Estado del contrato como propiedad directa
             )
             ->orderby('usr_app_clientes.numero_radicado', 'DESC')
             ->paginate($cantidad);
@@ -837,9 +837,9 @@ class formularioDebidaDiligenciaController extends Controller
                     'usr_app_clientes.telefono_empresa',
                     'usr_app_clientes.created_at',
                     'estf.nombre as nombre_estado_firma',
+                    'contratos.estado_contrato',
                     'estf.color as color_estado_firma',
                     'estf.id as estado_firma_id',
-                    'contratos.estado_contrato'
                 )
                 ->orderby('id', 'DESC');
 
@@ -850,6 +850,8 @@ class formularioDebidaDiligenciaController extends Controller
                         $query->where('ven.nom_ven', 'like', '%' . $valor . '%');
                     } else if ($campo == "nombre_estado_firma") {
                         $query->where('estf.nombre', 'like', '%' . $valor . '%');
+                    } else if ($campo == "estado_contrato") {
+                        $query->where('contratos.estado_contrato', 'like', '%' . $valor . '%');
                     } else {
                         $query->where($campo, 'like', '%' . $valor . '%');
                     }
