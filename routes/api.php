@@ -192,6 +192,7 @@ Route::group([
   Route::get('/user-profile', [AuthController::class, 'userProfile']);
 
   // Usuarios
+  Route::get('/allUsers', [UsuarioController::class, 'index2']);
   Route::get('/users/{cantidad}', [UsuarioController::class, 'index']);
   Route::get('/users/{filtro}/{cantidad}', [UsuarioController::class, 'filtro']);
   Route::get('/userslist', [UsuarioController::class, 'userslist']);

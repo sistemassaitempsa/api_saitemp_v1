@@ -28,7 +28,7 @@ class UsuarioController extends Controller
                 "usr_app_usuarios.email",
                 "usr_app_usuarios.id as id_user",
                 "usr_app_estados_usuario .nombre as estado",
-              
+
             )
             ->paginate($cantidad);
         return response()->json($users);
@@ -39,10 +39,10 @@ class UsuarioController extends Controller
         $users = user::select(
             // "usr_app_usuarios.nombres",
             // "usr_app_usuarios.apellidos",
-            DB::raw("CONCAT(nombres, ' ', apellidos) AS nombre"),
+            DB::raw("CONCAT(REPLACE(nombres, 'null', ''), ' ', REPLACE(apellidos, 'null', '')) AS nombre")
 
         )
-            ->get();
+            ->orderby('nombre')->get();
         return response()->json($users);
     }
 
@@ -71,7 +71,7 @@ class UsuarioController extends Controller
         $result = user::select(
             'id',
             DB::raw("CONCAT(nombres,' ',apellidos)  AS nombre"),
-            'usuario AS email' ,
+            'usuario AS email',
             'lider',
         )
             ->get();
@@ -138,7 +138,7 @@ class UsuarioController extends Controller
                 "usr_app_roles.id as id_rol",
                 "usr_app_estados_usuario.nombre as estado",
                 "usr_app_estados_usuario.id as id_estado",
-              
+
             )
             ->get();
         return response()->json($users);
@@ -259,7 +259,7 @@ class UsuarioController extends Controller
         }
 
         try {
-         
+
             $user->nombres = $request->nombres !== "null" ? $request->nombres : null;
             $user->apellidos = $request->apellidos !== "null" ? $request->apellidos : null;
             $user->documento_identidad = $request->documento_identidad !== "null" ? $request->documento_identidad : null;
@@ -302,8 +302,9 @@ class UsuarioController extends Controller
             return response()->json(['status' => 'error', 'message' => 'Error al eliminar el usuario']);
         }
     }
-    public function updateVendedorId(Request $request, $id){
-        $result=user::find($id);
+    public function updateVendedorId(Request $request, $id)
+    {
+        $result = user::find($id);
         $result->vendedor_id = $request->vendedor_id;
         $result->save();
     }

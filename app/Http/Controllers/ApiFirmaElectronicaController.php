@@ -354,15 +354,16 @@ class ApiFirmaElectronicaController extends Controller
                     foreach ($firmantes as $firmante) {
                         if ($firmante['email'] == $contrato->correo_enviado_empresa && $firmante['estado'] == 1) {
                             $contrato->firmado_empresa = 1;
+                            $contrato->estado_contrato = "Firmado";
                         }
                         if ($firmante['email'] == $contrato->correo_enviado_cliente && $firmante['estado'] == 1) {
                             $contrato->firmado_cliente = 1;
                             $contrato->estado_contrato = "Firmado por el cliente";
                         }
                     }
-                    if ($contrato->firmado_cliente == 1 && $contrato->firmado_empresa = 1) {
+                    /* if ($contrato->firmado_cliente == 1 && $contrato->firmado_empresa = 1) {
                         $contrato->estado_contrato = "Firmado";
-                    }
+                    } */
                     $contrato->save();
                     return [
                         'status' => 'success',
@@ -402,26 +403,28 @@ class ApiFirmaElectronicaController extends Controller
                 if ($response->successful()) {
                     if ($response['estado'] == true) {
                         $url = $response['url'];
-                        $respuesta = Http::get($url);
-                        if ($respuesta->successful()) {
-                            $fileContent = $respuesta->body();
-                            $fileName = $id . '_evidencia.pdf';
-                            $filePath = public_path('upload/contratosFirmados/' . $fileName);
-                            if (!file_exists(public_path('upload/contratosFirmados'))) {
-                                mkdir(public_path('upload/contratosFirmados'), 0755, true);
+                        if ($url) {
+                            $respuesta = Http::get($url);
+                            if ($respuesta->successful()) {
+                                $fileContent = $respuesta->body();
+                                $fileName = $id . '_evidencia.pdf';
+                                $filePath = public_path('upload/contratosFirmados/' . $fileName);
+                                if (!file_exists(public_path('upload/contratosFirmados'))) {
+                                    mkdir(public_path('upload/contratosFirmados'), 0755, true);
+                                }
+                                file_put_contents($filePath, $fileContent);
+                                $relativePath = 'upload/contratosFirmados/' . $fileName;
+                                $contrato->ruta_contrato = $relativePath;
+                                $contrato->firmado_empresa = 1;
+                                $contrato->firmado_cliente = 1;
+                                $contrato->estado_contrato = "Firmado";
+                                $contrato->save();
+                                return response()->json([
+                                    'status' => 'success',
+                                    'message' => 'Archivo descargado y guardado exitosamente',
+                                    'file_path' => asset($relativePath),
+                                ]);
                             }
-                            file_put_contents($filePath, $fileContent);
-                            $relativePath = 'upload/contratosFirmados/' . $fileName;
-                            $contrato->ruta_contrato = $relativePath;
-                            $contrato->firmado_empresa = 1;
-                            $contrato->firmado_cliente = 1;
-                            $contrato->estado_contrato =  "Firmado";
-                            $contrato->save();
-                            return response()->json([
-                                'status' => 'success',
-                                'message' => 'Archivo descargado y guardado exitosamente',
-                                'file_path' => asset($relativePath),
-                            ]);
                         } else {
                             return response()->json([
                                 'status' => 'error',
