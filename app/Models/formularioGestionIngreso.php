@@ -11,11 +11,12 @@ class formularioGestionIngreso extends Model
     use HasFactory;
 
     protected $table = 'usr_app_formulario_ingreso';
+    protected $dateFormat = 'd-m-Y H:i:s';
 
-    public function fromDateTime($value)
+    /* public function fromDateTime($value)
     {
         return Carbon::parse(parent::fromDateTime($value))->format('Y-d-m');
-    }
+    } */
 
     protected static function boot()
     {
