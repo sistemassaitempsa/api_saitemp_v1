@@ -1,15 +1,11 @@
 <?php
 
 
-
+date_default_timezone_set('America/Bogota');
 ini_set('memory_limit', '512M');
 try {
-
     include('cone.php');
     include('autenticar.php');
-
-
-
     try {
         $fechaHoyStart = date('Ymd') . ' 00:00:00';
         $fechaHoyEnd = date('Ymd') . ' 23:59:59';
@@ -72,16 +68,19 @@ try {
                 // Llamar al método "ping" del WebService
                 $response = $client->__soapCall("registrarDocumentoElectronico_Generar_FuenteXML", [$params]);
                 // Mostrar la respuesta
+
                 $data = json_decode($response->return);
                 $success = $data->success == true ? 1 : 0;
                 $msg = $data->msg;
+                $date = date("Y-m-d H:i:s");
                 var_dump($success);
 
-                $stmtInsert = $conn->prepare("INSERT INTO usr_estadoenvio (num_doc, estado, descrip) 
-                VALUES (:num_doc, :estado, :descrip)");
+                $stmtInsert = $conn->prepare("INSERT INTO usr_estadoenvio (num_doc, estado, descrip,fecha_reg) 
+                VALUES (:num_doc, :estado, :descrip,:fecha_reg)");
                 $stmtInsert->bindParam(':num_doc', $num_doc, PDO::PARAM_STR);
                 $stmtInsert->bindValue(':estado', $success, PDO::PARAM_INT);
                 $stmtInsert->bindParam(':descrip', $msg, PDO::PARAM_STR);
+                $stmtInsert->bindParam(':fecha_reg', $date, PDO::PARAM_STR);
                 $stmtInsert->execute();
 
                 // Mostrar el resultado

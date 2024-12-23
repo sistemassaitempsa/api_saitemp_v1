@@ -38,9 +38,12 @@ class enviarCorreoDDController extends Controller
 
         if ($booleanCorregir == true) {
             $body = "Cordial saludo, tiene nuevas tareas pendientes por corregir asignados en el radicado Debida Diligencia número: <b><i>$numeroRadicado</i></b> con las siguientes observaciones: $observacion.
-        \n\n Atentamente:";
+            \n\npara acceder al radicado ingrese al siguiente link: <a href='http://srv-saitemp03:8181/aplicaciones/?#/navbar/debida-diligencia/formulario-clientes/$registro_id'>Click aquí</a> *Debe encontrarse logueado con su usario y contraseña en SEIYA.
+        
+            \n\n Atentamente:";
         } else {
             $body = "Cordial saludo, tiene nuevas tareas asignadas en el radicado Debida Diligencia número: <b><i>$numeroRadicado</i></b>.
+             \n\npara acceder al radicado ingrese al siguiente link: <a href='http://srv-saitemp03:8181/aplicaciones/?#/navbar/debida-diligencia/formulario-clientes/$registro_id'>Click aquí</a> *Debe encontrarse logueado con su usario y contraseña en SEIYA.
             \n\n Atentamente:";
         }
 
