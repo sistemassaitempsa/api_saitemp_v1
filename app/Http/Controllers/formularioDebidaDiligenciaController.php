@@ -334,7 +334,24 @@ class formularioDebidaDiligenciaController extends Controller
                 ->first();
 
 
-            $seguimiento = ClientesSeguimientoGuardado::join('usr_app_estados_firma as ei', 'ei.id', '=', 'usr_app_clientes_seguimiento_guardado.estado_firma_id')
+            $seguimiento = RegistroCambio::join('usr_app_clientes as cli', 'cli.id', 'usr_app_registro_cambios.cliente_id')
+                ->select(
+                    'cli.razon_social',
+                    'cli.numero_radicado',
+                    'usr_app_registro_cambios.solicitante',
+                    'usr_app_registro_cambios.autoriza',
+                    'usr_app_registro_cambios.actualiza',
+                    'usr_app_registro_cambios.observaciones',
+                    'usr_app_registro_cambios.cliente_id as cliente',
+                    'usr_app_registro_cambios.estado',
+                    'usr_app_registro_cambios.updated_at'
+                )
+                ->where('usr_app_registro_cambios.cliente_id', $id)
+                ->orderby('usr_app_registro_cambios.id', 'DESC')
+                ->get();
+            $result['seguimiento'] = $seguimiento;
+
+            /*  $seguimiento = ClientesSeguimientoGuardado::join('usr_app_estados_firma as ei', 'ei.id', '=', 'usr_app_clientes_seguimiento_guardado.estado_firma_id')
                 ->where('usr_app_clientes_seguimiento_guardado.cliente_id', $id)
                 ->select(
                     'usr_app_clientes_seguimiento_guardado.usuario',
@@ -344,7 +361,7 @@ class formularioDebidaDiligenciaController extends Controller
                 )
                 ->orderby('usr_app_clientes_seguimiento_guardado.id', 'desc')
                 ->get();
-            $result['seguimiento'] = $seguimiento;
+            $result['seguimiento'] = $seguimiento; */
 
             $novedades = NovedadesDD::join('usr_app_usuarios as usuario', 'usuario.id', 'usr_app_novedades_dd.usuario_corrige')
                 ->where('usr_app_novedades_dd.registro_cliente_id', $id)
@@ -1507,6 +1524,7 @@ class formularioDebidaDiligenciaController extends Controller
             $apellidos = str_replace("null", "", $user->apellidos);
             $registroCambio = new RegistroCambio;
             $registroCambio->observaciones = $request['registro_cambios']['observaciones'];
+            $registroCambio->estado = $request['consulta_estado_firma'];
             $registroCambio->solicitante = $request['registro_cambios']['solicitante'];
             $registroCambio->autoriza = $request['registro_cambios']['autoriza'];
             $registroCambio->actualiza = $nombres . ' ' . $apellidos;
@@ -2746,7 +2764,7 @@ class formularioDebidaDiligenciaController extends Controller
                    ';
                         $examIndice = 0;
                         $examValPrev = "";
-                        $html .= '<tr><th><b>Exámenes:</b></th><td style="text-align:justify;"></td></tr>';
+                        $html .= '<tr><th><b>Exámenes:</b></th><td style="text-align:left;"></td></tr>';
                         if (count($cargo['examenes']) > 0) {
                             foreach ($cargo['examenes'] as $index => $examen) {
                                 if ($index % 2 == 0) {
@@ -2767,9 +2785,9 @@ class formularioDebidaDiligenciaController extends Controller
 
                         if (count($cargo['recomendaciones']) > 0) {
 
-                            $html .= '<tr><th colspan="2" style="text-align:justify; font-size:9px; margin:20px;"><b>Orientaciones específicas para los exámenes:</b> ' . $cargo['recomendaciones'][0]['recomendacion1'] . '</th></tr>';
+                            $html .= '<tr><th colspan="2" style="text-align:left; font-size:9px; margin:20px;"><b>Orientaciones específicas para los exámenes:</b> ' . $cargo['recomendaciones'][0]['recomendacion1'] . '</th></tr>';
 
-                            $html .= '<tr><th colspan="2" style="text-align:justify; font-size:9px; margin:20px;"><b>Patologías que restringen la labor:</b> ' . $cargo['recomendaciones'][0]['recomendacion2'] . '</th></tr>';
+                            $html .= '<tr><th colspan="2" style="text-align:left; font-size:9px; margin:20px;"><b>Patologías que restringen la labor:</b> ' . $cargo['recomendaciones'][0]['recomendacion2'] . '</th></tr>';
                         }
                     }
                 }
@@ -2992,7 +3010,7 @@ class formularioDebidaDiligenciaController extends Controller
             </tr></table>';
 
             $html .= '<table style="border: 1px #000000 solid; padding:2px; border-collapse: collapse;">';
-            $html .= '<tr><td><p style="text-align:justify; font-size:9px;">Cumplo con alguno de los siguientes atributos o tengo un vínculo familiar (cónyuge o compañero permanente, padres, abuelos, hijos, nietos, cuñados, adoptantes o adoptivos) con una persona que:</p></td></tr>
+            $html .= '<tr><td><p style="text-align:left; font-size:9px;">Cumplo con alguno de los siguientes atributos o tengo un vínculo familiar (cónyuge o compañero permanente, padres, abuelos, hijos, nietos, cuñados, adoptantes o adoptivos) con una persona que:</p></td></tr>
 
             <tr><td><p style="font-size:9px;">-Esté expuesta políticamente según la legislación nacional.</p></td></tr>
 
@@ -3028,24 +3046,24 @@ class formularioDebidaDiligenciaController extends Controller
             </tr></table>';
 
             $html .= '<table style="border: 1px #000000 solid; padding:2px; border-collapse: collapse;">';
-            $html .= '<tr><td colspan="2"><p style="text-align:justify; font-size:9px;">Quien suscribe la presente solicitud obrando en nombre propio y/o en representación legal de la persona 
+            $html .= '<tr><td colspan="2"><p style="text-align:left; font-size:9px;">Quien suscribe la presente solicitud obrando en nombre propio y/o en representación legal de la persona 
             jurídica que represento, de manera voluntaria y dando certeza de que todo lo aquí consignado es cierto, veraz y verificable, 
             realizo la siguiente declaración de fuente de bienes y/o fondos, con el propósito de dar cumplimiento a lo señalado
             al respecto a las normas legales vigentes y concordantes.</p></td></tr>
 
-            <tr><td colspan="2"><p style="text-align:justify; font-size:9px;">A. Declaro que yo y/o la persona jurídica que represento es beneficiaria efectiva de los recursos
+            <tr><td colspan="2"><p style="text-align:left; font-size:9px;">A. Declaro que yo y/o la persona jurídica que represento es beneficiaria efectiva de los recursos
             y son compatibles con mis actividades y situación patrimonial.</p></td></tr>
 
-            <tr><td colspan="2"><p style="text-align:justify; font-size:9px;">B. Que los recursos que se entreguen de mi parte en desarrollo de cualquiera de las relaciones contractuales que tenga
+            <tr><td colspan="2"><p style="text-align:left; font-size:9px;">B. Que los recursos que se entreguen de mi parte en desarrollo de cualquiera de las relaciones contractuales que tenga
              con los destinatarios de la presente declaración, provienen de mi patrimonio y/o de la sociedad que represento y no de 
             terceros, y se derivan de las siguientes fuentes: (detalle de la actividad o negocio del que provienen los recursos)</p></td></tr>';
 
             $html .= '<tr style="font-size:9px;"><th><b>- ' . $result['origen_fondos']->origen_fondos . '</b></th><td>Otra¿Cuál?<b> ' . $result['origen_fondos']->otro_origen . '</b></td></tr>';
             $html .= '<tr style="font-size:9px;"><th></th><td></td></tr>';
-            $html .= '<tr><td colspan="2"><p style="text-align:justify; font-size:9px;">C. Declaro que los recursos no provienen de ninguna actividad ilícita de las contempladas en el Código Penal Colombiano o 
+            $html .= '<tr><td colspan="2"><p style="text-align:left; font-size:9px;">C. Declaro que los recursos no provienen de ninguna actividad ilícita de las contempladas en el Código Penal Colombiano o 
             en cualquier norma que lo modifique o adicione.</p></td></tr>
 
-            <tr><td colspan="2"><p style="text-align:justify; font-size:9px;">D. No se admitirá que terceros efectúen depósitos a mis cuentas y/o de la Entidad que represento con fondos provenientes 
+            <tr><td colspan="2"><p style="text-align:left; font-size:9px;">D. No se admitirá que terceros efectúen depósitos a mis cuentas y/o de la Entidad que represento con fondos provenientes 
             de las actividades ilícitas contempladas en el Código penal Colombiano o en cualquier norma que lo modifique, sustituya o adicione,
             ni se efectuarán transacciones destinadas a tales actividades o a favor de personas relacionadas con las mismas.</p></td></tr>
 
@@ -3061,7 +3079,7 @@ class formularioDebidaDiligenciaController extends Controller
                 $html .= '<tr><td><p style="font-size:9px;"><b>No</b></p></td></tr>';
             }
 
-            $html .= '<tr><td colspan="2"><p style="text-align:justify; font-size:9px;">En nombre propio y/o de mi representado, declaro que no estoy impedido para realizar cualquier tipo de operación y 
+            $html .= '<tr><td colspan="2"><p style="text-align:left; font-size:9px;">En nombre propio y/o de mi representado, declaro que no estoy impedido para realizar cualquier tipo de operación y 
             que conozco y acepto las normas que regulan el comercio colombiano y me obligo a cumplirlas. Conozco y acepto los riesgos que puedan 
             presentarse frente a las instrucciones y órdenes que imparta, derivados de la utilización de los medios y canales de distribución de 
             productos y servicios, tales como Internet, correos electrónicos u otros mecanismos similares, mensajería instantánea, teléfono, fax, 
@@ -3104,7 +3122,7 @@ class formularioDebidaDiligenciaController extends Controller
 
             $html .= '<table style="border: 1px #000000 solid; padding:10px; border-collapse: collapse;">';
 
-            $html .= '<tr><td><p style="text-align:justify; font-size:9px; ">La Sociedad SAITEMP S.A., en cumplimiento de lo definido por la Ley 1581 de 2012, el decreto reglamentario 1377 de 2013 y 
+            $html .= '<tr><td><p style="text-align:left; font-size:9px; ">La Sociedad SAITEMP S.A., en cumplimiento de lo definido por la Ley 1581 de 2012, el decreto reglamentario 1377 de 2013 y 
             nuestra política de protección de datos personales, le informan que los datos personales que usted suministre en cualquiera de nuestros 
             establecimientos en desarrollo de cualquier operación comercial, serán tratados mediante el uso y mantenimiento de medidas de seguridad 
             técnicas, físicas y administrativas a fin de impedir que terceros no autorizados accedan a los mismos, lo anterior de conformidad con 
