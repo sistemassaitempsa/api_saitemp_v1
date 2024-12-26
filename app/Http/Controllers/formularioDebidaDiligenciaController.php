@@ -49,6 +49,9 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\enviarCorreoDDController;
 use App\Models\NovedadesDD;
+
+use App\Models\VersionTablasAndroid;
+
 // use App\Events\EventoPrueba2;
 
 
@@ -102,6 +105,7 @@ class formularioDebidaDiligenciaController extends Controller
                     $subQuery->where('usr_app_clientes.vendedor_id', $user->vendedor_id)
                         ->orWhere('usr_app_clientes.responsable_id', $user->id);
                 });
+
             })
             ->select(
                 'usr_app_clientes.id',
@@ -1244,6 +1248,10 @@ class formularioDebidaDiligenciaController extends Controller
                 $cliente_laboratorio->cliente_id = $cliente->id;
                 $cliente_laboratorio->save();
             }
+
+            $clientes_android = VersionTablasAndroid::find(12);
+            $clientes_android->version = $clientes_android->version + 1;
+            $clientes_android->save();
 
             DB::commit();
             return response()->json(['status' => '200', 'message' => 'ok', 'client' => $cliente->id]);
@@ -4136,3 +4144,4 @@ class formularioDebidaDiligenciaController extends Controller
         }
     }
 }
+

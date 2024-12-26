@@ -1863,7 +1863,7 @@ class formularioGestionIngresoController extends Controller
                 // Revertir la transacción si se produce alguna excepción
                 DB::rollback();
                 // return $e;
-                return response()->json(['status' => 'error', 'message' => 'Error al guardar formulario, por favor verifique el llenado de todos los campos e intente nuevamente']);
+                return response()->json(['status' => 'error', 'message' => 'Error al guardar formulario, por favor intente nuevamente']);
             }
         }
 
@@ -1988,9 +1988,7 @@ class formularioGestionIngresoController extends Controller
                             $nuevoNombre = '_' . $ingreso_id . '_' . $microtimeWithoutDecimal . "_" . $nombreArchivoOriginal;
 
                             $carpetaDestino = public_path('upload/');
-                            // Leer el contenido del archivo original
                             $contenido = file_get_contents($item->getRealPath());
-                            // Escribir el contenido en la nueva ubicación
                             file_put_contents($carpetaDestino . $nuevoNombre, $contenido);
 
                             $ruta = 'upload/' . $nuevoNombre; // Construye la ruta relativa
@@ -2433,9 +2431,14 @@ class formularioGestionIngresoController extends Controller
         // return response()->json($result);
         $seguimiento_estados = FormularioIngresoSeguimientoEstado::join('usr_app_estados_ingreso as ei', 'ei.id', '=', 'usr_app_formulario_ingreso_seguimiento_estado.estado_ingreso_inicial')
             ->join('usr_app_estados_ingreso as ef', 'ef.id', '=', 'usr_app_formulario_ingreso_seguimiento_estado.estado_ingreso_final')
+            ->join('usr_app_formulario_ingreso as formulario','formulario.id','=','usr_app_formulario_ingreso_seguimiento_estado.formulario_ingreso_id')
+            ->join('usr_app_formulario_ingreso_tipo_servicio as tipo_servicio','tipo_servicio.id','=','formulario.tipo_servicio_id')
+            ->join('usr_app_clientes as cli','cli.id','=','formulario.cliente_id')
             ->where('usr_app_formulario_ingreso_seguimiento_estado.estado_ingreso_final', $id)
-            ->whereDate('usr_app_formulario_ingreso_seguimiento_estado.created_at', Carbon::parse('2024-09-27'))
+            ->whereDate('usr_app_formulario_ingreso_seguimiento_estado.created_at','>=', Carbon::parse('2024-09-1'))
+            ->whereDate('usr_app_formulario_ingreso_seguimiento_estado.created_at','<=', Carbon::parse('2024-10-30'))
             ->select(
+                'cli.razon_social',
                 'usr_app_formulario_ingreso_seguimiento_estado.responsable_inicial',
                 'usr_app_formulario_ingreso_seguimiento_estado.responsable_final',
                 'ei.nombre as estado_ingreso_inicial',
@@ -2443,7 +2446,13 @@ class formularioGestionIngresoController extends Controller
                 'usr_app_formulario_ingreso_seguimiento_estado.actualiza_registro',
                 DB::raw("FORMAT(usr_app_formulario_ingreso_seguimiento_estado.created_at, 'dd/MM/yyyy HH:mm:ss') as fecha_radicado"),
                 'usr_app_formulario_ingreso_seguimiento_estado.formulario_ingreso_id',
-                'usr_app_formulario_ingreso_seguimiento_estado.created_at'
+                'usr_app_formulario_ingreso_seguimiento_estado.created_at',
+                'tipo_servicio.nombre_servicio',
+                // 'formulario.profesional',
+                DB::raw("COALESCE(formulario.profesional, '') as profesional"),
+                // 'formulario.n_servicio'
+                DB::raw("COALESCE(formulario.n_servicio, '') as n_servicio"),
+                DB::raw("COALESCE(formulario.afectacion_servicio, '') as afectacion_servicio"),
             )
             ->orderby('usr_app_formulario_ingreso_seguimiento_estado.formulario_ingreso_id', 'desc')
             ->orderby('usr_app_formulario_ingreso_seguimiento_estado.created_at', 'desc')

@@ -114,6 +114,11 @@ class VersionTablasAndroidController extends Controller
         $result = PqrsfCRM::all();
         return response()->json($result);
     }
+    public function usr_app_clientes()
+    {
+        $result = cliente::select('id', DB::raw('COALESCE(nit, numero_identificacion) as nit'),'razon_social')->get();
+        return response()->json($result);
+    }
     /**
      * Show the form for creating a new resource.
      *

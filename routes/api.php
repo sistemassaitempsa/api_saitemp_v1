@@ -876,6 +876,7 @@ Route::group([
   Route::get('/seguimientocrm/{cantidad}', [SeguimientoCrmController::class, 'index']);
   Route::get('/seguimientocrmbyid/{id}', [SeguimientoCrmController::class, 'byid']);
   Route::post('/seguimientocrm', [SeguimientoCrmController::class, 'create']);
+  Route::post('/seguimientocrm2', [SeguimientoCrmController::class, 'createandroid']);
   Route::post('/seguimientocrm/{id}', [SeguimientoCrmController::class, 'update']);
   Route::get('/seguimientocrmfiltro/{cadena}', [SeguimientoCrmController::class, 'filtro']);
   Route::post('/seguimientocrmpendientes', [SeguimientoCrmController::class, 'pendientes']);
@@ -990,7 +991,7 @@ Route::group([
   Route::get('/tablasandroid_usr_app_estado_cierre_crm', [VersionTablasAndroidController::class, 'usr_app_estado_cierre_crm']);
   Route::get('/tablasandroid_usr_app_estado_compromiso_crm', [VersionTablasAndroidController::class, 'usr_app_estado_compromiso_crm']);
   Route::get('/tablasandroid_usr_app_pqrsf_crm', [VersionTablasAndroidController::class, 'usr_app_pqrsf_crm']);
-
+  Route::get('/tablasandroid_usr_app_cliente_debida_diligencia', [VersionTablasAndroidController::class, 'usr_app_clientes']);
 
   Route::get('/clear-cache', function () {
     echo Artisan::call('config:clear');

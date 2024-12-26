@@ -373,8 +373,6 @@ class MatrizRiesgoController extends Controller
             $valor = $valores[2];
             $valor2 = isset($valores[3]) ? $valores[3] : null;
 
-            // return $valores;
-
             $query = MatrizRiesgo::join('usr_app_riesgos_tipos_proceso as tp', 'tp.id', 'usr_app_matriz_riesgo.tipo_proceso_id')
                 ->join('usr_app_riesgos_nombres_proceso as np', 'np.id', 'usr_app_matriz_riesgo.nombre_proceso_id')
                 ->join('usr_app_riesgos_nivel_probabilidad as a_nip', 'a_nip.id', 'usr_app_matriz_riesgo.a_probabilidad_id')

@@ -35,6 +35,7 @@ class formularioIngresoExportController extends Controller
             ->LeftJoin('usr_app_estados_ingreso as est', 'est.id', 'usr_app_formulario_ingreso.estado_ingreso_id')
             ->LeftJoin('usr_app_afp as afp', 'afp.id', 'usr_app_formulario_ingreso.afp_id')
             ->leftJoin('usr_app_formulario_ingreso_tipo_servicio as tiser', 'tiser.id', 'usr_app_formulario_ingreso.tipo_servicio_id')
+            ->leftJoin('gen_tipide as doc', 'doc.cod_tip', 'usr_app_formulario_ingreso.tipo_documento_id')
             ->select(
                 'usr_app_formulario_ingreso.id',
                 'usr_app_formulario_ingreso.numero_radicado',
@@ -44,6 +45,7 @@ class formularioIngresoExportController extends Controller
                 'cli.razon_social',
                 'usr_app_formulario_ingreso.direccion_empresa',
                 'tiser.nombre_servicio',
+                'doc.des_tip as Tipo de identificación',
                 'usr_app_formulario_ingreso.numero_identificacion',
                 'usr_app_formulario_ingreso.nombre_completo',
                 'usr_app_formulario_ingreso.numero_contacto',
