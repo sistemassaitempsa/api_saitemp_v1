@@ -6,6 +6,8 @@ use Illuminate\Http\Request;
 use App\Models\EstadosFirma;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Carbon;
+use App\Models\ResponsablesEstadosModel;
+use App\Models\ClientesSeguimientoEstado;
 
 class EstadosFirmaController extends Controller
 {
@@ -16,16 +18,20 @@ class EstadosFirmaController extends Controller
      */
     public function index()
     {
+
         /* $hoy = Carbon::now();
         $diaSemana = $hoy->dayName;
         formatoFechaCarbon= 2024-10-28T20:06:44.820417Z; */
 
+
         $result = EstadosFirma::select(
             'id',
             'nombre',
-            'color'
-        )
-        ->get();
+            'color',
+            'tiempo_respuesta'
+        )->orderByRaw("
+        TRY_CAST(LEFT(nombre, CHARINDEX('.', nombre + '.') - 1) AS INT), nombre")
+            ->get();
         return response()->json($result);
     }
 
@@ -38,20 +44,56 @@ class EstadosFirmaController extends Controller
     {
         DB::beginTransaction();
         try {
-            $estadosFirma= new EstadosFirma;
-            $estadosFirma->nombre= $request->nombre;
-            $estadosFirma->color= $request->color;
-            /* $estadosFirma->horas_requeridas= $request->horas_requeridas; */
+            $estadosFirma = new EstadosFirma;
+            $estadosFirma->nombre = $request->nombre;
+            $estadosFirma->color = $request->color;
+            $estadosFirma->tiempo_respuesta = $request->tiempo_respuesta;
             $estadosFirma->save();
+            if ($request->responsables) {
+                foreach ($request->responsables as $item) {
+                    $responsableEstado = new ResponsablesEstadosModel;
+                    $responsableEstado->usuario_id = $item["usuario_id"];
+                    $responsableEstado->estado_firma_id = $estadosFirma->id;
+                    $responsableEstado->save();
+                }
+            }
             DB::commit();
             return response()->json(['status' => 'success', 'message' => 'Registro guardado de manera exitosa', 'id' => $estadosFirma->id]);
         } catch (\Exception $e) {
+            return $e;
             DB::rollback();
             return response()->json(['status' => 'error', 'message' => 'Error al guardar el formulario, por favor intenta nuevamente']);
         }
-     
     }
+    public function indexResponsableEstado($estado)
+    {
+        $usuarios = ResponsablesEstadosModel::join('usr_app_usuarios as usr', 'usr.id', '=', 'usr_app_clientes_responsable_estado.usuario_id')
+            ->where('usr_app_clientes_responsable_estado.estado_firma_id', '=', $estado)
+            ->select(
+                'usuario_id',
+                DB::raw("CONCAT(nombres,' ',apellidos)  AS nombre"),
+                'usr.usuario as email'
+            )
+            ->get();
+        return response()->json($usuarios);
+    }
+    public function indexResponsableEstado2()
+    {
+        try {
+            $usuarios = ResponsablesEstadosModel::join('usr_app_usuarios as usr', 'usr.id', '=', 'usr_app_clientes_responsable_estado.usuario_id')
+                ->select(
+                    'usuario_id',
+                    DB::raw("CONCAT(usr.nombres, ' ', usr.apellidos) AS nombre"),
+                    'usr.usuario as email'
+                )
+                ->distinct()
+                ->get();
 
+            return response()->json($usuarios);
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
+    }
     /**
      * Store a newly created resource in storage.
      *
@@ -96,17 +138,37 @@ class EstadosFirmaController extends Controller
     {
         DB::beginTransaction();
         try {
+            // Buscar el estado y actualizar sus datos básicos
             $result = EstadosFirma::find($id);
-            $result->nombre= $request->nombre;
-            $result->color= $request->color;
-            /* $result->horas_requeridas= $request->horas_requeridas; */
+            $result->nombre = $request->nombre;
+            $result->color = $request->color;
+            $result->tiempo_respuesta = $request->tiempo_respuesta;
             $result->save();
+            $responsablesExistentes = ResponsablesEstadosModel::where('estado_firma_id', $result->id)
+                ->pluck('usuario_id')
+                ->toArray();
+
+            $responsablesNuevos = collect($request->responsables)->pluck('usuario_id')->toArray();
+            $responsablesParaCrear = array_diff($responsablesNuevos, $responsablesExistentes);
+            $responsablesParaEliminar = array_diff($responsablesExistentes, $responsablesNuevos);
+
+            foreach ($responsablesParaCrear as $usuario_id) {
+                ResponsablesEstadosModel::create([
+                    'usuario_id' => $usuario_id,
+                    'estado_firma_id' => $result->id
+                ]);
+            }
+
+            ResponsablesEstadosModel::where('estado_firma_id', $result->id)
+                ->whereIn('usuario_id', $responsablesParaEliminar)
+                ->delete();
+
             DB::commit();
             return response()->json(['status' => 'success', 'message' => 'Registro actualizado de manera exitosa', 'id' => $result->id]);
-            } catch (\Exception $e) {
-                DB::rollback();
-                return response()->json(['status' => 'error', 'message' => 'Error al guardar el formulario, por favor intenta nuevamente']);
-            }
+        } catch (\Exception $e) {
+            DB::rollback();
+            return response()->json(['status' => 'error', 'message' => 'Error al guardar el formulario, por favor intenta nuevamente', 'error' => $e->getMessage()]);
+        }
     }
 
     /**
@@ -119,12 +181,28 @@ class EstadosFirmaController extends Controller
     {
         $result = EstadosFirma::find($id);
         if (!$result) {
-            return response()->json(['message' => 'El radicado no existe.'], 404);}
-            try {
-                $result->delete();
-                return response()->json(['message' => 'Estado eliminado con éxito.'], 200);
-            } catch (\Exception $e) {
-                return response()->json(['message' => 'Error al eliminar el estado.', 'error' => $e->getMessage()], 500);
-            }
+            return response()->json(['message' => 'El radicado no existe.'], 404);
+        }
+        try {
+            $result->delete();
+            return response()->json(['status' => 'success', 'message' => 'Registro eliminado de manera exitosa']);
+        } catch (\Exception $e) {
+            return response()->json(['status' => 'error', 'message' => 'Error al eliminar el estado, por favor intenta nuevamente o verifica que no existan registros creados con este estado', 'error']);
+        }
+    }
+    public function allClientesSeguimientoEstado()
+    {
+        $result = ClientesSeguimientoEstado::all();
+        return response()->json($result);
+    }
+    public function byId($id)
+    {
+        return EstadosFirma::select(
+            'id',
+            'nombre',
+            'color',
+            'tiempo_respuesta'
+        )->where('usr_app_estados_firma.id', $id)
+            ->first();
     }
 }

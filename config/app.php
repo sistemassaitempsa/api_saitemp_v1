@@ -55,6 +55,9 @@ return [
     'url' => env('APP_URL', 'http://localhost'),
 
     'asset_url' => env('ASSET_URL', null),
+    'USUARIO_VALIDART' => env('USUARIO_VALIDART'),
+    'VALIDART_URL' => env('VALIDART_URL'),
+    'PASSWORD_VALIDART' => env('PASSWORD_VALIDART'),
 
     /*
     |--------------------------------------------------------------------------
@@ -191,7 +194,7 @@ return [
     */
 
     'aliases' => [
-    
+
         'App' => Illuminate\Support\Facades\App::class,
         'Arr' => Illuminate\Support\Arr::class,
         'Artisan' => Illuminate\Support\Facades\Artisan::class,

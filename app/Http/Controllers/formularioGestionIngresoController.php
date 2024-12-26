@@ -43,6 +43,7 @@ class formularioGestionIngresoController extends Controller
                 'usr_app_formulario_ingreso.numero_radicado',
                 'usr_app_formulario_ingreso.n_servicio',
                 'tiser.nombre_servicio',
+                'usr_app_formulario_ingreso.updated_at',
                 'usr_app_formulario_ingreso.created_at',
                 'usr_app_formulario_ingreso.numero_identificacion',
                 'usr_app_formulario_ingreso.nombre_completo',
@@ -65,7 +66,7 @@ class formularioGestionIngresoController extends Controller
                 'est.color as color_estado',
 
             )
-            ->orderby('usr_app_formulario_ingreso.id', 'DESC')
+            ->orderby('usr_app_formulario_ingreso.updated_at', 'DESC')
             ->paginate($cantidad);
         foreach ($result as $item) {
             $item->fecha_examen = $item->fecha_examen ? date('d/m/Y H:i', strtotime($item->fecha_examen)) : null;
@@ -345,6 +346,7 @@ class formularioGestionIngresoController extends Controller
                 'usr_app_formulario_ingreso.responsable_corregir',
                 'usr_app_formulario_ingreso.nc_hora_cierre',
                 'usr_app_formulario_ingreso.n_servicio',
+
 
 
             )
@@ -1496,6 +1498,7 @@ class formularioGestionIngresoController extends Controller
         // return $arraysDecodificados;
 
         $campo = $arraysDecodificados[0];
+
         $operador = $arraysDecodificados[1];
         $valor_comparar = $arraysDecodificados[2];
         $valor_comparar2 = $arraysDecodificados[3];
@@ -1511,6 +1514,7 @@ class formularioGestionIngresoController extends Controller
                 'usr_app_formulario_ingreso.numero_radicado',
                 'usr_app_formulario_ingreso.n_servicio',
                 'tiser.nombre_servicio',
+                'usr_app_formulario_ingreso.updated_at',
                 'usr_app_formulario_ingreso.created_at',
                 'usr_app_formulario_ingreso.numero_identificacion',
                 'usr_app_formulario_ingreso.nombre_completo',
@@ -1528,6 +1532,7 @@ class formularioGestionIngresoController extends Controller
                 // 'usr_app_formulario_ingreso.citacion_entrevista',
                 'usr_app_formulario_ingreso.afectacion_servicio',
                 'usr_app_formulario_ingreso.responsable_corregir',
+
                 'est.nombre as estado_ingreso',
                 'usr_app_formulario_ingreso.responsable',
                 // 'usr_app_formulario_ingreso.responsable as responsable_ingreso',

@@ -1,8 +1,11 @@
 <?php
+
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Http\Request;
 use App\Http\Controllers\FiltroCrmController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\ApiFirmaElectronicaController;
+use App\Http\Controllers\HistoricoEstadosDdController;
 use App\Http\Controllers\FamiliaresFormEmpleadoController;
 use App\Http\Controllers\GrupoEtnicoFormEmpleadoController;
 use App\Http\Controllers\NivelAcademicoFormEmpleadoController;
@@ -160,6 +163,8 @@ use App\Http\Controllers\RecepcionEmpleadoController;
 use App\Http\Controllers\GenerarZipController;
 use App\Http\Controllers\limitesCrmController;
 use App\Models\SeguimientoCrm;
+use App\Http\Controllers\enviarCorreoDDController;
+use App\Http\Controllers\IndicadoresDDController;
 
 /*
 |--------------------------------------------------------------------------
@@ -187,6 +192,7 @@ Route::group([
   Route::get('/user-profile', [AuthController::class, 'userProfile']);
 
   // Usuarios
+  Route::get('/allUsers', [UsuarioController::class, 'index2']);
   Route::get('/users/{cantidad}', [UsuarioController::class, 'index']);
   Route::get('/users/{filtro}/{cantidad}', [UsuarioController::class, 'filtro']);
   Route::get('/userslist', [UsuarioController::class, 'userslist']);
@@ -195,7 +201,7 @@ Route::group([
   Route::delete('/user/{id}', [UsuarioController::class, 'destroy']);
   // Route::post('/user', [UsuarioController::class, 'create']); 
   Route::post('/user', [UsuarioController::class, 'update']);
-  Route::put('/updateUserVendedor/{id}',[UsuarioController::class, 'updateVendedorId']);
+  Route::put('/updateUserVendedor/{id}', [UsuarioController::class, 'updateVendedorId']);
   // Route::get('/usuariosporcontrato', [UsuarioController::class, 'usuariosporcontrato']); 
   // Route::get('/usuariosporcontrato/{id}', [UsuarioController::class, 'usuariosporcontrato2']); 
 
@@ -610,13 +616,39 @@ Route::group([
   Route::post('/formulariocliente/doc/{id}', [formularioDebidaDiligenciaController::class, 'store']);
   Route::post('/formulariocliente/{id}', [formularioDebidaDiligenciaController::class, 'update']);
   Route::delete('/formulariocliente/{id}', [formularioDebidaDiligenciaController::class, 'destroy']);
-  Route::post('/actualizaestadofirma/{item_id}/{estado_id}', [formularioDebidaDiligenciaController::class, 'actualizaestadofirma']);
+  Route::get('/actualizaestadofirma/{item_id}/{estado_id}/{responsable_id}', [formularioDebidaDiligenciaController::class, 'actualizaestadofirma']);
   Route::get('/versiondebidadiligencia', [formularioDebidaDiligenciaController::class, 'versionformulario']);
+
+  Route::get('/formulariocliente/generarpdf/{id}', [formularioDebidaDiligenciaController::class, 'generarPdf']);
 
   Route::get('/consultaformulariocliente/{cantidad}', [formularioDebidaDiligenciaController::class, 'consultacliente']);
   Route::get('/clientesactivos', [formularioDebidaDiligenciaController::class, 'clientesactivos']);
   Route::get('/consultaformularioclientefiltro/{cadena}', [formularioDebidaDiligenciaController::class, 'filtro']);
+  Route::get('/actualizaResponsableCliente/{item}/{responsable_id}/{nombre}', [formularioDebidaDiligenciaController::class, 'actualizaResponsableCliente']);
   Route::get('/contrato/{id}', [ContratoController::class, 'index']);
+  Route::post('/enviarCorreoDD/{registro_id}', [enviarCorreoDDController::class, 'enviarCorreosDD']);
+  Route::get('/formulariocliente/generarContratoDD/{id}', [formularioDebidaDiligenciaController::class, 'generarContrato2']);
+
+  //Rutas para el historico de estados DD
+  Route::get('/consultaHistoricoEstadosDd/{cantidad}', [HistoricoEstadosDdController::class, 'index']);
+  Route::post('/consultaHistoricoEstadosDd/{cantidad}', [HistoricoEstadosDdController::class, 'filtrarEstados']);
+  Route::post('/excelHistoricoEstadosDd', [HistoricoEstadosDdController::class, 'exportExcel']);
+  Route::delete('/deleteAllHistoricoDD', [HistoricoEstadosDdController::class, 'deleteAll']);
+
+  //Rutas para los indicadores DD
+  Route::get('/numeroRadicadosMes/{anio}', [IndicadoresDDController::class, 'numeroRadicadosMes']);
+  Route::get('/tipoDeOperacionMes/{anio}', [IndicadoresDDController::class, 'tipoDeOperacionMes']);
+  Route::get('/estadoOportunoMes/{anio}', [IndicadoresDDController::class, 'estadoOportunoMes']);
+
+  //Api validart
+  Route::get('/uploadFileValidart/{id}', [ApiFirmaElectronicaController::class, 'uploadFileValidarT']);
+  Route::post('/firmaValidart/{id}', [ApiFirmaElectronicaController::class, 'firmaEstandar']);
+  Route::post('/callBackFirmado', [ApiFirmaElectronicaController::class, 'callBackFirmado']);
+  Route::get('/reenviarFirma/{id}', [ApiFirmaElectronicaController::class, 'reenvioFirmantes']);
+  Route::get('/anularContrato/{id}', [ApiFirmaElectronicaController::class, 'anularContrato']);
+  Route::get('/consultaFirmantes/{id}', [ApiFirmaElectronicaController::class, 'consultaFirmantes']);
+  Route::get('/consultaProcesoFirma/{id}', [ApiFirmaElectronicaController::class, 'consultaProcesoFirma']);
+  Route::get('/verContratoDD/{id}', [ApiFirmaElectronicaController::class, 'verContrato']);
 
   // Tipos de documento de identidad
   Route::get('/tipodocumento/{cantidad}', [SigTipoDocumentoIdentidadController::class, 'index']);
@@ -760,9 +792,12 @@ Route::group([
 
   // Estados firma
   Route::get('/estadosfirma', [EstadosFirmaController::class, 'index']);
-  Route::post('/estadosfirma/{id}', [EstadosFirmaController::class, 'create']);
+  Route::post('/estadosfirma', [EstadosFirmaController::class, 'create']);
   Route::put('/estadosfirma/{id}', [EstadosFirmaController::class, 'update']);
   Route::delete('/estadosfirma/{id}', [EstadosFirmaController::class, 'destroy']);
+  Route::get('/estadoResponsableFirma', [EstadosFirmaController::class, 'indexResponsableEstado2']);
+  Route::get('/estadoResponsableFirma/{estado}', [EstadosFirmaController::class, 'indexResponsableEstado']);
+  Route::get('/estadosfirma/{estado}', [EstadosFirmaController::class, 'byId']);
 
   // Historial de cambios
   Route::get('/registrocambios', [RegistroCambioController::class, 'index']);
@@ -819,8 +854,8 @@ Route::group([
   Route::post('/asignacionmasivaformularioingreso/{id_estado}/{id_encargado}', [formularioGestionIngresoController::class, 'asignacionmasiva']);
 
   Route::get('/observacionestado', [ObservacionEstadoFormIngresoController::class, 'index']);
-  Route::get('/limitesCrm',[limitesCrmController::class,'getLimitesCrm']);
-  Route::get('/recortarObservacion',[SeguimientoCrmController::class,'recortarObservacion']);
+  Route::get('/limitesCrm', [limitesCrmController::class, 'getLimitesCrm']);
+  Route::get('/recortarObservacion', [SeguimientoCrmController::class, 'recortarObservacion']);
 
   Route::get('/estadosingresos', [estadosIngresoController::class, 'index']);
   Route::get('/actualizaestadoingreso/{item}/{estado}', [formularioGestionIngresoController::class, 'actualizaestadoingreso']);
@@ -853,32 +888,33 @@ Route::group([
   Route::get('/seguimientocrmpdf/{id}/{btnId}', [SeguimientoCrmController::class, 'generarPdfCrm']);
   // Route::delete('/seguimientocrm', [SeguimientoCrmController::class, 'destroy']);
   Route::delete('/seguimientocrmbyid/{id}', [SeguimientoCrmController::class, 'destroy']);
-  Route::get('/compromisosGenerales',[SeguimientoCrmController::class, 'getAllCompromisos']);
-  Route::delete('/compromisosGenerales/{id}',[SeguimientoCrmController::class, 'getAllCompromisos']);
-  Route::get('/verEvidencia/{id}',[SeguimientoCrmController::class, 'verEvidencia']);
+  Route::get('/compromisosGenerales', [SeguimientoCrmController::class, 'getAllCompromisos']);
+  Route::delete('/compromisosGenerales/{id}', [SeguimientoCrmController::class, 'getAllCompromisos']);
+  Route::get('/verEvidencia/{id}', [SeguimientoCrmController::class, 'verEvidencia']);
+  Route::get('/excelCrmPqrsf', [SeguimientoCrmController::class, 'exportarExcelCrm']);
 
   //Rutas para el dashBoard de CRM 
   Route::get('/filtroCRM/{anio}', [FiltroCrmController::class, 'getRadicadosMes']);
   Route::get('/filtroCRMMedios/{anio}', [FiltroCrmController::class, 'getRadicadosByMedio']);
-/*   Route::get('/filtroCRMCompromisos/{cedula}', [FiltroCrmController::class, 'getCompromisosByMes']); */
-  
+  /*   Route::get('/filtroCRMCompromisos/{cedula}', [FiltroCrmController::class, 'getCompromisosByMes']); */
+
   //Rutas para el formulario publico de recepcion de empleados
   Route::get('/recepcionEmpleado', [RecepcionEmpleadoController::class, 'index']);
   Route::post('/recepcionEmpleado', [RecepcionEmpleadoController::class, 'create']);
   Route::put('/recepcionEmpleado/{cod_emp}', [RecepcionEmpleadoController::class, 'updateByCodEmp']);
   Route::get('/recepcionEmpleado/{cod_emp}', [RecepcionEmpleadoController::class, 'searchByCodEmp']);
-  Route::get('/paisesFormularioEmpleado',[PaisesFormualrioEmpleadoController::class, 'index']);
-  Route::get('/ciudadesFormularioEmpleado',[CiudadesFormularioEmpleadoController::class, 'index']);
-  Route::get('/ciudadesFormularioEmpleado/{codPai}/{codDep}',[CiudadesFormularioEmpleadoController::class, 'byCodDep']);
-  Route::get('/departamentosFormularioEmpleado/{codPai}',[DepartamentosFormularioEmpleadoController::class, 'byCodPai']);
-  Route::get('/tipoIdFormularioEmpleado',[TipoIdFormularioEmpleadoController::class, 'index']);
-  Route::get('/bancosFormularioEmpleado',[BancosFormularioEmpleadoController::class, 'index']);
-  Route::get('/nivelAcademicoFormEmpleado',[NivelAcademicoFormEmpleadoController::class, 'index']);
-  Route::get('/grupoEtnicoEmpleado',[GrupoEtnicoFormEmpleadoController::class, 'index']);
-  Route::get('/familiaresFormularioEmpleado',[FamiliaresFormEmpleadoController::class, 'index']);
-  
+  Route::get('/paisesFormularioEmpleado', [PaisesFormualrioEmpleadoController::class, 'index']);
+  Route::get('/ciudadesFormularioEmpleado', [CiudadesFormularioEmpleadoController::class, 'index']);
+  Route::get('/ciudadesFormularioEmpleado/{codPai}/{codDep}', [CiudadesFormularioEmpleadoController::class, 'byCodDep']);
+  Route::get('/departamentosFormularioEmpleado/{codPai}', [DepartamentosFormularioEmpleadoController::class, 'byCodPai']);
+  Route::get('/tipoIdFormularioEmpleado', [TipoIdFormularioEmpleadoController::class, 'index']);
+  Route::get('/bancosFormularioEmpleado', [BancosFormularioEmpleadoController::class, 'index']);
+  Route::get('/nivelAcademicoFormEmpleado', [NivelAcademicoFormEmpleadoController::class, 'index']);
+  Route::get('/grupoEtnicoEmpleado', [GrupoEtnicoFormEmpleadoController::class, 'index']);
+  Route::get('/familiaresFormularioEmpleado', [FamiliaresFormEmpleadoController::class, 'index']);
+
   //ruta para generar el archivo zip de seiya
-  Route::get('/descargarZip/{idRadicado}/{idCliente}',[GenerarZipController::class, 'descargarArchivosById' ]);
+  Route::get('/descargarZip/{idRadicado}/{idCliente}', [GenerarZipController::class, 'descargarArchivosById']);
 
 
 
@@ -917,14 +953,14 @@ Route::group([
   Route::get('/metodosidentificacion', [RiesgosMetodosIdentificacionController::class, 'index']);
   Route::get('/factores', [RiesgoFactoresController::class, 'index']);
   Route::get('/seguimientos', [RiesgoSeguimientosController::class, 'index']);
-  
+
   Route::get('/documentosregistrados', [RiesgoDocumentosRegistradosController::class, 'index']);
   Route::get('/clasescontrol', [RiesgoClasesControlController::class, 'index']);
   Route::get('/frecuenciascontrol', [RiesgoFrecuenciasControlController::class, 'index']);
   Route::get('/tiposcontrol', [RiesgoTiposControlController::class, 'index']);
   Route::get('/existeevidencias', [RiesgoExisteEvidenciasController::class, 'index']);
   Route::get('/ejecucioneseficaces', [RiesgoEjecucionesEficacesController::class, 'index']);
-  
+
   Route::get('/riesgoscontrol', [RiesgoControlController::class, 'index']);
   Route::get('/matrizamenazas', [MatrizAmenazaController::class, 'index']);
   Route::get('/matrizoportunidades', [MatrizOportunidadController::class, 'index']);
@@ -938,6 +974,9 @@ Route::group([
   Route::get('/buscarradicado/{radicado}', [MatrizRiesgoController::class, 'buscarradicado']);
   Route::get('/lideres', [MatrizRiesgoController::class, 'lideres']);
   Route::get('/clasificacionesriesgos', [ClasificacionRiesgoController::class, 'index']);
+
+  //Actualizar riesgo
+  Route::get('/updateRiesgoAlto', [MatrizRiesgoController::class, 'updateRiesgo']);
 
   Route::get('/tablasandroid', [VersionTablasAndroidController::class, 'index']);
   Route::get('/tablasandroid2', [VersionTablasAndroidController::class, 'index2']);
@@ -959,7 +998,7 @@ Route::group([
     echo Artisan::call('config:cache');
     echo Artisan::call('cache:clear');
     echo Artisan::call('route:clear');
- });
+  });
 
 
 

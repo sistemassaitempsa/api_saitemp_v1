@@ -17,6 +17,8 @@ use App\Models\TemasVisitaCrm;
 use App\Models\CompromisosVisitaCrm;
 use App\Models\AsistenciaVisitaCrm;
 use TCPDF;
+use App\Exports\CrmExport;
+use Maatwebsite\Excel\Facades\Excel;
 use ZipArchive;
 use App\Models\AtencionInteraccion;
 
@@ -1030,10 +1032,10 @@ class SeguimientoCrmController extends Controller
     }
 
 
-    public function generarPdfCrm(Request $request, $registro_id, $btnId)
+    public function generarPdfCrm(Request $request, $registro_id, $btnId = 1)
     {
-        $modulo = 46;
 
+        $modulo = 46;
         // Obtener los datos del formulario
 
         $user = auth()->user();
@@ -1048,11 +1050,8 @@ class SeguimientoCrmController extends Controller
             // Manejar el caso donde tipo_atencion_id no exista
             $atencionInteracion = null;
         }
-
-        // Inicializar TCPDF
-        /* $pdf = new \TCPDF('P', 'mm', 'A4', true, 'UTF-8', false); */
         $pdf = new \TCPDF();
-        // Establecer los metadatos del documento
+
         $pdf->SetCreator(PDF_CREATOR);
         $pdf->SetAuthor('Saitemp');
         $pdf->SetTitle('Reporte CRM');
@@ -1071,23 +1070,8 @@ class SeguimientoCrmController extends Controller
         if (!empty($formulario->hora_cierre)) {
             $horaCierreFormateada = Carbon::parse($formulario->hora_cierre)->format('H:i');
         }
-        // Eliminar la cabecera y pie de página por defecto
         $pdf->setPrintHeader(false);
-        /*  function addMembrete(\TCPDF $pdf)
-            {
-                $url = public_path('/upload/MEMBRETE.png');
-                $pdf->Image($url, -0.5, 0, $pdf->getPageWidth() + 0.5, 30, '', '', '', false, 300, '', false, false, 0);
-            }
-         */
-        // Añadir la primera página
         $pdf->AddPage();
-        /*  addMembrete($pdf); */
-        /*  $pdf->AddPage(); */
-        /*   $pdf->setPrintFooter(false);
-            $pdf->setFooterMargin(0); */
-
-        // Añadir una página
-
         $pdf->SetMargins(0, 0, 0);
         $pdf->SetAutoPageBreak(false, 0);
         // Agregar imagen de fondo
@@ -1101,6 +1085,7 @@ class SeguimientoCrmController extends Controller
         // Construir el contenido del PDF con las claves y valores del formulario y aplicando estilos
 
         $parrafo = str_replace("\n", "<br>", $formulario->observacion);
+
         $pdf->Ln(20);
         $html = '
                 <style>
@@ -1141,7 +1126,6 @@ class SeguimientoCrmController extends Controller
                     }
                     td {
                         border: 1px solid #ddd;
-                        padding: 8px;
                         font-size: 12px;
                     }
                     .signature {
@@ -1154,7 +1138,10 @@ class SeguimientoCrmController extends Controller
                     .asistencia_title{
                         color: #043c69; 
                     }
-                  
+                    .divImg{
+                    
+                
+    }
                 </style>
                 <div class="divInit">
          <h1> Registro de servicio </h1>
@@ -1254,7 +1241,7 @@ class SeguimientoCrmController extends Controller
                     <tr>
                         <td>' . $asistencia->nombre . '</td>
                         <td>' . $asistencia->cargo . '</td>
-                        <td><img src="' . public_path($asistencia->firma) . '" class="signature" /></td>
+                        <td><div class="divImg"><img src="' . public_path($asistencia->firma) . '" class="signature" /></div></td>
                     </tr>';
             }
             $html .= '</table>';
@@ -1538,5 +1525,40 @@ class SeguimientoCrmController extends Controller
         }
         $ruta_zip_archivo = ltrim($carpetaDestino, '.') . $zipNombre . '_' . $nuevoNombre;
         return $ruta_zip_archivo;
+    }
+    public function exportarExcelCrm()
+    {
+        $result = SeguimientoCrm::join('usr_app_sedes_saitemp as sede', 'sede.id', 'usr_app_seguimiento_crm.sede_id')
+            ->join('usr_app_procesos as proces', 'proces.id', 'usr_app_seguimiento_crm.proceso_id')
+            ->join('usr_app_atencion_interacion as inter', 'inter.id', 'usr_app_seguimiento_crm.tipo_atencion_id')
+            ->join('usr_app_estado_cierre_crm as cierre', 'cierre.id', 'usr_app_seguimiento_crm.estado_id')
+            ->join('usr_app_pqrsf_crm as pqrsf', 'pqrsf.id', 'usr_app_seguimiento_crm.pqrsf_id')
+            ->join('usr_app_solicitante_crm as soli', 'soli.id', 'usr_app_seguimiento_crm.solicitante_id')
+            ->where('usr_app_seguimiento_crm.pqrsf_id', '!=', 6) // Condición para excluir registros con pqrsf_id = 6
+            ->select(
+                'usr_app_seguimiento_crm.id',
+                'usr_app_seguimiento_crm.numero_radicado',
+                'sede.nombre as sede',
+                'proces.nombre as proceso',
+                'soli.nombre as solicitante',
+                'usr_app_seguimiento_crm.nombre_contacto',
+                'inter.nombre as iteraccion',
+                'pqrsf.nombre as pqrsf',
+                'usr_app_seguimiento_crm.telefono',
+                'usr_app_seguimiento_crm.correo',
+                'cierre.nombre as estado',
+                'usr_app_seguimiento_crm.observacion',
+                'usr_app_seguimiento_crm.created_at',
+            )
+            ->orderby('usr_app_seguimiento_crm.id', 'DESC')
+            ->get();
+
+        // Convertir 'observacion' a texto plano
+        $result = $result->map(function ($item) {
+            $item->observacion = strip_tags($item->observacion); // Eliminar HTML del campo 'observacion'
+            return $item;
+        });
+
+        return Excel::download(new CrmExport($result), 'crm.xlsx');
     }
 }

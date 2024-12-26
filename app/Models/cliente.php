@@ -11,10 +11,16 @@ class cliente extends Model
     use HasFactory;
     protected $table = 'usr_app_clientes';
 
+    public function contratos()
+    {
+        return $this->hasMany(HistoricoContratosDDModel::class, 'cliente_id', 'id')
+            ->where('activo', 1);
+    }
+
     public function fromDateTime($value)
     {
         return Carbon::parse(parent::fromDateTime($value))->format('Y-d-m');
-        // return Carbon::parse(parent::fromDateTime($value))->format('Y-d-m H:i:s');
+        /* return Carbon::parse(parent::fromDateTime($value))->format('Y-d-m H:i:s'); */
     }
 
     // protected static function boot()
