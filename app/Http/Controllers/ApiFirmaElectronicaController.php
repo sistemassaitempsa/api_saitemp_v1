@@ -379,9 +379,9 @@ class ApiFirmaElectronicaController extends Controller
                             }
                         }
                     }
-                    /* if ($contrato->firmado_cliente == 1 && $contrato->firmado_empresa = 1) {
+                    if ($contrato->firmado_cliente == 1 && $contrato->firmado_empresa = 1) {
                         $contrato->estado_contrato = "Firmado";
-                    } */
+                    }
                     $contrato->save();
                     return [
                         'status' => 'success',

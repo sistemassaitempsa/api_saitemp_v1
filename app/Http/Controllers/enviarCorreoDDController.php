@@ -35,7 +35,7 @@ class enviarCorreoDDController extends Controller
 
         $numeroRadicado = $formulario->numero_radicado;
         $observaciones = '<html>
-        <body>  
+        <body>
       ';
 
         if (count($formulario->seguimiento) > 0) {
@@ -76,7 +76,7 @@ class enviarCorreoDDController extends Controller
         } else {
             $body = "Cordial saludo, tiene nuevas tareas asignadas en el radicado Debida Diligencia número: <b><i>$numeroRadicado</i></b>.
              \n\npara acceder al radicado ingrese al siguiente link: <a href='http://srv-saitemp03:8181/aplicaciones/?#/navbar/debida-diligencia/formulario-clientes/$registro_id'>Click aquí</a> *Debe encontrarse logueado con su usuario y contraseña en SEIYA.
-            \n\n Con el siguiente historial de actualizaciones: \n\n$observaciones
+             \n\n Con el siguiente historial de actualizaciones: \n\n$observaciones
              \n\n
             Atentamente:";
         }
