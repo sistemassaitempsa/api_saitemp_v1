@@ -42,6 +42,7 @@ class FormularioIngresoExport implements FromCollection, WithStyles, ShouldAutoS
             'Empresa usuaria',
             'Dirección de empresa',
             'Tipo de servicio',
+            'Tipo de indentificación',
             'Número de identificación',
             'Nombre candidato',
             'Número de contacto',

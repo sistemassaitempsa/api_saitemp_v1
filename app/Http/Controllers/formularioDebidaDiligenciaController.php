@@ -674,11 +674,6 @@ class formularioDebidaDiligenciaController extends Controller
 
     public function filtro($cadena)
     {
-        // $objeto = (object) [
-        //     'mensaje' => 'Filtrando empresas',
-        //     'componente' => 'navbar/debida-diligencia/clientes'
-        // ];
-        // event(new EventoPrueba2($objeto));
         try {
             $consulta = base64_decode($cadena);
             $valores = explode("/", $consulta);
@@ -726,11 +721,11 @@ class formularioDebidaDiligenciaController extends Controller
                     }
                     break;
                 case 'Igual a fecha':
-                    $query->whereDate("usr_app_clientes.".$campo, '=', $valor);
+                    $query->whereDate("usr_app_clientes." . $campo, '=', $valor);
                     break;
                 case 'Entre':
-                    $query->whereDate("usr_app_clientes.".$campo, '>=', $valor)
-                        ->whereDate("usr_app_clientes.".$campo, '<=', $valor2);
+                    $query->whereDate("usr_app_clientes." . $campo, '>=', $valor)
+                        ->whereDate("usr_app_clientes." . $campo, '<=', $valor2);
                     break;
             }
 
@@ -1053,7 +1048,7 @@ class formularioDebidaDiligenciaController extends Controller
             }
 
             $clientes_android = VersionTablasAndroid::find(12);
-            $clientes_android->version = $clientes_android->version+1;
+            $clientes_android->version = $clientes_android->version + 1;
             $clientes_android->save();
 
             DB::commit();
