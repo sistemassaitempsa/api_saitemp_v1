@@ -243,7 +243,7 @@ class ApiFirmaElectronicaController extends Controller
                     return response()->json([
                         'status' => 'error',
                         'message' => 'No se pudo descargar el archivo desde la URL proporcionada',
-                    ], 400);
+                    ], 404);
                 }
             } catch (\Exception $e) {
                 return response()->json([
@@ -255,7 +255,7 @@ class ApiFirmaElectronicaController extends Controller
             return response()->json([
                 'status' => 'error',
                 'message' => 'El estado no permite procesar la solicitud',
-            ], 400);
+            ], 404);
         }
     }
     public function reenvioFirmantes($id)

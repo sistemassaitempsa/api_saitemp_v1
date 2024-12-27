@@ -22,8 +22,7 @@ class enviarCorreoDDController extends Controller
                     $resultCorreo = $this->enviarCorreo($correoData['correo'], $formulario,  $registro_id, $modulo, $correoData['observacion'], $user->usuario, $correoData['corregir']);
                 }
             } catch (\Exception $e) {
-                /*  $resultCorreo = response()->json(['status' => 'error', 'message' => 'No fue posible enviar el registro verifique el correo de contacto o de los responsables']); */
-                $resultCorreo = $e;
+                $resultCorreo = response()->json(['status' => 'error', 'message' => 'No fue posible enviar el registro verifique el correo de contacto o de los responsables']);
             }
         }
         return $resultCorreo;
