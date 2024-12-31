@@ -839,6 +839,7 @@ Route::group([
   Route::get('/afp', [AfpFormularioIngresoController::class, 'index']);
 
   Route::get('/formularioingreso/{cantidad}', [formularioGestionIngresoController::class, 'index']);
+  Route::get('/formularioIngreso/filtrofechaingreso/{cantidad}', [formularioGestionIngresoController::class, 'filtroFechaIngreso']);
   Route::get('/formularioingresobyid/{id}', [formularioGestionIngresoController::class, 'byid']);
   Route::post('/formularioingreso', [formularioGestionIngresoController::class, 'create']);
   Route::post('/formularioingresopendientes', [formularioGestionIngresoController::class, 'pendientes']);
