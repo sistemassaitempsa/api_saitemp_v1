@@ -1484,7 +1484,7 @@ class formularioGestionIngresoController extends Controller
     }
 
 
-    public function filtroFechaIngreso($cantidad = null)
+    public function filtroFechaIngreso(Request $request, $cantidad = null)
     {
         $user = auth()->user();
         $result = formularioGestionIngreso::leftJoin('usr_app_clientes as cli', 'cli.id', 'usr_app_formulario_ingreso.cliente_id')
@@ -1493,8 +1493,6 @@ class formularioGestionIngresoController extends Controller
             ->leftJoin('usr_app_formulario_ingreso_tipo_servicio as tiser', 'tiser.id', 'usr_app_formulario_ingreso.tipo_servicio_id')
             ->leftJoin('usr_app_registro_ingreso_laboraorio as ilab', 'ilab.registro_ingreso_id', 'usr_app_formulario_ingreso.id')
             ->leftJoin('usr_app_ciudad_laboraorio as ciulab', 'ciulab.id', 'ilab.laboratorio_medico_id')
-            ->whereNotNull('usr_app_formulario_ingreso.fecha_ingreso')
-            ->where('usr_app_formulario_ingreso.responsable_id', '=', $user->id)
             ->select(
                 'usr_app_formulario_ingreso.id',
                 'usr_app_formulario_ingreso.numero_radicado',
@@ -1523,15 +1521,36 @@ class formularioGestionIngresoController extends Controller
                 'est.color as color_estado',
                 'cli.contratacion_hora_confirmacion as hora_confirmacion',
                 'usr_app_formulario_ingreso.responsable_id',
-            )
+            );
 
-            ->orderByRaw("CAST(usr_app_formulario_ingreso.fecha_ingreso AS DATE) ASC")
-            ->orderBy('cli.contratacion_hora_confirmacion', 'ASC')
-            ->paginate($cantidad);
+        if ($request['ordenar_prioridad'] == true) {
+            $result->whereNotNull('usr_app_formulario_ingreso.fecha_ingreso');
+            $result->orderByRaw("CAST(usr_app_formulario_ingreso.fecha_ingreso AS DATE) ASC")
+                ->orderBy('cli.contratacion_hora_confirmacion', 'ASC');
+        }
+        if ($request['filtro_mios'] == true) {
+            $result->where('usr_app_formulario_ingreso.responsable_id', '=', $user->id);
+        } else if ($request['ordenar_prioridad'] == false) {
+            $result->orderby('usr_app_formulario_ingreso.id', 'DESC');
+        }
+
+        /*     if ($filtro == 1) {
+            $result->where('usr_app_formulario_ingreso.responsable_id', '=', $user->id)
+                ->orderby('usr_app_formulario_ingreso.id', 'DESC')
+            ;
+        }
+        if ($filtro == 3) {
+            $result->whereNotNull('usr_app_formulario_ingreso.fecha_ingreso');
+            $result->where('usr_app_formulario_ingreso.responsable_id', '=', $user->id)
+                ->orderByRaw("CAST(usr_app_formulario_ingreso.fecha_ingreso AS DATE) ASC")
+                ->orderBy('cli.contratacion_hora_confirmacion', 'ASC');
+        } */
+        $registros = $result->paginate($cantidad);
+
         foreach ($result as $item) {
             $item->fecha_examen = $item->fecha_examen ? date('d/m/Y H:i', strtotime($item->fecha_examen)) : null;
         }
-        return response()->json($result);
+        return response()->json($registros);
     }
 
     public function filtro($cadena, $cantidad = null)
