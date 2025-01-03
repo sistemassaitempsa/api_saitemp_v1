@@ -798,6 +798,7 @@ Route::group([
   Route::get('/estadoResponsableFirma', [EstadosFirmaController::class, 'indexResponsableEstado2']);
   Route::get('/estadoResponsableFirma/{estado}', [EstadosFirmaController::class, 'indexResponsableEstado']);
   Route::get('/estadosfirma/{estado}', [EstadosFirmaController::class, 'byId']);
+  Route::put('/estadosfirma', [EstadosFirmaController::class, 'cambiarOrden']);
 
   // Historial de cambios
   Route::get('/registrocambios', [RegistroCambioController::class, 'index']);

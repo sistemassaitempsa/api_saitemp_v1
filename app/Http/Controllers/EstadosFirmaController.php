@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Carbon;
 use App\Models\ResponsablesEstadosModel;
 use App\Models\ClientesSeguimientoEstado;
+use Exception;
 
 class EstadosFirmaController extends Controller
 {
@@ -28,9 +29,11 @@ class EstadosFirmaController extends Controller
             'id',
             'nombre',
             'color',
-            'tiempo_respuesta'
-        )->orderByRaw("
-        TRY_CAST(LEFT(nombre, CHARINDEX('.', nombre + '.') - 1) AS INT), nombre")
+            'tiempo_respuesta',
+            'posicion'
+        )->orderBy('posicion')
+            /*  ->orderByRaw("
+        TRY_CAST(LEFT(nombre, CHARINDEX('.', nombre + '.') - 1) AS INT), nombre") */
             ->get();
         return response()->json($result);
     }
@@ -204,5 +207,21 @@ class EstadosFirmaController extends Controller
             'tiempo_respuesta'
         )->where('usr_app_estados_firma.id', $id)
             ->first();
+    }
+    public function cambiarOrden(Request $request)
+    {
+
+        $estadosArray = $request['estados'];
+        foreach ($estadosArray as $index => $estado) {
+            try {
+                $result = EstadosFirma::find($estado['id']);
+                $result->posicion = $index + 1;
+                $result->save();
+            } catch (Exception $e) {
+                return $e;
+            }
+        }
+
+        return response()->json(['status' => 'success', 'message' => 'Registros actualizados de manera exitosa']);
     }
 }

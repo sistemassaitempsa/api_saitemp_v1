@@ -1521,13 +1521,14 @@ class SeguimientoCrmController extends Controller
     }
     public function exportarExcelCrm()
     {
-        $result = SeguimientoCrm::join('usr_app_sedes_saitemp as sede', 'sede.id', 'usr_app_seguimiento_crm.sede_id')
-            ->join('usr_app_procesos as proces', 'proces.id', 'usr_app_seguimiento_crm.proceso_id')
-            ->join('usr_app_atencion_interacion as inter', 'inter.id', 'usr_app_seguimiento_crm.tipo_atencion_id')
-            ->join('usr_app_estado_cierre_crm as cierre', 'cierre.id', 'usr_app_seguimiento_crm.estado_id')
-            ->join('usr_app_pqrsf_crm as pqrsf', 'pqrsf.id', 'usr_app_seguimiento_crm.pqrsf_id')
-            ->join('usr_app_solicitante_crm as soli', 'soli.id', 'usr_app_seguimiento_crm.solicitante_id')
-            ->where('usr_app_seguimiento_crm.pqrsf_id', '!=', 6) // Condición para excluir registros con pqrsf_id = 6
+        $result = SeguimientoCrm::leftjoin('usr_app_sedes_saitemp as sede', 'sede.id', 'usr_app_seguimiento_crm.sede_id')
+            ->leftjoin('usr_app_procesos as proces', 'proces.id', 'usr_app_seguimiento_crm.proceso_id')
+            ->leftjoin('usr_app_atencion_interacion as inter', 'inter.id', 'usr_app_seguimiento_crm.tipo_atencion_id')
+            ->leftjoin('usr_app_estado_cierre_crm as cierre', 'cierre.id', 'usr_app_seguimiento_crm.estado_id')
+            ->leftjoin('usr_app_pqrsf_crm as pqrsf', 'pqrsf.id', 'usr_app_seguimiento_crm.pqrsf_id')
+            ->leftjoin('usr_app_solicitante_crm as soli', 'soli.id', 'usr_app_seguimiento_crm.solicitante_id')
+            ->where('usr_app_seguimiento_crm.tipo_atencion_id', 5) // Condición para excluir registros con pqrsf_id = 6
+            /*  ->where('usr_app_seguimiento_crm.tipo_atencion_id', 5) */
             ->select(
                 'usr_app_seguimiento_crm.id',
                 'usr_app_seguimiento_crm.numero_radicado',
@@ -1536,6 +1537,7 @@ class SeguimientoCrmController extends Controller
                 'soli.nombre as solicitante',
                 'usr_app_seguimiento_crm.nombre_contacto',
                 'inter.nombre as iteraccion',
+                'usr_app_seguimiento_crm.responsable',
                 'pqrsf.nombre as pqrsf',
                 'usr_app_seguimiento_crm.telefono',
                 'usr_app_seguimiento_crm.correo',
