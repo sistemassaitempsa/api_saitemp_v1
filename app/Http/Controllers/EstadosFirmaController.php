@@ -218,7 +218,7 @@ class EstadosFirmaController extends Controller
                 $result->posicion = $index + 1;
                 $result->save();
             } catch (Exception $e) {
-                return $e;
+                return response()->json(['status' => 'error', 'message' => 'Hubo un problema al cambiar el orden de los estados']);
             }
         }
 
