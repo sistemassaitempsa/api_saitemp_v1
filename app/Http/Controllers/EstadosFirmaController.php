@@ -27,7 +27,7 @@ class EstadosFirmaController extends Controller
 
         $result = EstadosFirma::select(
             'id',
-            'nombre',
+            DB::raw("CONCAT(posicion, '. ', nombre) AS nombre"),
             'color',
             'tiempo_respuesta',
             'posicion'
@@ -198,6 +198,7 @@ class EstadosFirmaController extends Controller
         $result = ClientesSeguimientoEstado::all();
         return response()->json($result);
     }
+
     public function byId($id)
     {
         return EstadosFirma::select(
@@ -208,6 +209,18 @@ class EstadosFirmaController extends Controller
         )->where('usr_app_estados_firma.id', $id)
             ->first();
     }
+
+    public function byOrder($order)
+    {
+        return EstadosFirma::select(
+            'id',
+            'nombre',
+            'color',
+            'tiempo_respuesta'
+        )->where('usr_app_estados_firma.posicion', $order)
+            ->first();
+    }
+
     public function cambiarOrden(Request $request)
     {
 

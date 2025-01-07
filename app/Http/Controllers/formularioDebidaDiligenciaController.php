@@ -325,6 +325,7 @@ class formularioDebidaDiligenciaController extends Controller
                     'usr_app_clientes.responsable',
                     'usr_app_clientes.estado_firma_id',
                     'estf.nombre as nombre_estado_firma',
+                    'estf.posicion as posicion_estado_firma',
                     'usr_app_clientes.novedad_servicio',
                     'usr_app_clientes.afectacion_servicio',
                     'usr_app_clientes.usuario_corregir_id',
@@ -2051,7 +2052,7 @@ class formularioDebidaDiligenciaController extends Controller
     {
 
         $user = auth()->user();
-        /*      $usuarios = ResponsablesEstadosModel::where('usr_app_clientes_responsable_estado.estado_firma_id', '=', $estado_id)
+        $usuarios = ResponsablesEstadosModel::where('usr_app_clientes_responsable_estado.estado_firma_id', '=', $estado_id)
             ->join('usr_app_usuarios as usr', 'usr.id', '=', 'usr_app_clientes_responsable_estado.usuario_id')
             ->select(
                 'usuario_id',
@@ -2059,7 +2060,7 @@ class formularioDebidaDiligenciaController extends Controller
                 'usr.apellidos'
             )
             ->get();
- */
+
         $registro_ingreso = Cliente::where('usr_app_clientes.id', '=', $item_id)
             ->first();
         $estado_inicial = $registro_ingreso->estado_firma_id;
