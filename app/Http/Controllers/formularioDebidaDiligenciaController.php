@@ -118,10 +118,12 @@ class formularioDebidaDiligenciaController extends Controller
                 'estf.nombre as nombre_estado_firma',
                 'contratos.estado_contrato', // Estado del contrato como propiedad directa
                 'estf.color as color_estado_firma',
+                'usr_app_clientes.responsable_corregir',
                 'usr_app_clientes.responsable',
                 'estf.id as estado_firma_id',
             )
             ->orderby('usr_app_clientes.created_at', 'DESC')
+            ->orderby('usr_app_clientes.numero_radicado', 'DESC')
             ->paginate($cantidad);
 
         return response()->json($result);
@@ -330,6 +332,7 @@ class formularioDebidaDiligenciaController extends Controller
                     'usr_app_clientes.afectacion_servicio',
                     'usr_app_clientes.usuario_corregir_id',
                     'usr_app_clientes.dirección_rut',
+                    'usr_app_clientes.responsable_corregir',
                     'novedad.nombre as nombre_novedad_servicio',
                     DB::raw("CONCAT(usuario.nombres,' ',usuario.apellidos)  AS nombre_usuario_corregir"),
 
@@ -861,6 +864,7 @@ class formularioDebidaDiligenciaController extends Controller
                     'contratos.estado_contrato',
                     'estf.color as color_estado_firma',
                     'estf.id as estado_firma_id',
+                    'usr_app_clientes.responsable_corregir'
                 )
                 ->orderby('created_at', 'DESC');
 
@@ -1472,10 +1476,12 @@ class formularioDebidaDiligenciaController extends Controller
             /*    $cliente->estado_firma_id = $request->estado_firma_id;
             $cliente->responsable = $request->responsable;
             $cliente->responsable_id = $request->responsable_id; */
+            $cliente->responsable_corregir = $request['responsable_corregir'];
             $cliente->save();
 
 
             if ($request['novedad_servicio'] == 17) {
+
                 $novedad = new NovedadesDD();
                 $novedad->registro_cliente_id =  $cliente->id;
                 $novedad->observaciones = $request['afectacion_servicio'];
@@ -1483,6 +1489,7 @@ class formularioDebidaDiligenciaController extends Controller
                 $novedad->usuario_corrige = $request['usuario_corregir_id'];
                 $novedad->save();
             }
+
 
 
             $ids = [];
