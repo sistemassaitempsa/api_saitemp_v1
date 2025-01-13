@@ -1001,7 +1001,7 @@ Route::group([
     echo Artisan::call('cache:clear');
     echo Artisan::call('route:clear');
   });
-
+  Route::post('/pruebaCorreo', [EnvioCorreoController::class, 'correoPrueba']);
 
 
   // Route::get('/otrosi/{id}', [OtroSiController::class, 'byid']);

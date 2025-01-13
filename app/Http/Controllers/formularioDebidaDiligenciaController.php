@@ -750,7 +750,7 @@ class formularioDebidaDiligenciaController extends Controller
             $cliente_tipo_contrato = ClienteTipoContrato::join('rhh_tipcon as tcon', 'tcon.tip_con', '=', 'usr_app_cliente_tipos_contrato.tipo_contrato_id')
                 ->where('cliente_id', '=', $id)
                 ->select(
-                    'usr_app_cliente_tipos_contrato.tipo_contrato_id as id',
+                    'usr_app_cliente_tipos_contrato.tipo_contrato_id as tip_con',
                     'tcon.nom_con as nombre',
                 )
                 ->get();

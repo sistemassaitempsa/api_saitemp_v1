@@ -1525,7 +1525,7 @@ class formularioGestionIngresoController extends Controller
 
         if ($request['ordenar_prioridad'] == true) {
             $result->whereNotNull('usr_app_formulario_ingreso.fecha_ingreso');
-            $result->orderByRaw("CAST(usr_app_formulario_ingreso.fecha_ingreso AS DATE) ASC")
+            $result->orderByRaw("CAST(usr_app_formulario_ingreso.fecha_ingreso AS DATE) DESC")
                 ->orderBy('cli.contratacion_hora_confirmacion', 'ASC');
         }
         if ($request['filtro_mios'] == true) {

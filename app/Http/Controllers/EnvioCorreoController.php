@@ -222,4 +222,46 @@ class EnvioCorreoController extends Controller
             return response()->json(['status' => 'error', 'message' => 'Correo o ontraseña incorrecta. Vuelve a intentarlo o selecciona "¿Has olvidado tu contraseña?" para cambiarla.']);
         }
     }
+    public function correoPrueba(Request $request)
+    {
+
+        $password = $request['password'];
+        $smtpHost = 'smtp.gmail.com';
+        $smtpPort = 587;
+        $smtpEncryption = 'tls';
+        $smtpUsername = $request['email'];
+        $smtpPassword = $password;
+
+        $dsn = "smtp://$smtpUsername:$smtpPassword@$smtpHost:$smtpPort?encryption=$smtpEncryption";
+
+        $transport = Transport::fromDsn($dsn);
+        $mailer = new Mailer($transport);
+        $body = 'prueba';
+        $email = (new Email())
+            ->from(new Address($smtpUsername, "saitemp"))
+            ->subject("prueba")
+            ->html($body);
+        $email->addTo("programador2@saitempsa.com");
+        try {
+            $mailer->send($email);
+            /*   if ($mailer) {
+                $registroCorreosController = new RegistroCorreosController;
+                $correo['remitente'] = $smtpUsername;
+                $correo['destinatario'] = "programador2@saitempsa.com";
+                $correo['con_copia'] = explode(', ', $correo['con_copia'] ?? '');
+                $correo['con_copia_oculta'] = explode(', ', $correo['con_copia_oculta'] ?? '');
+                $correo['asunto'] = "prueba";
+                $correo['mensaje'] = $body;
+                $correo['adjunto'] = [];
+                $correo['modulo'] = 45;
+                $correo['registro_id'] = 416;
+                $correo['formulario_correo'] = $request->formulario_correo ?? 0;
+                $registroCorreosController->create($correo); */
+
+            return response()->json(['status' => 'success', 'message' => 'El correo electrónico se ha enviado correctamente.']);
+        } catch (\Exception $th) {
+            /* return response()->json(['status' => 'error', 'message' => 'Hubo un error al enviar el correo electrónico.']); */
+            return $th;
+        }
+    }
 }

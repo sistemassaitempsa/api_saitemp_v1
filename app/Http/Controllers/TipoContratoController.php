@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Http\Controllers;
+
 use App\Models\TipoContrato;
 use Illuminate\Http\Request;
 
@@ -14,10 +15,10 @@ class TipoContratoController extends Controller
     public function index()
     {
         $result = TipoContrato::select(
-            'tip_con as id',
+            'tip_con',
             'nom_con as nombre',
         )
-        ->get();
+            ->get();
         return response()->json($result);
     }
 
