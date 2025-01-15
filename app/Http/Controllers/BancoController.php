@@ -27,7 +27,7 @@ class BancoController extends Controller
             ->orWhere('cod_ban', '13')
             ->orWhere('cod_ban', '0')
             ->select(
-                'cod_ban as id',
+                'cod_ban',
                 'nom_ban as nombre',
             )
             ->get();

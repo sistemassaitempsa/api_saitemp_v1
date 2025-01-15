@@ -743,7 +743,7 @@ class formularioDebidaDiligenciaController extends Controller
             $cliente_convenio_banco = ClienteConvenioBanco::join('gen_bancos as ban', 'ban.cod_ban', '=', 'usr_app_cliente_convenio_bancos.convenio_banco_id')
                 ->where('cliente_id', '=', $id)
                 ->select(
-                    'usr_app_cliente_convenio_bancos.convenio_banco_id as id',
+                    'usr_app_cliente_convenio_bancos.convenio_banco_id as cod_ban',
                     'ban.nom_ban as nombre',
                 )
                 ->get();
