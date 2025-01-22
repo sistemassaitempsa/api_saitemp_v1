@@ -51,6 +51,12 @@ return [
             'driver' => 'jwt',
             'provider' => 'users',
         ],
+        'external_ppl' => [
+            'driver' => 'jwt',
+            'provider' => 'users_candidatos',
+            'hash' => false,
+
+        ],
     ],
 
     /*
@@ -75,6 +81,10 @@ return [
             'driver' => 'eloquent',
             'model' => App\Models\User::class,
         ],
+        'users_candidatos' => [
+            'driver' => 'eloquent',
+            'model' => App\Models\UsuariosCandidatosModel::class,
+        ]
 
         // 'users' => [
         //     'driver' => 'database',
@@ -100,6 +110,12 @@ return [
     'passwords' => [
         'users' => [
             'provider' => 'users',
+            'table' => 'password_resets',
+            'expire' => 480,
+            'throttle' => 60,
+        ],
+        'users_candidatos' => [
+            'provider' => 'users_candidatos',
             'table' => 'password_resets',
             'expire' => 480,
             'throttle' => 60,

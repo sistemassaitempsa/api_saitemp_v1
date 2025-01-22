@@ -163,6 +163,7 @@ use App\Http\Controllers\RecepcionEmpleadoController;
 use App\Http\Controllers\GenerarZipController;
 use App\Http\Controllers\limitesCrmController;
 use App\Models\SeguimientoCrm;
+use App\Http\Controllers\AuthCandidatosController;
 use App\Http\Controllers\enviarCorreoDDController;
 use App\Http\Controllers\IndicadoresDDController;
 
@@ -177,15 +178,30 @@ use App\Http\Controllers\IndicadoresDDController;
 |
 */
 
+
+
+
 // TODO: Colocar los name a las rutas 
+
 Route::group([
   'middleware' => ['api', \Fruitcake\Cors\HandleCors::class],
   'prefix' => 'v1'
-
 ], function ($router) {
+  // Route::group(['middleware' => ['auth:external_ppl']], function () {
+  Route::get('userloguedCandidatos', [AuthCandidatosController::class, 'userloguedCandidato']);
+  // });
 
+  Route::post('/loginCandidatos', [AuthCandidatosController::class, 'login']);
+
+  /*  Route::get('userloguedCandidatos', [UsuarioController::class, 'userloguedCandidato']); */
+  /*  Route::get('/userloguedCandidatos/{userType}', [UsuarioController::class, 'userlogued']); */
   Route::post('/login', [AuthController::class, 'login']);
+  Route::post('/registerCandidatos', [AuthCandidatosController::class, 'createUserCandidato']);
   Route::post('/register', [AuthController::class, 'register']);
+  Route::post('/enviartoken', [AuthCandidatosController::class, 'enviarTokenRecuperacion']);
+  Route::post('/recuperarcontrasena', [AuthCandidatosController::class, 'recuperarContraseña']);
+  Route::put('/actualizarcandidatousuario', [AuthCandidatosController::class, 'updateCandidatoUser']);
+  Route::get('/mostrarcandidatos', [AuthCandidatosController::class, 'mostrarUsuarios']);
   // Route::post('/register2', [AuthUsuarioController::class, 'register']);
   Route::post('/logout', [AuthController::class, 'logout']);
   Route::post('/refresh', [AuthController::class, 'refresh']);

@@ -13,7 +13,7 @@ use Tymon\JWTAuth\Facades\JWTAuth;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
-use Validator;
+use Illuminate\Support\Facades\Validator;
 
 class AuthController extends Controller
 {
@@ -59,7 +59,7 @@ class AuthController extends Controller
                             return response()->json([
                                 'access_token' => $token,
                                 'token_type' => 'bearer',
-                                'expires_in' => auth()->factory()->getTTL() * 60 * 60 * 8,
+                                'expires_in' => auth()->factory()->getTTL() / 60 / 60 / 8,
                                 'marca' => $uuid
                             ]);
                         }

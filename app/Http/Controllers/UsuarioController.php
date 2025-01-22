@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
+use App\Models\UsuariosCandidatosModel;
 
 class UsuarioController extends Controller
 {
@@ -77,10 +78,9 @@ class UsuarioController extends Controller
             ->get();
         return response()->json($result);
     }
-
-
     public function userlogued()
     {
+
         $id = auth()->id();
         $users = user::join("usr_app_roles", "usr_app_roles.id", "=", "usr_app_usuarios.rol_id")
             ->join("usr_app_estados_usuario", "usr_app_estados_usuario.id", "=", "usr_app_usuarios.estado_id")
