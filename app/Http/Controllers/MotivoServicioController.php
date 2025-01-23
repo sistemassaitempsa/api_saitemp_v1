@@ -1,38 +1,23 @@
 <?php
 
 namespace App\Http\Controllers;
-use App\Models\ListaCargo;
-use Illuminate\Http\Request;
 
-class ListaCargoController extends Controller
+use Illuminate\Http\Request;
+use App\Models\MotivoServicio;
+
+class MotivoServicioController extends Controller
 {
     /**
      * Display a listing of the resource.
      *
      * @return \Illuminate\Http\Response
      */
-    public function index($id)
+    public function index()
     {
-        $result = ListaCargo::select(
+        $result = MotivoServicio::select(
             'id',
-            'nombre',
-            'descripcion',
-        )
-        ->where('subcategoria_cargo_id','=',$id)
-        ->get();
-        return response()->json($result);
-    }
-
-    public function listacargoscompleta()
-    {
-        $result = ListaCargo::select(
-            'id',
-            'nombre',
-            'descripcion',
-            'subcategoria_cargo_id',
-        )
-        ->orderby('nombre')
-        ->get();
+            'nombre'
+        )->get();
         return response()->json($result);
     }
 

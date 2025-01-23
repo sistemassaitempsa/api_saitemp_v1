@@ -87,7 +87,7 @@ class formularioDebidaDiligenciaController extends Controller
         $permisos = $this->validaPermiso();
 
         $user = auth()->user();
-        $year_actual = date('Y');
+        // $year_actual = date('Y');
 
         $result = cliente::join('gen_vendedor as ven', 'ven.cod_ven', '=', 'usr_app_clientes.vendedor_id')
             ->leftJoin('usr_app_estados_firma as estf', 'estf.id', '=', 'usr_app_clientes.estado_firma_id')
@@ -99,13 +99,12 @@ class formularioDebidaDiligenciaController extends Controller
                 '=',
                 'usr_app_clientes.id'
             )
-            ->whereYear('usr_app_clientes.created_at', $year_actual)
+            // ->whereYear('usr_app_clientes.created_at', $year_actual)
             ->when(!in_array('39', $permisos), function ($query) use ($user) {
                 return $query->where(function ($subQuery) use ($user) {
                     $subQuery->where('usr_app_clientes.vendedor_id', $user->vendedor_id)
                         ->orWhere('usr_app_clientes.responsable_id', $user->id);
                 });
-
             })
             ->select(
                 'usr_app_clientes.id',
@@ -122,7 +121,8 @@ class formularioDebidaDiligenciaController extends Controller
                 'usr_app_clientes.responsable',
                 'estf.id as estado_firma_id',
             )
-            ->orderby('usr_app_clientes.numero_radicado', 'DESC')
+            ->orderby('usr_app_clientes.created_at', 'DESC')
+			->orderby('usr_app_clientes.numero_radicado', 'DESC')
             ->paginate($cantidad);
 
         return response()->json($result);
@@ -809,6 +809,20 @@ class formularioDebidaDiligenciaController extends Controller
         }
     }
 
+
+    public function formularioclientenit($nit)
+    {
+        $result = Cliente::where('nit', '=', $nit)
+            ->orwhere('numero_identificacion', '=', $nit)
+            ->select(
+                'id',
+                'razon_social',
+                DB::raw('COALESCE(nit, numero_identificacion) as nit')
+            )
+            ->orderby('id', 'DESC')
+            ->first();
+        return response()->json($result);
+    }
 
     public function filtro($cadena)
     {
@@ -4144,4 +4158,3 @@ class formularioDebidaDiligenciaController extends Controller
         }
     }
 }
-

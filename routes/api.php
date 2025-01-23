@@ -165,6 +165,8 @@ use App\Http\Controllers\limitesCrmController;
 use App\Models\SeguimientoCrm;
 use App\Http\Controllers\enviarCorreoDDController;
 use App\Http\Controllers\IndicadoresDDController;
+use App\Http\Controllers\UsuarioDebidaDiligenciaController;
+use App\Http\Controllers\MotivoServicioController;
 
 /*
 |--------------------------------------------------------------------------
@@ -186,7 +188,6 @@ Route::group([
 
   Route::post('/login', [AuthController::class, 'login']);
   Route::post('/register', [AuthController::class, 'register']);
-  // Route::post('/register2', [AuthUsuarioController::class, 'register']);
   Route::post('/logout', [AuthController::class, 'logout']);
   Route::post('/refresh', [AuthController::class, 'refresh']);
   Route::get('/user-profile', [AuthController::class, 'userProfile']);
@@ -567,6 +568,7 @@ Route::group([
 
   // lista cargos
   Route::get('/listacargos/{id}', [ListaCargoController::class, 'index']);
+  Route::get('/listacargoscompleta', [ListaCargoController::class, 'listacargoscompleta']);
   Route::post('/listacargos', [ListaCargoController::class, 'create']);
   Route::post('/listacargos/{id}', [ListaCargoController::class, 'update']);
   Route::delete('/listacargos/{id}', [ListaCargoController::class, 'destroy']);
@@ -666,14 +668,14 @@ Route::group([
   Route::post('/clientesai/{id}', [ClientesAlInstanteController::class, 'update']);
   Route::delete('/clientesai/{id}', [ClientesAlInstanteController::class, 'destroy']);
 
-  // Clientes al instante
+  // formulario debida diligencia
   Route::get('/conceptosformulario', [ListaConceptosFormularioSupController::class, 'index']);
   Route::get('/lementospp', [ListaConceptosFormularioSupController::class, 'lementospp']);
   Route::post('/conceptosformulario', [ListaConceptosFormularioSupController::class, 'create']);
   Route::post('/conceptosformulario/{id}', [ListaConceptosFormularioSupController::class, 'update']);
   Route::delete('/conceptosformulario/{id}', [ListaConceptosFormularioSupController::class, 'destroy']);
 
-  // Clientes al instante
+  // formulario supervisión al instante
   Route::get('/formulariosupervision', [formularioSupervisionController::class, 'index']);
   Route::get('/formulariosupervision/{id}', [formularioSupervisionController::class, 'formById']);
   Route::post('/formulariosupervision', [formularioSupervisionController::class, 'create']);
@@ -689,10 +691,11 @@ Route::group([
   Route::delete('/estadosconceptoformulario/{id}', [EstadosConceptoFormularioSupController::class, 'destroy']);
 
   // Servicios orden de servicio
-  Route::get('/serviciosordens', [ServicioOrdenServicioController::class, 'index']);
-  Route::post('/serviciosordens', [ServicioOrdenServicioController::class, 'create']);
-  Route::post('/serviciosordens/{id}', [ServicioOrdenServicioController::class, 'update']);
-  Route::delete('/serviciosordens/{id}', [ServicioOrdenServicioController::class, 'destroy']);
+  Route::get('/serviciosordenes', [ServicioOrdenServicioController::class, 'index']);
+  Route::get('/clienteservicio', [ServicioOrdenServicioController::class, 'datoscliente']);
+  Route::post('/serviciosordenes', [ServicioOrdenServicioController::class, 'create']);
+  Route::post('/serviciosordenes/{id}', [ServicioOrdenServicioController::class, 'update']);
+  Route::delete('/serviciosordenes/{id}', [ServicioOrdenServicioController::class, 'destroy']);
 
   // Bonificación orden de servicio
   Route::get('/bonificacionordens', [BonificacionOrdenServicioController::class, 'index']);
@@ -711,6 +714,20 @@ Route::group([
   Route::post('/laboratorioos', [LaboratorioOrdenServicioController::class, 'create']);
   Route::post('/laboratorioos/{id}', [LaboratorioOrdenServicioController::class, 'update']);
   Route::delete('/laboratorioos/{id}', [LaboratorioOrdenServicioController::class, 'destroy']);
+
+  //   Orden Servicio 
+  Route::get('/ordenservicio', [OrdenServiciolienteController::class, 'index']);
+  Route::post('/ordenservicio', [OrdenServiciolienteController::class, 'create']);
+  Route::post('/ordenservicio/{id}', [OrdenServiciolienteController::class, 'update']);
+  Route::delete('/ordenservicio/{id}', [OrdenServiciolienteController::class, 'destroy']);
+
+
+  //   Motivo servicio 
+  Route::get('/motivoservicio', [MotivoServicioController::class, 'index']);
+  Route::post('/motivoservicio', [MotivoServicioController::class, 'create']);
+  Route::post('/motivoservicio/{id}', [MotivoServicioController::class, 'update']);
+  Route::delete('/motivoservicio/{id}', [MotivoServicioController::class, 'destroy']);
+
 
   //   OrdenServiciolienteController
   Route::get('/ordenserviciocliente', [OrdenServiciolienteController::class, 'index']);
