@@ -21,7 +21,6 @@ use App\Http\Controllers\PermisoController;
 use App\Http\Controllers\SigContratoController;
 use App\Http\Controllers\DepartamentoController;
 use App\Http\Controllers\SigTipoDocumentoIdentidadController;
-use App\Http\Controllers\AuthUsuarioController;
 use App\Http\Controllers\UsuarioController;
 use App\Http\Controllers\MenuRolController;
 use App\Http\Controllers\SigPermisoRolController;
@@ -165,7 +164,6 @@ use App\Http\Controllers\limitesCrmController;
 use App\Models\SeguimientoCrm;
 use App\Http\Controllers\enviarCorreoDDController;
 use App\Http\Controllers\IndicadoresDDController;
-use App\Http\Controllers\UsuarioDebidaDiligenciaController;
 use App\Http\Controllers\MotivoServicioController;
 
 /*
