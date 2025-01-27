@@ -165,7 +165,7 @@ use App\Models\SeguimientoCrm;
 use App\Http\Controllers\enviarCorreoDDController;
 use App\Http\Controllers\IndicadoresDDController;
 use App\Http\Controllers\MotivoServicioController;
-// prueba commit
+prueba commit
 /*
 |--------------------------------------------------------------------------
 | API Routes
