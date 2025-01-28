@@ -35,9 +35,9 @@ class AuthCandidatosController extends Controller
                 'message' => 'Credenciales inválidas'
             ], 401);
         } */
-        $user = UsuariosCandidatosModel::where('email', $request->email)->first();
+        /*   $user = UsuariosCandidatosModel::where('email', $request->email)->first();
         Auth::guard('external_ppl')->login($user);
-        $credentials = $request->only('email', 'password');
+        $credentials = $request->only('email', 'password'); */
         if (!$token = Auth::guard('external_ppl')->attempt([
             'email' => $request->email,
             'password' => $request->password,
@@ -69,7 +69,7 @@ class AuthCandidatosController extends Controller
                 'message' => 'Ya existe un usuario registrado con este número de documento'
             ], 422);
         }
-        $existingUser2 = UsuariosCandidatosModel::where('email', $request->correo)->first();
+        $existingUser2 = UsuariosCandidatosModel::where('email', $request->email)->first();
 
         if ($existingUser2) {
             return response()->json([
