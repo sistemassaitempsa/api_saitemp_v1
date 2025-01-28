@@ -2,10 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Banco;
 use Illuminate\Http\Request;
+use App\Models\MotivoServicio;
 
-class BancoController extends Controller
+class MotivoServicioController extends Controller
 {
     /**
      * Display a listing of the resource.
@@ -14,27 +14,12 @@ class BancoController extends Controller
      */
     public function index()
     {
-        $result = Banco::select()
-            ->get();
+        $result = MotivoServicio::select(
+            'id',
+            'nombre'
+        )->get();
         return response()->json($result);
     }
-
-    public function conveniobanco()
-    {
-        $result = Banco::where('cod_ban', '07')
-            ->orWhere('cod_ban', '01')
-            ->orWhere('cod_ban', '52')
-            ->orWhere('cod_ban', '13')
-            ->orWhere('cod_ban', '0')
-            ->select(
-                'cod_ban',
-                'nom_ban as nombre',
-            )
-            ->get();
-        return response()->json($result);
-    }
-
-
 
     /**
      * Show the form for creating a new resource.

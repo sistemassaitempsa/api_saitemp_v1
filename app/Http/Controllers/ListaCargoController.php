@@ -23,6 +23,19 @@ class ListaCargoController extends Controller
         return response()->json($result);
     }
 
+    public function listacargoscompleta()
+    {
+        $result = ListaCargo::select(
+            'id',
+            'nombre',
+            'descripcion',
+            'subcategoria_cargo_id',
+        )
+        ->orderby('nombre')
+        ->get();
+        return response()->json($result);
+    }
+
     /**
      * Show the form for creating a new resource.
      *

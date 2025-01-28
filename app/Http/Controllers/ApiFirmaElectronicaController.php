@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use App\Models\HistoricoContratosDDModel;
 use App\Http\Controllers\formularioDebidaDiligenciaController;
+use App\Http\Controllers\EstadosFirmaController;
 use setasign\Fpdi\Fpdi;
 use Illuminate\Support\Carbon;
 
@@ -206,6 +207,8 @@ class ApiFirmaElectronicaController extends Controller
         $id = $request['id'];
         $contrato = HistoricoContratosDDModel::where('usr_app_historico_contratos_dd.transaccion_id', '=', $id)->where('activo', '=', 1)
             ->first();
+
+
         if (!$contrato) {
             return response()->json([
                 'status' => 'error',
@@ -216,7 +219,15 @@ class ApiFirmaElectronicaController extends Controller
         $estado = $request['estado'];
         if ($estado === "true") {
             $url = $request['url'];
-
+            $controllerDD = new formularioDebidaDiligenciaController;
+            $formulario = $controllerDD->getbyid($id, false);
+            $posicion_estado_firma_actual = $formulario->posicion_estado_firma;
+            $posicion_estado_firma_nuevo = $posicion_estado_firma_actual + 1;
+            $estadosController = new EstadosFirmaController;
+            $estado_firma_nuevo = $estadosController->byOrder($posicion_estado_firma_nuevo);
+            if ($estado_firma_nuevo) {
+                $controllerDD->actualizaestadofirma($id, $estado_firma_nuevo, null, $formulario->responsable_id, $formulario->estado_firma_id);
+            }
             try {
                 // Descargar archivo desde la URL
                 $response = Http::get($url);
@@ -243,7 +254,7 @@ class ApiFirmaElectronicaController extends Controller
                     return response()->json([
                         'status' => 'error',
                         'message' => 'No se pudo descargar el archivo desde la URL proporcionada',
-                    ], 400);
+                    ], 404);
                 }
             } catch (\Exception $e) {
                 return response()->json([
@@ -255,7 +266,7 @@ class ApiFirmaElectronicaController extends Controller
             return response()->json([
                 'status' => 'error',
                 'message' => 'El estado no permite procesar la solicitud',
-            ], 400);
+            ], 404);
         }
     }
     public function reenvioFirmantes($id)

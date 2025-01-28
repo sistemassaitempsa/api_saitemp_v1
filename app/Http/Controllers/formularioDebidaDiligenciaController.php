@@ -87,7 +87,7 @@ class formularioDebidaDiligenciaController extends Controller
         $permisos = $this->validaPermiso();
 
         $user = auth()->user();
-        $year_actual = date('Y');
+        // $year_actual = date('Y');
 
         $result = cliente::join('gen_vendedor as ven', 'ven.cod_ven', '=', 'usr_app_clientes.vendedor_id')
             ->leftJoin('usr_app_estados_firma as estf', 'estf.id', '=', 'usr_app_clientes.estado_firma_id')
@@ -99,13 +99,13 @@ class formularioDebidaDiligenciaController extends Controller
                 '=',
                 'usr_app_clientes.id'
             )
-            ->whereYear('usr_app_clientes.created_at', $year_actual)
+
+            /*   ->whereYear('usr_app_clientes.created_at', $year_actual) */
             ->when(!in_array('39', $permisos), function ($query) use ($user) {
                 return $query->where(function ($subQuery) use ($user) {
                     $subQuery->where('usr_app_clientes.vendedor_id', $user->vendedor_id)
                         ->orWhere('usr_app_clientes.responsable_id', $user->id);
                 });
-
             })
             ->select(
                 'usr_app_clientes.id',
@@ -119,9 +119,11 @@ class formularioDebidaDiligenciaController extends Controller
                 'estf.nombre as nombre_estado_firma',
                 'contratos.estado_contrato', // Estado del contrato como propiedad directa
                 'estf.color as color_estado_firma',
+                'usr_app_clientes.responsable_corregir',
                 'usr_app_clientes.responsable',
                 'estf.id as estado_firma_id',
             )
+            ->orderby('usr_app_clientes.created_at', 'DESC')
             ->orderby('usr_app_clientes.numero_radicado', 'DESC')
             ->paginate($cantidad);
 
@@ -326,10 +328,12 @@ class formularioDebidaDiligenciaController extends Controller
                     'usr_app_clientes.responsable',
                     'usr_app_clientes.estado_firma_id',
                     'estf.nombre as nombre_estado_firma',
+                    'estf.posicion as posicion_estado_firma',
                     'usr_app_clientes.novedad_servicio',
                     'usr_app_clientes.afectacion_servicio',
                     'usr_app_clientes.usuario_corregir_id',
                     'usr_app_clientes.dirección_rut',
+                    'usr_app_clientes.responsable_corregir',
                     'novedad.nombre as nombre_novedad_servicio',
                     DB::raw("CONCAT(usuario.nombres,' ',usuario.apellidos)  AS nombre_usuario_corregir"),
 
@@ -740,7 +744,7 @@ class formularioDebidaDiligenciaController extends Controller
             $cliente_convenio_banco = ClienteConvenioBanco::join('gen_bancos as ban', 'ban.cod_ban', '=', 'usr_app_cliente_convenio_bancos.convenio_banco_id')
                 ->where('cliente_id', '=', $id)
                 ->select(
-                    'usr_app_cliente_convenio_bancos.convenio_banco_id as id',
+                    'usr_app_cliente_convenio_bancos.convenio_banco_id as cod_ban',
                     'ban.nom_ban as nombre',
                 )
                 ->get();
@@ -750,7 +754,7 @@ class formularioDebidaDiligenciaController extends Controller
             $cliente_tipo_contrato = ClienteTipoContrato::join('rhh_tipcon as tcon', 'tcon.tip_con', '=', 'usr_app_cliente_tipos_contrato.tipo_contrato_id')
                 ->where('cliente_id', '=', $id)
                 ->select(
-                    'usr_app_cliente_tipos_contrato.tipo_contrato_id as id',
+                    'usr_app_cliente_tipos_contrato.tipo_contrato_id as tip_con',
                     'tcon.nom_con as nombre',
                 )
                 ->get();
@@ -810,6 +814,20 @@ class formularioDebidaDiligenciaController extends Controller
     }
 
 
+    public function formularioclientenit($nit)
+    {
+        $result = Cliente::where('nit', '=', $nit)
+            ->orwhere('numero_identificacion', '=', $nit)
+            ->select(
+                'id',
+                'razon_social',
+                DB::raw('COALESCE(nit, numero_identificacion) as nit')
+            )
+            ->orderby('id', 'DESC')
+            ->first();
+        return response()->json($result);
+    }
+
     public function filtro($cadena)
     {
         $permisos = $this->validaPermiso();
@@ -841,7 +859,7 @@ class formularioDebidaDiligenciaController extends Controller
                     '=',
                     'usr_app_clientes.id'
                 )
-                ->whereYear('usr_app_clientes.created_at', $year_actual)
+                /*    ->whereYear('usr_app_clientes.created_at', $year_actual) */
                 ->when(!in_array('39', $permisos), function ($query) use ($user) {
                     return $query->where(function ($subQuery) use ($user) {
                         $subQuery->where('usr_app_clientes.vendedor_id', $user->vendedor_id)
@@ -861,8 +879,9 @@ class formularioDebidaDiligenciaController extends Controller
                     'contratos.estado_contrato',
                     'estf.color as color_estado_firma',
                     'estf.id as estado_firma_id',
+                    'usr_app_clientes.responsable_corregir'
                 )
-                ->orderby('id', 'DESC');
+                ->orderby('created_at', 'DESC');
 
 
             switch ($operador) {
@@ -1472,10 +1491,12 @@ class formularioDebidaDiligenciaController extends Controller
             /*    $cliente->estado_firma_id = $request->estado_firma_id;
             $cliente->responsable = $request->responsable;
             $cliente->responsable_id = $request->responsable_id; */
+            $cliente->responsable_corregir = $request['responsable_corregir'];
             $cliente->save();
 
 
             if ($request['novedad_servicio'] == 17) {
+
                 $novedad = new NovedadesDD();
                 $novedad->registro_cliente_id =  $cliente->id;
                 $novedad->observaciones = $request['afectacion_servicio'];
@@ -1483,6 +1504,7 @@ class formularioDebidaDiligenciaController extends Controller
                 $novedad->usuario_corrige = $request['usuario_corregir_id'];
                 $novedad->save();
             }
+
 
 
             $ids = [];
@@ -2052,7 +2074,7 @@ class formularioDebidaDiligenciaController extends Controller
     {
 
         $user = auth()->user();
-        /*      $usuarios = ResponsablesEstadosModel::where('usr_app_clientes_responsable_estado.estado_firma_id', '=', $estado_id)
+        $usuarios = ResponsablesEstadosModel::where('usr_app_clientes_responsable_estado.estado_firma_id', '=', $estado_id)
             ->join('usr_app_usuarios as usr', 'usr.id', '=', 'usr_app_clientes_responsable_estado.usuario_id')
             ->select(
                 'usuario_id',
@@ -2060,7 +2082,7 @@ class formularioDebidaDiligenciaController extends Controller
                 'usr.apellidos'
             )
             ->get();
- */
+
         $registro_ingreso = Cliente::where('usr_app_clientes.id', '=', $item_id)
             ->first();
         $estado_inicial = $registro_ingreso->estado_firma_id;
@@ -4144,4 +4166,3 @@ class formularioDebidaDiligenciaController extends Controller
         }
     }
 }
-

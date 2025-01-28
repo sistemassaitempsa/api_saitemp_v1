@@ -280,11 +280,14 @@ class SeguimientoCrmController extends Controller
     public function createandroid(Request $request)
     {
 
+
         $datosFormulario = $request->all();
         DB::beginTransaction();
         try {
             $user = auth()->user();
+            $user = auth()->user();
             $fechaHoraActual = Carbon::now();
+            $result = new SeguimientoCrm; //::find("94");
             $result = new SeguimientoCrm; //::find("94");
             $result->sede_id = $request->sede_id;
             $result->proceso_id = $request->proceso_id;
@@ -299,7 +302,9 @@ class SeguimientoCrmController extends Controller
                 $result->cierre_pqrsf = $request->cierra_radicado;
                 $result->fecha_cerrado = $fechaHoraActual->format('d-m-Y H:i:s');
                 $result->usuario_guarda_cierre = $user->nombres . " " . $user->apellidos;
+                $result->usuario_guarda_cierre = $user->nombres . " " . $user->apellidos;
             }
+            $result->creacion_pqrsf = $user->nombres . ' ' . $user->apellidos;
             $result->creacion_pqrsf = $user->nombres . ' ' . $user->apellidos;
             $result->responsable = $request->responsable;
             $result->pqrsf_id = $request->pqrsf_id;
@@ -336,69 +341,191 @@ class SeguimientoCrmController extends Controller
                     // Crea una nueva instancia del modelo Evidencia
                     $evidencia = new Evidencia;
 
-                    // Decodifica el archivo Base64
-                    $archivoBase64 = $item['path'];
-                    $nombre_archivo =  $item['nombre'];
-                    $archivoBinario = base64_decode($archivoBase64);
+                    $result->save();
 
-                    // Verifica si la decodificación fue exitosa
-                    if ($archivoBinario === false) {
-                        throw new \Exception("Error al decodificar el archivo base64.");
+                    if (isset($datosFormulario['evidencias'])) {
+
+
+                        foreach ($datosFormulario['evidencias'] as $item) {
+                            // Crea una nueva instancia del modelo Evidencia
+                            $evidencia = new Evidencia;
+
+                            // Decodifica el archivo Base64
+                            $archivoBase64 = $item['path'];
+                            $nombre_archivo =  $item['nombre'];
+                            $archivoBinario = base64_decode($archivoBase64);
+                            // Decodifica el archivo Base64
+                            $archivoBase64 = $item['path'];
+                            $nombre_archivo =  $item['nombre'];
+                            $archivoBinario = base64_decode($archivoBase64);
+
+                            // Verifica si la decodificación fue exitosa
+                            if ($archivoBinario === false) {
+                                throw new \Exception("Error al decodificar el archivo base64.");
+                            }
+                            // Verifica si la decodificación fue exitosa
+                            if ($archivoBinario === false) {
+                                throw new \Exception("Error al decodificar el archivo base64.");
+                            }
+
+                            // Guarda el archivo temporalmente
+                            $rutaTemp = storage_path('app/temp/');
+                            if (!file_exists($rutaTemp)) {
+                                mkdir($rutaTemp, 0777, true);
+                            }
+                            $tempFilePath = $rutaTemp . $nombre_archivo;
+                            file_put_contents($tempFilePath, $archivoBinario);
+                            // Guarda el archivo temporalmente
+                            $rutaTemp = storage_path('app/temp/');
+                            if (!file_exists($rutaTemp)) {
+                                mkdir($rutaTemp, 0777, true);
+                            }
+                            $tempFilePath = $rutaTemp . $nombre_archivo;
+                            file_put_contents($tempFilePath, $archivoBinario);
+
+                            // Llama a la función `comprimirArchivos` pasando el archivo temporal como argumento
+                            try {
+                                $evidencia->archivo = $this->comprimirArchivos($result->numero_radicado, new \Illuminate\Http\File($tempFilePath), './upload/evidenciasCrm2/', $nombre_archivo);
+                                $evidencia->descripcion = $item['descripcion'];
+                                $evidencia->registro_id = $result->id;
+                                $evidencia->save();
+                            } catch (\Exception $e) {
+
+                                continue;
+                            }
+
+                            // Elimina el archivo temporal después de procesarlo
+                            if (file_exists($tempFilePath)) {
+                                unlink($tempFilePath);
+                            }
+                        }
                     }
 
-                    // Guarda el archivo temporalmente
-                    $rutaTemp = storage_path('app/temp/');
-                    if (!file_exists($rutaTemp)) {
-                        mkdir($rutaTemp, 0777, true);
+                    // Definir la estructura de correos en un array
+                    $correosResponsables = [
+                        'correos' => [
+                            [
+                                'correo' => $request->correo_responsable,
+                                'observacion' => '',
+                                'compromiso' => false,
+                            ],
+                            [
+                                'correo' => $request->correo,
+                                'observacion' => '',
+                                'compromiso' => false,
+                            ],
+                        ],
+                    ];
+
+                    $contador = 1;
+                    if (isset($datosFormulario['asistentes'])) {
+                        foreach ($datosFormulario['asistentes'] as $item) {
+                            // Crea una nueva instancia del modelo Evidencia
+                            $asistente = new AsistenciaVisitaCrm;
+                            // Elimina el archivo temporal después de procesarlo
+                            if (file_exists($tempFilePath)) {
+                                unlink($tempFilePath);
+                            }
+                        }
                     }
-                    $tempFilePath = $rutaTemp . $nombre_archivo;
-                    file_put_contents($tempFilePath, $archivoBinario);
 
-                    // Llama a la función `comprimirArchivos` pasando el archivo temporal como argumento
-                    try {
-                        $evidencia->archivo = $this->comprimirArchivos($result->numero_radicado, new \Illuminate\Http\File($tempFilePath), './upload/evidenciasCrm2/', $nombre_archivo);
-                        $evidencia->descripcion = $item['descripcion'];
-                        $evidencia->registro_id = $result->id;
-                        $evidencia->save();
-                    } catch (\Exception $e) {
-                        Log::error("Error al comprimir el archivo: " . $e->getMessage());
-                        continue;
+                    // Definir la estructura de correos en un array
+                    $correosResponsables = [
+                        'correos' => [
+                            [
+                                'correo' => $request->correo_responsable,
+                                'observacion' => '',
+                                'compromiso' => false,
+                            ],
+                            [
+                                'correo' => $request->correo,
+                                'observacion' => '',
+                                'compromiso' => false,
+                            ],
+                        ],
+                    ];
+
+                    $contador = 1;
+                    if (isset($datosFormulario['asistentes'])) {
+                        foreach ($datosFormulario['asistentes'] as $item) {
+                            // Crea una nueva instancia del modelo Evidencia
+                            $asistente = new AsistenciaVisitaCrm;
+
+                            // Decodifica el archivo Base64
+                            $archivoBase64 = $item['firma'];
+                            $nombre_archivo = 'firma.png';
+                            $archivoBinario = base64_decode($archivoBase64);
+                            // Decodifica el archivo Base64
+                            $archivoBase64 = $item['firma'];
+                            $nombre_archivo = 'firma.png';
+                            $archivoBinario = base64_decode($archivoBase64);
+
+                            // Verifica si la decodificación fue exitosa
+                            if ($archivoBinario === false) {
+                                throw new \Exception("Error al decodificar el archivo base64.");
+                            }
+
+                            // Define la carpeta de destino en la carpeta public/upload/evidenciasCrm2
+                            $carpetaDestino = public_path('upload/evidenciasCrm2/');
+                            if (!file_exists($carpetaDestino)) {
+                                mkdir($carpetaDestino, 0777, true); // Crea el directorio si no existe con permisos 0777
+                            }
+
+                            // Genera un nombre único para el archivo
+                            $nombreArchivo = Carbon::now()->timestamp . '_' . $contador . '.png';
+                            $rutaCompleta = $carpetaDestino . $nombreArchivo;
+
+                            // Guarda el archivo directamente en la carpeta public/upload/evidenciasCrm2
+                            if (file_put_contents($rutaCompleta, $archivoBinario)) {
+                                // Guarda solo el path relativo en la base de datos para el acceso desde el frontend
+                                $asistente->firma = 'upload/evidenciasCrm2/' . $nombreArchivo;
+                                $asistente->nombre = $item['nombre'];
+                                $asistente->correo = $item['correo'];
+                                $asistente->cargo = $item['cargo'];
+                                $asistente->registro_id = $result->id;
+                                $asistente->save();
+
+                                $correosResponsables['correos'][] = [
+                                    'correo' => $item['correo'],
+                                    'observacion' => '',
+                                    'compromiso' => false,
+                                ];
+                            } else {
+                                throw new \Exception("Error al guardar el archivo en la carpeta public/upload/evidenciasCrm2.");
+                            }
+                            $contador++;
+                        }
                     }
 
-                    // Elimina el archivo temporal después de procesarlo
-                    if (file_exists($tempFilePath)) {
-                        unlink($tempFilePath);
+                    foreach ($datosFormulario['compromisos'] as $item) {
+
+                        $compromiso = new CompromisosVisitaCrm;
+                        $compromiso->titulo = "titulo 1";
+                        $compromiso->descripcion = $item['compromiso'];
+                        $compromiso->registro_id = $result->id;
+                        $compromiso->estado_cierre_id = $item['estado_id'];
+                        $compromiso->responsable = $item['responsable'];
+                        $compromiso->observacion = $item['observacion'];
+                        $compromiso->responsable_id = $item['responsable_id'];
+                        $compromiso->save();
+
+                        $usuario = User::find($item['responsable_id']);
+                        $correosResponsables['correos'][] = [
+                            'correo' => $usuario->usuario,
+                            'observacion' => $item['observacion'],
+                            'compromiso' => true,
+                        ];
                     }
-                }
-            }
+                    $temaPrincipal = new TemasVisitaCrm;
+                    $temaPrincipal->titulo = "";
+                    $temaPrincipal->descripcion = $request->tema;
+                    $temaPrincipal->registro_id = $result->id;
+                    $temaPrincipal->save();
 
-            // Definir la estructura de correos en un array
-            $correosResponsables = [
-                'correos' => [
-                    [
-                        'correo' => $request->correo_responsable,
-                        'observacion' => '',
-                        'compromiso' => false,
-                    ],
-                    [
-                        'correo' => $request->correo,
-                        'observacion' => '',
-                        'compromiso' => false,
-                    ],
-                ],
-            ];
+                    DB::commit();
 
-            $contador = 1;
-            if (isset($datosFormulario['asistentes'])) {
-                foreach ($datosFormulario['asistentes'] as $item) {
-                    // Crea una nueva instancia del modelo Evidencia
-                    $asistente = new AsistenciaVisitaCrm;
 
-                    // Decodifica el archivo Base64
-                    $archivoBase64 = $item['firma'];
-                    $nombre_archivo = 'firma.png';
-                    $archivoBinario = base64_decode($archivoBase64);
-
+                    return response()->json(["correos" => $correosResponsables, "formulario_id" => $result->id]);
                     // Verifica si la decodificación fue exitosa
                     if ($archivoBinario === false) {
                         throw new \Exception("Error al decodificar el archivo base64.");
@@ -1069,18 +1196,17 @@ class SeguimientoCrmController extends Controller
         if (!empty($formulario->hora_cierre)) {
             $horaCierreFormateada = Carbon::parse($formulario->hora_cierre)->format('H:i');
         }
+        $url = public_path('upload/logo1.png');
         $pdf->setPrintHeader(false);
+        $pdf->SetMargins(15, 30, 15);
+        $pdf->SetAutoPageBreak(true, 40);
         $pdf->AddPage();
+        $url2 = public_path('/upload/MEMBRETE.png');
         $pdf->SetMargins(0, 0, 0);
         $pdf->SetAutoPageBreak(false, 0);
-        // Agregar imagen de fondo
-        $url = public_path('/upload/MEMBRETE.png');
-        $pdf->Image($url, -0.5, 0, $pdf->getPageWidth() + 0.5, $pdf->getPageHeight(), '', '', '', false, 300, '', false, false, 0);
-        // Asegurarse de que el contenido no esté afectado por la imagen de fondo
-        /*  $pdf->SetMargins(5, 20, 5); */
-        // Establecer fuente
-        $pdf->SetFont('helvetica', '', 12);
-
+        $pdf->Image($url2, 0, 0, $pdf->getPageWidth() + 0.5, $pdf->getPageHeight(), '', '', '', false, 300, '', false, false, 0);
+        $pdf->SetMargins(15, 30, 15);
+        $pdf->SetAutoPageBreak(true, 40);
         // Construir el contenido del PDF con las claves y valores del formulario y aplicando estilos
 
         $parrafo = str_replace("\n", "<br>", $formulario->observacion);
@@ -1245,12 +1371,7 @@ class SeguimientoCrmController extends Controller
             }
             $html .= '</table>';
         }
-        $margen_izquierdo = 15;
-        $margen_derecho = 15;
-        $pdf->SetMargins($margen_izquierdo, 40, $margen_derecho);
-        $pdf->SetAutoPageBreak(true, 50);
-        // Escribir el HTML en el PDF
-        $pdf->writeHTML($html, false, false, true, false, '');
+        $pdf->writeHTML($html, true, false, true, false, '');
         $totalPages = 0;
         if ($pdf->getNumPages() == 1) {
             $totalPages = 1;
@@ -1263,17 +1384,18 @@ class SeguimientoCrmController extends Controller
             // Cambiar a la página correspondiente
             $pdf->setPage($i);
 
+            if ($i > 1) {
+                $url = public_path('/upload/MEMBRETE.png');
+                /*          $pdf->SetMargins(0, 0, 0);
+                $pdf->SetAutoPageBreak(false, 40); */
+                $pdf->SetMargins(0, 0, 0);
+                $pdf->SetAutoPageBreak(false, 0);
+                $pdf->Image($url, 0, 0, $pdf->getPageWidth(), $pdf->getPageHeight(), '', '', '', false, 300, '', false, false, 0);
+                $pdf->SetMargins(15, 30, 15);
+                $pdf->SetAutoPageBreak(true, 40);
+            }
             // Ajustar los márgenes para que el membrete no interfiera con el contenido
-            $pdf->SetMargins(0, 0, 0);
-            $pdf->SetAutoPageBreak(false, 0);
 
-            // Agregar la imagen del membrete
-            $url = public_path('/upload/MEMBRETE.png');
-            $pdf->Image($url, -0.5, 0, $pdf->getPageWidth() + 0.5, $pdf->getPageHeight(), '', '', '', false, 300, '', false, false, 0);
-
-            // Restaurar los márgenes para el contenido
-            $pdf->SetMargins(15, 40, 15);
-            $pdf->SetAutoPageBreak(true, 50);
         }
 
 
@@ -1527,13 +1649,14 @@ class SeguimientoCrmController extends Controller
     }
     public function exportarExcelCrm()
     {
-        $result = SeguimientoCrm::join('usr_app_sedes_saitemp as sede', 'sede.id', 'usr_app_seguimiento_crm.sede_id')
-            ->join('usr_app_procesos as proces', 'proces.id', 'usr_app_seguimiento_crm.proceso_id')
-            ->join('usr_app_atencion_interacion as inter', 'inter.id', 'usr_app_seguimiento_crm.tipo_atencion_id')
-            ->join('usr_app_estado_cierre_crm as cierre', 'cierre.id', 'usr_app_seguimiento_crm.estado_id')
-            ->join('usr_app_pqrsf_crm as pqrsf', 'pqrsf.id', 'usr_app_seguimiento_crm.pqrsf_id')
-            ->join('usr_app_solicitante_crm as soli', 'soli.id', 'usr_app_seguimiento_crm.solicitante_id')
-            ->where('usr_app_seguimiento_crm.pqrsf_id', '!=', 6) // Condición para excluir registros con pqrsf_id = 6
+        $result = SeguimientoCrm::leftjoin('usr_app_sedes_saitemp as sede', 'sede.id', 'usr_app_seguimiento_crm.sede_id')
+            ->leftjoin('usr_app_procesos as proces', 'proces.id', 'usr_app_seguimiento_crm.proceso_id')
+            ->leftjoin('usr_app_atencion_interacion as inter', 'inter.id', 'usr_app_seguimiento_crm.tipo_atencion_id')
+            ->leftjoin('usr_app_estado_cierre_crm as cierre', 'cierre.id', 'usr_app_seguimiento_crm.estado_id')
+            ->leftjoin('usr_app_pqrsf_crm as pqrsf', 'pqrsf.id', 'usr_app_seguimiento_crm.pqrsf_id')
+            ->leftjoin('usr_app_solicitante_crm as soli', 'soli.id', 'usr_app_seguimiento_crm.solicitante_id')
+            ->where('usr_app_seguimiento_crm.tipo_atencion_id', 5) // Condición para excluir registros con pqrsf_id = 6
+            /*  ->where('usr_app_seguimiento_crm.tipo_atencion_id', 5) */
             ->select(
                 'usr_app_seguimiento_crm.id',
                 'usr_app_seguimiento_crm.numero_radicado',
@@ -1542,6 +1665,7 @@ class SeguimientoCrmController extends Controller
                 'soli.nombre as solicitante',
                 'usr_app_seguimiento_crm.nombre_contacto',
                 'inter.nombre as iteraccion',
+                'usr_app_seguimiento_crm.responsable',
                 'pqrsf.nombre as pqrsf',
                 'usr_app_seguimiento_crm.telefono',
                 'usr_app_seguimiento_crm.correo',

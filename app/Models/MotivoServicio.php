@@ -5,8 +5,9 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class TipoContrato extends Model
+class MotivoServicio extends Model
 {
     use HasFactory;
-    protected $table = 'rhh_tipcon';
+
+    protected $table = 'usr_app_motivos_servicio';
 }
