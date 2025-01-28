@@ -6,6 +6,7 @@ use App\Models\SigContratoEmpleado;
 use App\Models\SigEmpleados;
 use App\Models\SigUsuarioContrato;
 use App\Models\User;
+use App\Models\UsuarioDebidaDiligencia;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -53,6 +54,9 @@ class AuthController extends Controller
                         ldap_close($ldapconn);
                         $user = User::where('email', $request->email)->first();
                         $uuid = $this->guadarMarcaTemporal($user->email);
+                        if($user->estado_id == 2){
+                            return response()->json(['status' => 'error', 'message' => 'Este usuario se encuentra inactivo, por favor consulte al administrador del sistema']);
+                        }
                         if ($user) {
                             Auth::guard('no-password-validation')->login($user);
                             $token = JWTAuth::fromUser($user);
@@ -69,7 +73,8 @@ class AuthController extends Controller
                 } catch (\Exception $e) {
                     ldap_close($ldapconn);
                     $validator = Validator::make($request->all(), [
-                        'email' => 'required|email',
+                        'email' => 'required',
+                        // 'email' => 'required|email',
                         'password' => 'required|string|min:6',
                     ]);
 
@@ -77,35 +82,23 @@ class AuthController extends Controller
                         return response()->json($validator->errors(), 422);
                     }
 
-                    if (!$token = auth()->attempt($validator->validated())) {
+                    $token = auth()->attempt($validator->validated());
+                    if (!$token) {
+                        $token = auth('usuariosdebidadiligencia')->attempt($validator->validated());
+                    }
+
+                    if (!$token) {
                         return response()->json(['status' => 'error', 'message' => 'Por favor verifique sus datos de inicio de sesión e intente nuevamente']);
                     }
 
-                    $uuid = $this->guadarMarcaTemporal($request->email);
-                    $token_marca = $this->createNewToken($token, $uuid);
-                    // $token_marca['marca'] = $uuid;
-                    return $token_marca;
+                    $token = $this->createNewToken($token);
+                    return $token;
                 }
             }
         } catch (\Exception $e) {
+            return $e;
             return response()->json(['status' => 'error', 'message' => 'No se pudo establecer la conexión con el servidor LDAP.']);
         }
-
-
-        // $validator = Validator::make($request->all(), [
-        //     'email' => 'required|email',
-        //     'password' => 'required|string|min:6',
-        // ]);
-
-        // if ($validator->fails()) {
-        //     return response()->json($validator->errors(), 422);
-        // }
-
-        // if (!$token = auth()->attempt($validator->validated())) {
-        //     return response()->json(['status' => 'error', 'message'=>'Por favor verifique sus datos de inicio de sesión e intente nuevamente']);
-        // }
-
-        // return $this->createNewToken($token);
     }
 
     public function guadarMarcaTemporal($email)
@@ -125,24 +118,6 @@ class AuthController extends Controller
      */
     public function register(Request $request)
     {
-        // $validator = Validator::make($request->all(), [
-        //     // 'nombres' => 'string|between:2,100',
-        //     // 'apellidos' => 'string|between:2,100',
-        //     // 'documento_identidad' => 'string|between:2,100',
-        //     // 'email' => 'required|string|max:100',
-        //     // 'password' => 'string|min:6',
-        //     // 'rol_id' => 'required',
-        // ]);
-
-        // if ($validator->fails()) {
-        //     return response()->json($validator->errors()->toJson(), 400);
-        // }
-
-        // $user = User::create(array_merge(
-        //     $validator->validated(),
-        //     ['password' => bcrypt($request->password)]
-        // ));
-
         $user = new User;
         $user->nombres = $request->nombres;
         $user->apellidos = $request->apellidos;
@@ -151,7 +126,12 @@ class AuthController extends Controller
         $user->contrasena_correo = Crypt::encryptString($request->contrasena_correo);
         $user->email = $request->email;
         $user->password = bcrypt($request->password);
-        $user->rol_id = $request->rol_id == '' ? 3 : $request->rol_id;
+        if(is_numeric($request->email)){ // se verifica si el usuario a registrar es un número de documento para asignar el rol de cliente
+            $user->rol_id = 53;
+            $user->empresa_cliente = 1;
+        }else{
+            $user->rol_id = $request->rol_id == '' ? 3 : $request->rol_id;
+        }
 
 
         $archivos = $request->files->all();
@@ -220,9 +200,7 @@ class AuthController extends Controller
         return response()->json([
             'access_token' => $token,
             'token_type' => 'bearer',
-            'expires_in' => auth()->factory()->getTTL() * 60 * 60 * 8,
-            'marca' => $uuid
-            // 'user' => auth()->user()
+            'expires_in' => auth()->factory()->getTTL() * 60 * 60 * 8
         ]);
     }
 }
