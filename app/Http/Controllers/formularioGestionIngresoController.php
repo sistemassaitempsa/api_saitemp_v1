@@ -64,9 +64,10 @@ class formularioGestionIngresoController extends Controller
                 'usr_app_formulario_ingreso.responsable',
                 'est.id as estado_ingreso_id',
                 'est.color as color_estado',
-
+                'cli.contratacion_hora_confirmacion as hora_confirmacion',
+                'usr_app_formulario_ingreso.responsable_id',
             )
-            ->orderby('usr_app_formulario_ingreso.updated_at', 'DESC')
+            ->orderby('usr_app_formulario_ingreso.id', 'DESC')
             ->paginate($cantidad);
         foreach ($result as $item) {
             $item->fecha_examen = $item->fecha_examen ? date('d/m/Y H:i', strtotime($item->fecha_examen)) : null;
@@ -1483,7 +1484,74 @@ class formularioGestionIngresoController extends Controller
     }
 
 
+    public function filtroFechaIngreso(Request $request, $cantidad = null)
+    {
+        $user = auth()->user();
+        $result = formularioGestionIngreso::leftJoin('usr_app_clientes as cli', 'cli.id', 'usr_app_formulario_ingreso.cliente_id')
+            ->leftJoin('usr_app_municipios as mun', 'mun.id', 'usr_app_formulario_ingreso.municipio_id')
+            ->LeftJoin('usr_app_estados_ingreso as est', 'est.id', 'usr_app_formulario_ingreso.estado_ingreso_id')
+            ->leftJoin('usr_app_formulario_ingreso_tipo_servicio as tiser', 'tiser.id', 'usr_app_formulario_ingreso.tipo_servicio_id')
+            ->leftJoin('usr_app_registro_ingreso_laboraorio as ilab', 'ilab.registro_ingreso_id', 'usr_app_formulario_ingreso.id')
+            ->leftJoin('usr_app_ciudad_laboraorio as ciulab', 'ciulab.id', 'ilab.laboratorio_medico_id')
+            ->select(
+                'usr_app_formulario_ingreso.id',
+                'usr_app_formulario_ingreso.numero_radicado',
+                'usr_app_formulario_ingreso.n_servicio',
+                'tiser.nombre_servicio',
+                'usr_app_formulario_ingreso.updated_at',
+                'usr_app_formulario_ingreso.created_at',
+                'usr_app_formulario_ingreso.numero_identificacion',
+                'usr_app_formulario_ingreso.nombre_completo',
+                'usr_app_formulario_ingreso.cargo',
+                'cli.razon_social',
+                'mun.nombre as ciudad',
+                'ciulab.laboratorio',
+                'usr_app_formulario_ingreso.laboratorio as otro_laboratorio',
+                'usr_app_formulario_ingreso.fecha_examen',
+                DB::raw("FORMAT(CAST(usr_app_formulario_ingreso.fecha_ingreso AS DATE), 'dd/MM/yyyy') as fecha_ingreso"),
+                'usr_app_formulario_ingreso.estado_vacante',
+                'usr_app_formulario_ingreso.novedades',
+                'usr_app_formulario_ingreso.observacion_estado',
+                'usr_app_formulario_ingreso.profesional',
+                'usr_app_formulario_ingreso.afectacion_servicio',
+                'usr_app_formulario_ingreso.responsable_corregir',
+                'est.nombre as estado_ingreso',
+                'usr_app_formulario_ingreso.responsable',
+                'est.id as estado_ingreso_id',
+                'est.color as color_estado',
+                'cli.contratacion_hora_confirmacion as hora_confirmacion',
+                'usr_app_formulario_ingreso.responsable_id',
+            );
 
+        if ($request['ordenar_prioridad'] == true) {
+            $result->whereNotNull('usr_app_formulario_ingreso.fecha_ingreso');
+            $result->orderByRaw("CAST(usr_app_formulario_ingreso.fecha_ingreso AS DATE) DESC")
+                ->orderBy('cli.contratacion_hora_confirmacion', 'ASC');
+        }
+        if ($request['filtro_mios'] == true) {
+            $result->where('usr_app_formulario_ingreso.responsable_id', '=', $user->id);
+        } else if ($request['ordenar_prioridad'] == false) {
+            $result->orderby('usr_app_formulario_ingreso.id', 'DESC');
+        }
+
+        /*     if ($filtro == 1) {
+            $result->where('usr_app_formulario_ingreso.responsable_id', '=', $user->id)
+                ->orderby('usr_app_formulario_ingreso.id', 'DESC')
+            ;
+        }
+        if ($filtro == 3) {
+            $result->whereNotNull('usr_app_formulario_ingreso.fecha_ingreso');
+            $result->where('usr_app_formulario_ingreso.responsable_id', '=', $user->id)
+                ->orderByRaw("CAST(usr_app_formulario_ingreso.fecha_ingreso AS DATE) ASC")
+                ->orderBy('cli.contratacion_hora_confirmacion', 'ASC');
+        } */
+        $registros = $result->paginate($cantidad);
+
+        foreach ($result as $item) {
+            $item->fecha_examen = $item->fecha_examen ? date('d/m/Y H:i', strtotime($item->fecha_examen)) : null;
+        }
+        return response()->json($registros);
+    }
 
     public function filtro($cadena, $cantidad = null)
     {
@@ -2431,12 +2499,12 @@ class formularioGestionIngresoController extends Controller
         // return response()->json($result);
         $seguimiento_estados = FormularioIngresoSeguimientoEstado::join('usr_app_estados_ingreso as ei', 'ei.id', '=', 'usr_app_formulario_ingreso_seguimiento_estado.estado_ingreso_inicial')
             ->join('usr_app_estados_ingreso as ef', 'ef.id', '=', 'usr_app_formulario_ingreso_seguimiento_estado.estado_ingreso_final')
-            ->join('usr_app_formulario_ingreso as formulario','formulario.id','=','usr_app_formulario_ingreso_seguimiento_estado.formulario_ingreso_id')
-            ->join('usr_app_formulario_ingreso_tipo_servicio as tipo_servicio','tipo_servicio.id','=','formulario.tipo_servicio_id')
-            ->join('usr_app_clientes as cli','cli.id','=','formulario.cliente_id')
+            ->join('usr_app_formulario_ingreso as formulario', 'formulario.id', '=', 'usr_app_formulario_ingreso_seguimiento_estado.formulario_ingreso_id')
+            ->join('usr_app_formulario_ingreso_tipo_servicio as tipo_servicio', 'tipo_servicio.id', '=', 'formulario.tipo_servicio_id')
+            ->join('usr_app_clientes as cli', 'cli.id', '=', 'formulario.cliente_id')
             ->where('usr_app_formulario_ingreso_seguimiento_estado.estado_ingreso_final', $id)
-            ->whereDate('usr_app_formulario_ingreso_seguimiento_estado.created_at','>=', Carbon::parse('2024-09-1'))
-            ->whereDate('usr_app_formulario_ingreso_seguimiento_estado.created_at','<=', Carbon::parse('2024-10-30'))
+            ->whereDate('usr_app_formulario_ingreso_seguimiento_estado.created_at', '>=', Carbon::parse('2024-09-1'))
+            ->whereDate('usr_app_formulario_ingreso_seguimiento_estado.created_at', '<=', Carbon::parse('2024-10-30'))
             ->select(
                 'cli.razon_social',
                 'usr_app_formulario_ingreso_seguimiento_estado.responsable_inicial',

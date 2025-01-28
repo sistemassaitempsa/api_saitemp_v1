@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Carbon;
 use App\Models\ResponsablesEstadosModel;
 use App\Models\ClientesSeguimientoEstado;
+use Exception;
 
 class EstadosFirmaController extends Controller
 {
@@ -26,11 +27,13 @@ class EstadosFirmaController extends Controller
 
         $result = EstadosFirma::select(
             'id',
-            'nombre',
+            DB::raw("CONCAT(posicion, '. ', nombre) AS nombre"),
             'color',
-            'tiempo_respuesta'
-        )->orderByRaw("
-        TRY_CAST(LEFT(nombre, CHARINDEX('.', nombre + '.') - 1) AS INT), nombre")
+            'tiempo_respuesta',
+            'posicion'
+        )->orderBy('posicion')
+            /*  ->orderByRaw("
+        TRY_CAST(LEFT(nombre, CHARINDEX('.', nombre + '.') - 1) AS INT), nombre") */
             ->get();
         return response()->json($result);
     }
@@ -195,6 +198,7 @@ class EstadosFirmaController extends Controller
         $result = ClientesSeguimientoEstado::all();
         return response()->json($result);
     }
+
     public function byId($id)
     {
         return EstadosFirma::select(
@@ -204,5 +208,33 @@ class EstadosFirmaController extends Controller
             'tiempo_respuesta'
         )->where('usr_app_estados_firma.id', $id)
             ->first();
+    }
+
+    public function byOrder($order)
+    {
+        return EstadosFirma::select(
+            'id',
+            'nombre',
+            'color',
+            'tiempo_respuesta'
+        )->where('usr_app_estados_firma.posicion', $order)
+            ->first();
+    }
+
+    public function cambiarOrden(Request $request)
+    {
+
+        $estadosArray = $request['estados'];
+        foreach ($estadosArray as $index => $estado) {
+            try {
+                $result = EstadosFirma::find($estado['id']);
+                $result->posicion = $index + 1;
+                $result->save();
+            } catch (Exception $e) {
+                return response()->json(['status' => 'error', 'message' => 'Hubo un problema al cambiar el orden de los estados']);
+            }
+        }
+
+        return response()->json(['status' => 'success', 'message' => 'Registros actualizados de manera exitosa']);
     }
 }
