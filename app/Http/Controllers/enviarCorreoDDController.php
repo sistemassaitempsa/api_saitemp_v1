@@ -14,7 +14,7 @@ class enviarCorreoDDController extends Controller
         $formularioDebidaDiligenciaController = new formularioDebidaDiligenciaController;
         $formulario = $formularioDebidaDiligenciaController->getbyid($registro_id)->getData();
         $user = auth()->user();
-
+        $resultCorreo = response()->json(['status' => 'success', 'message' => 'No ha añadido correos']);
         foreach ($request->correos as $correoData) {
             try {
                 if ($correoData['correo'] != "" && $correoData['correo'] != "null") {
@@ -22,8 +22,7 @@ class enviarCorreoDDController extends Controller
                     $resultCorreo = $this->enviarCorreo($correoData['correo'], $formulario,  $registro_id, $modulo, $correoData['observacion'], $user->usuario, $correoData['corregir']);
                 }
             } catch (\Exception $e) {
-                /*  $resultCorreo = response()->json(['status' => 'error', 'message' => 'No fue posible enviar el registro verifique el correo de contacto o de los responsables']); */
-                $resultCorreo = $e;
+                $resultCorreo = response()->json(['status' => 'error', 'message' => 'No fue posible enviar el registro verifique el correo de contacto o de los responsables']);
             }
         }
         return $resultCorreo;
@@ -69,7 +68,7 @@ class enviarCorreoDDController extends Controller
 
 
         if ($booleanCorregir == true) {
-            $body = "Cordial saludo, tiene nuevas tareas pendientes por corregir asignados en el radicado Debida Diligencia número: <b><i>$numeroRadicado</i></b> con las siguientes observaciones: $observacion.
+            $body = "Cordial saludo, tiene novedades en el radicado Debida Diligencia número: <b><i>$numeroRadicado</i></b> con las siguientes observaciones: $observacion.
             \n\npara acceder al radicado ingrese al siguiente link: <a href='http://srv-saitemp03:8181/aplicaciones/?#/navbar/debida-diligencia/formulario-clientes/$registro_id'>Click aquí</a> *Debe encontrarse logueado con su usuario y contraseña en SEIYA.
             
             \n\n Atentamente:";

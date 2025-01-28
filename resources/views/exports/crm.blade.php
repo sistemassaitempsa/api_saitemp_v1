@@ -8,6 +8,7 @@
             <th>Solicitante</th>
             <th>Nombre/razon social</th>
             <th>Medio de atención</th>
+            <th>Responsable</th>
             <th>Tipo de PQRSF</th>
             <th>Teléfono de contacto</th>
             <th>Correo de contacto</th>
@@ -26,6 +27,7 @@
             <td>{{ $estado->solicitante }}</td>
             <td>{{ $estado->nombre_contacto }}</td>
             <td>{{ $estado->iteraccion }}</td>
+            <td>{{ $estado->responsable }}</td>
             <td>{{ $estado->pqrsf }}</td>
             <td>{{ $estado->telefono }}</td>
             <td>{{ $estado->correo }}</td>
