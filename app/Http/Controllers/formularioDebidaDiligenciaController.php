@@ -1007,6 +1007,7 @@ class formularioDebidaDiligenciaController extends Controller
             $cliente->contratacion_pago_efectivo = $request['contratacion_pago_efectivo'];
             $cliente->contratacion_carnet_corporativo = $request['contratacion_carnet_corporativo'];
             $cliente->contratacion_pagos_31 = $request['contratacion_pagos_31'];
+
             if (
                 $request->estado_firma_id
                 == ''
@@ -1473,6 +1474,8 @@ class formularioDebidaDiligenciaController extends Controller
             $cliente->contratacion_pagos_31 = $request['contratacion_pagos_31'];
             $cliente->contratacion_observacion = $request['contratacion_observacion'];
             $cliente->dirección_rut = $request['direccion_rut'];
+            $cliente->municipio_id = $request['municipio'];
+            $cliente->municipio_rut_id = $request['municipio_rut'];
             /*    $cliente->estado_firma_id = $request->estado_firma_id;
             $cliente->responsable = $request->responsable;
             $cliente->responsable_id = $request->responsable_id; */
