@@ -10,7 +10,7 @@ use Illuminate\Support\Carbon;
 use Illuminate\Notifications\Notifiable;
 
 
-class UsuariosCandidatosModel extends Authenticatable implements JWTSubject
+class UsuariosCandidatosModel extends Model
 {
 
     use HasFactory, Notifiable;
@@ -21,53 +21,13 @@ class UsuariosCandidatosModel extends Authenticatable implements JWTSubject
      * @var array
      */
     protected $fillable = [
-        'nombre',
-        'apellidos',
-        'numero_documento',
-        'rol_id',
-        'email',
-        'password',
+        'primer_nombre',
+        'primer_apellido',
+        'num_doc',
+        'tip_doc_id',
+        'celular',
     ];
-    protected $table = 'usr_app_usuarios_candidatos';
-
-    /**
-     * The attributes that should be hidden for arrays.
-     *
-     * @var array
-     */
-    protected $hidden = [
-        'password',
-        'remember_token',
-    ];
-
-    /**
-     * The attributes that should be cast to native types.
-     *
-     * @var array
-     */
-    protected $casts = [
-        'email_verified_at' => 'datetime',
-    ];
-
-    /**
-     * Get the identifier that will be stored in the subject claim of the JWT.
-     *
-     * @return mixed
-     */
-    public function getJWTIdentifier()
-    {
-        return $this->getKey();
-    }
-
-    /**
-     * Return a key value array, containing any custom claims to be added to the JWT.
-     *
-     * @return array
-     */
-    public function getJWTCustomClaims()
-    {
-        return [];
-    }
+    protected $table = 'usr_app_candidatos_c';
 
     public function fromDateTime($value)
     {

@@ -27,6 +27,7 @@ class MenuRolController extends Controller
                 ->join("usr_app_roles", "usr_app_roles.id", "=", "usr_app_menus_roles.rol_id")
                 ->select(
                     "usr_app_roles.nombre as rol",
+
                 )
                 ->distinct()
                 // ->orderby('roles.id', 'ASC')

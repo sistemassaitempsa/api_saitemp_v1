@@ -12,6 +12,8 @@ use App\Http\Controllers\EnvioCorreoController;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Auth;
 use Tymon\JWTAuth\Facades\JWTAuth;
+use App\Models\LoginUsuariosModel;
+use Illuminate\Support\Facades\DB;
 
 
 class AuthCandidatosController extends Controller
@@ -38,7 +40,7 @@ class AuthCandidatosController extends Controller
         /*   $user = UsuariosCandidatosModel::where('email', $request->email)->first();
         Auth::guard('external_ppl')->login($user);
         $credentials = $request->only('email', 'password'); */
-        if (!$token = Auth::guard('external_ppl')->attempt([
+        if (!$token = Auth::guard()->attempt([
             'email' => $request->email,
             'password' => $request->password,
         ])) {
@@ -51,25 +53,26 @@ class AuthCandidatosController extends Controller
             'status'       => 'success',
             'access_token' => $token,
             'token_type'   => 'bearer',
-            'user_type' => '2',
-            'expires_in'   => auth('external_ppl')->factory()->getTTL() / 60 / 60 / 8,
+            'expires_in'   => auth()->factory()->getTTL() / 60 / 60 / 8,
         ], 200);
     }
 
 
     public function createUserCandidato(Request $request)
     {
-        $existingUser = UsuariosCandidatosModel::where('numero_documento', $request->numero_documento)
-            ->where('doc_tip_id', $request->doc_tip_id)
+
+        $existingUser = UsuariosCandidatosModel::where('num_doc', $request->numero_documento)
+            ->where('tip_doc_id', $request->doc_tip_id)
             ->first();
 
         if ($existingUser) {
+            return ($existingUser);
             return response()->json([
                 'status' => 'error',
                 'message' => 'Ya existe un usuario registrado con este número de documento'
             ], 422);
         }
-        $existingUser2 = UsuariosCandidatosModel::where('email', $request->email)->first();
+        $existingUser2 = LoginUsuariosModel::where('email', $request->email)->first();
 
         if ($existingUser2) {
             return response()->json([
@@ -77,6 +80,36 @@ class AuthCandidatosController extends Controller
                 'message' => 'Ya existe un usuario registrado con este correo electrónico'
             ], 422);
         }
+        DB::beginTransaction();
+        try {
+            $loginUser =  new LoginUsuariosModel;
+            $loginUser->email = $request->email;
+            $loginUser->password = bcrypt($request->password);
+            $loginUser->estado_id = 1;
+            $loginUser->rol_id = 54;
+            $loginUser->oculto = 0;
+            $loginUser->tipo_usuario_id = 3;
+            $loginUser->save();
+
+            $candidato = new UsuariosCandidatosModel;
+            $candidato->login_usuario_id = $loginUser->id;
+            $candidato->primer_nombre = $request->nombre;
+            $candidato->primer_apellido = $request->apellidos;
+            $candidato->num_doc = $request->numero_documento;
+            $candidato->tip_doc_id = $request->doc_tip_id;
+            $candidato->celular = $request->telefono;
+            $candidato->save();
+
+            DB::commit();
+            return response()->json(['status' => 'success', 'message' => 'Registro guardado de manera exitosa']);
+        } catch (\Exception $e) {
+            DB::rollback();
+            return response()->json(['status' => 'error', 'message' => 'Error al guardar el formulario, por favor intenta nuevamente']);
+        }
+
+        /*  $loginUser->save();
+
+
 
         $user = new UsuariosCandidatosModel;
         $user->nombre = $request->nombre;
@@ -86,19 +119,19 @@ class AuthCandidatosController extends Controller
         $user->numero_documento = $request->numero_documento;
         $user->doc_tip_id = $request->doc_tip_id;
         $user->rol_id = $request->rol_id == '' ? 3 : $request->rol_id;
-        $user->telefono = $request->telefono;
+        $user->telefono = $request->telefono; */
 
 
-        if ($user->save()) {
+        /*    if ($loginUser->save()) {
             return response()->json(['status' => 'success', 'message' => 'Registro guardado exitosamente']);
         } else {
             return response()->json(['status' => 'error', 'message' => 'Ha ocurrido un error al guardar los datos de usuario']);
-        }
+        } */
     }
 
     public function mostrarUsuarios()
     {
-        $users = UsuariosCandidatosModel::get();
+        $users = LoginUsuariosModel::get();
         return response()->json($users);
     }
 

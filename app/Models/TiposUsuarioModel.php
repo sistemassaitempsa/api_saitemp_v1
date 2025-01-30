@@ -6,11 +6,10 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
 
-class ArchivosFormularioIngreso extends Model
+class TiposUsuarioModel extends Model
 {
     use HasFactory;
-
-    protected $table = 'usr_app_archivos_formulario_ingreso';
+    protected $table = 'usr_app_tipos_usuario';
 
     public function fromDateTime($value)
     {

@@ -166,6 +166,7 @@ use App\Http\Controllers\AuthCandidatosController;
 use App\Http\Controllers\enviarCorreoDDController;
 use App\Http\Controllers\IndicadoresDDController;
 use App\Http\Controllers\MotivoServicioController;
+use App\Http\Controllers\TiposUsuarioController;
 
 /*
 |--------------------------------------------------------------------------
@@ -187,21 +188,23 @@ Route::group([
   'middleware' => ['api', \Fruitcake\Cors\HandleCors::class],
   'prefix' => 'v1'
 ], function ($router) {
-  // Route::group(['middleware' => ['auth:external_ppl']], function () {
+  //tipos de usuario
+  Route::get('/tiposUsuario', [TiposUsuarioController::class, 'index']);
+  Route::post('/tiposUsuario', [TiposUsuarioController::class, 'create']);
+  Route::put('/tiposUsuario', [TiposUsuarioController::class, 'update']);
+
   Route::get('userloguedCandidatos', [AuthCandidatosController::class, 'userloguedCandidato']);
-  // });
-
   Route::post('/loginCandidatos', [AuthCandidatosController::class, 'login']);
-
+  Route::post('/registerCandidatos', [AuthCandidatosController::class, 'createUserCandidato']);
+  Route::get('/mostrarcandidatos', [AuthCandidatosController::class, 'mostrarUsuarios']);
   /*  Route::get('userloguedCandidatos', [UsuarioController::class, 'userloguedCandidato']); */
   /*  Route::get('/userloguedCandidatos/{userType}', [UsuarioController::class, 'userlogued']); */
   Route::post('/login', [AuthController::class, 'login']);
-  Route::post('/registerCandidatos', [AuthCandidatosController::class, 'createUserCandidato']);
   Route::post('/register', [AuthController::class, 'register']);
   Route::post('/enviartoken', [AuthCandidatosController::class, 'enviarTokenRecuperacion']);
   Route::post('/recuperarcontrasena', [AuthCandidatosController::class, 'recuperarContraseña']);
   Route::put('/actualizarcandidatousuario', [AuthCandidatosController::class, 'updateCandidatoUser']);
-  Route::get('/mostrarcandidatos', [AuthCandidatosController::class, 'mostrarUsuarios']);
+
   // Route::post('/register2', [AuthUsuarioController::class, 'register']);
   Route::post('/logout', [AuthController::class, 'logout']);
   Route::post('/refresh', [AuthController::class, 'refresh']);
@@ -869,6 +872,7 @@ Route::group([
   Route::post('/interaccioncliente', [ClienteInteraccionController::class, 'create']);
 
   Route::get('/archivosingreso', [ArchivosFormularioIngresoController::class, 'index']);
+  Route::put('/archivosingreso', [ArchivosFormularioIngresoController::class, 'update']);
   Route::get('/afp', [AfpFormularioIngresoController::class, 'index']);
 
   Route::get('/formularioingreso/{cantidad}', [formularioGestionIngresoController::class, 'index']);
