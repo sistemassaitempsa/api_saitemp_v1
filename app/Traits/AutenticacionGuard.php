@@ -5,6 +5,7 @@ namespace App\Traits;
 use App\Models\User;
 use App\Models\UsuarioDebidaDiligencia;
 use App\Models\UsuariosCandidatosModel;
+use App\Models\UsuariosInternosModel;
 
 trait AutenticacionGuard
 {
@@ -31,23 +32,23 @@ trait AutenticacionGuard
     {
         $user = $this->getGuard();
         if ($user['user']->tipo_usuario_id == "1") {
-            $result = user::join("usr_app_roles", "usr_app_roles.id", "=", "usr_app_usuarios.rol_id")
-                ->join("usr_app_estados_usuario", "usr_app_estados_usuario.id", "=", "usr_app_usuarios.estado_id")
-                ->where('usr_app_usuarios.login_usuario_id', '=', $user['user']->id)
+            $result = UsuariosInternosModel::join("usr_app_roles", "usr_app_roles.id", "=", "usr_app_usuarios_internos.rol_usuario_id")
+                ->join("usr_app_usuarios", "usr_app_usuarios.id", "=", "usr_app_usuarios_internos.usuario_id")
+                ->where('usr_app_usuarios.id', '=', $user['user']->id)
                 ->select(
-                    'usr_app_usuarios.id as usuario_id',
-                    "usr_app_usuarios.nombres",
-                    "usr_app_usuarios.apellidos",
-                    "usr_app_usuarios.documento_identidad",
-                    "usr_app_usuarios.usuario",
-                    "usr_app_usuarios.email",
+                    'usr_app_usuarios_internos.id as usuario_id',
+                    "usr_app_usuarios_internos.nombres",
+                    "usr_app_usuarios_internos.apellidos",
+                    "usr_app_usuarios_internos.documento_identidad",
+                    "usr_app_usuarios_internos.correo",
                     "usr_app_roles.nombre as rol",
                     "usr_app_roles.id as rol_id",
-                    "usr_app_estados_usuario.nombre as estado",
-                    "usr_app_estados_usuario.id as estado_id",
-                    "usr_app_usuarios.vendedor_id",
+                    "usr_app_usuarios_internos.vendedor_id",
+                    'usr_app_usuarios.email',
+                    'usr_app_usuarios.tipo_usuario_id',
+                    'usr_app_usuarios.id'
                 )
-                ->get();
+                ->first();
             return response()->json($result);
         } else if ($user['user']->tipo_usuario_id == "2") {
             $result = UsuarioDebidaDiligencia::where('usr_app_usuarios_clientes.login_usuario_id', $user['user']->id)->select(
@@ -62,9 +63,9 @@ trait AutenticacionGuard
             return response()->json($result);
         } else if ($user['user']->tipo_usuario_id == "3") {
             $result = UsuariosCandidatosModel::join("gen_tipide", "gen_tipide.cod_tip", "=", "usr_app_candidatos_c.tip_doc_id")
-                ->join("usr_app_login_usuarios", "usr_app_login_usuarios.id", "=", "usr_app_candidatos_c.login_usuario_id")
-                ->join("usr_app_roles", "usr_app_roles.id", "=", "usr_app_login_usuarios.rol_id")
-                ->where('usr_app_candidatos_c.login_usuario_id', $user['user']->id)
+                ->join("usr_app_usuarios", "usr_app_usuarios.id", "=", "usr_app_candidatos_c.usuario_id")
+                ->join("usr_app_roles", "usr_app_roles.id", "=", "usr_app_usuarios.rol_id")
+                ->where('usr_app_candidatos_c.usuario_id', $user['user']->id)
                 ->select(
                     'usr_app_candidatos_c.primer_nombre',
                     'usr_app_candidatos_c.primer_apellido',
@@ -74,10 +75,10 @@ trait AutenticacionGuard
                     'gen_tipide.cod_tip as tip_doc_id',
                     'usr_app_roles.id as rol_id',
                     'usr_app_roles.nombre as rol',
-                    'usr_app_login_usuarios.estado_id',
-                    'usr_app_login_usuarios.email',
-                    'usr_app_login_usuarios.tipo_usuario_id',
-                    'usr_app_login_usuarios.id'
+                    'usr_app_usuarios.estado_id',
+                    'usr_app_usuarios.email',
+                    'usr_app_usuarios.tipo_usuario_id',
+                    'usr_app_usuarios.id'
 
                 )->first();
             return response()->json($result);

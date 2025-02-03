@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Auth;
 use Tymon\JWTAuth\Facades\JWTAuth;
 use App\Models\LoginUsuariosModel;
+use App\Models\User;
 use Illuminate\Support\Facades\DB;
 
 
@@ -28,6 +29,7 @@ class AuthCandidatosController extends Controller
         if ($validator->fails()) {
             return response()->json($validator->errors(), 422);
         }
+
         /* if (!$token = auth('external_ppl')->attempt([
             'correo' => $request->correo,
             'password' => $request->password,
@@ -43,6 +45,8 @@ class AuthCandidatosController extends Controller
         if (!$token = Auth::guard()->attempt([
             'email' => $request->email,
             'password' => $request->password,
+            'estado_id' => "1",
+
         ])) {
             return response()->json([
                 'status'  => 'error',
@@ -72,7 +76,7 @@ class AuthCandidatosController extends Controller
                 'message' => 'Ya existe un usuario registrado con este número de documento'
             ], 422);
         }
-        $existingUser2 = LoginUsuariosModel::where('email', $request->email)->first();
+        $existingUser2 = User::where('email', $request->email)->first();
 
         if ($existingUser2) {
             return response()->json([
@@ -82,17 +86,17 @@ class AuthCandidatosController extends Controller
         }
         DB::beginTransaction();
         try {
-            $loginUser =  new LoginUsuariosModel;
+            $loginUser =  new User;
             $loginUser->email = $request->email;
             $loginUser->password = bcrypt($request->password);
-            $loginUser->estado_id = 1;
+            $loginUser->estado_id = "1";
             $loginUser->rol_id = 54;
             $loginUser->oculto = 0;
             $loginUser->tipo_usuario_id = 3;
             $loginUser->save();
 
             $candidato = new UsuariosCandidatosModel;
-            $candidato->login_usuario_id = $loginUser->id;
+            $candidato->usuario_id = $loginUser->id;
             $candidato->primer_nombre = $request->nombre;
             $candidato->primer_apellido = $request->apellidos;
             $candidato->num_doc = $request->numero_documento;
@@ -104,6 +108,7 @@ class AuthCandidatosController extends Controller
             return response()->json(['status' => 'success', 'message' => 'Registro guardado de manera exitosa']);
         } catch (\Exception $e) {
             DB::rollback();
+            return $e;
             return response()->json(['status' => 'error', 'message' => 'Error al guardar el formulario, por favor intenta nuevamente']);
         }
 
@@ -131,7 +136,7 @@ class AuthCandidatosController extends Controller
 
     public function mostrarUsuarios()
     {
-        $users = LoginUsuariosModel::get();
+        $users = UsuariosCandidatosModel::get();
         return response()->json($users);
     }
 
@@ -229,50 +234,6 @@ class AuthCandidatosController extends Controller
             }
         } catch (\Exception $e) {
             return $e;
-        }
-    }
-
-    public function userloguedCandidato()
-    {
-
-
-        $id = auth('external_ppl')->id();
-
-
-
-        $users = UsuariosCandidatosModel::leftjoin("usr_app_roles", "usr_app_roles.id", "=", "usr_app_usuarios_candidatos.rol_id")
-            /*  ->leftjoin("usr_app_estados_usuario", "usr_app_estados_usuario.id", "=", "usr_app_usuarios.estado_id") */
-            ->where('usr_app_usuarios_candidatos.id', '=', $id)
-            ->select(
-                "usr_app_roles.nombre as rol",
-                "usr_app_usuarios_candidatos.nombre as nombres",
-                "usr_app_usuarios_candidatos.apellidos",
-                "usr_app_usuarios_candidatos.numero_documento as documento_identidad",
-                "usr_app_usuarios_candidatos.email",
-                "usr_app_roles.id",
-                'usr_app_usuarios_candidatos.id as usuario_id',
-
-            )
-            ->get();
-
-        if (count($users) == 0) {
-            $users = UsuariosCandidatosModel::leftjoin("usr_app_roles", "usr_app_roles.id", "=", "usr_app_usuarios_candidatos.rol_id")
-                /*  ->join("usr_app_estados_usuario", "usr_app_estados_usuario.id", "=", "usr_app_usuarios_candidatos.estado_id") */
-                ->where('usr_app_usuarios_candidatos.id', '=', $id)
-                ->select(
-                    "usr_app_roles.nombre as rol",
-                    "usr_app_usuarios_candidatos.nombre as nombres",
-                    "usr_app_usuarios_candidatos.apellidos",
-                    "usr_app_usuarios_candidatos.numero_documento as documento_identidad",
-                    "usr_app_usuarios_candidatos.email",
-                    "usr_app_roles.id",
-                    'usr_app_usuarios_candidatos.id as usuario_id',
-
-                )
-                ->get();
-            return response()->json($users);
-        } else {
-            return response()->json($users);
         }
     }
 }

@@ -84,9 +84,6 @@ class AuthController extends Controller
                     }
 
                     $token = auth()->attempt($validator->validated());
-                    if (!$token) {
-                        $token = auth('usuariosdebidadiligencia')->attempt($validator->validated());
-                    }
 
                     if (!$token) {
                         return response()->json(['status' => 'error', 'message' => 'Por favor verifique sus datos de inicio de sesión e intente nuevamente']);
