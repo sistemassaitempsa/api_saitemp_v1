@@ -7,9 +7,12 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
+use App\Traits\AutenticacionGuard;
 
 class UsuarioController extends Controller
 {
+
+    use AutenticacionGuard;
     /**
      * Display a listing of the resource.
      *
@@ -81,44 +84,45 @@ class UsuarioController extends Controller
 
     public function userlogued()
     {
-        $id = auth()->id();
-        $users = user::join("usr_app_roles", "usr_app_roles.id", "=", "usr_app_usuarios.rol_id")
-            ->join("usr_app_estados_usuario", "usr_app_estados_usuario.id", "=", "usr_app_usuarios.estado_id")
-            ->where('usr_app_usuarios.id', '=', $id)
-            ->select(
-                "usr_app_roles.nombre as rol",
-                "usr_app_usuarios.nombres",
-                "usr_app_usuarios.apellidos",
-                "usr_app_usuarios.documento_identidad",
-                "usr_app_usuarios.usuario",
-                "usr_app_usuarios.email",
-                "usr_app_roles.id",
-                'usr_app_usuarios.id as usuario_id',
-                "usr_app_estados_usuario.nombre as estado",
-                "usr_app_usuarios.vendedor_id",
-            )
-            ->get();
-        if (count($users) == 0) {
-            $users = user::join("usr_app_roles", "usr_app_roles.id", "=", "usr_app_usuarios.rol_id")
-                ->join("usr_app_estados_usuario", "usr_app_estados_usuario.id", "=", "usr_app_usuarios.estado_id")
-                ->where('usr_app_usuarios.id', '=', $id)
-                ->select(
-                    "usr_app_usuarios.nombres",
-                    "usr_app_usuarios.apellidos",
-                    "usr_app_usuarios.usuario",
-                    "usr_app_usuarios.email",
-                    "usr_app_usuarios.id as id_user",
-                    "usr_app_roles.nombre as rol",
-                    "usr_app_roles.id",
-                    'usr_app_usuarios.id as usuario_id',
-                    "estado_usuarios.nombre as estado",
-                    "usr_app_estados_usuario.id as id_estado",
-                )
-                ->get();
-            return response()->json($users);
-        } else {
-            return response()->json($users);
-        }
+        $user = $this->getUserRelaciones();
+        return $user;
+        // $users = user::join("usr_app_roles", "usr_app_roles.id", "=", "usr_app_usuarios.rol_id")
+        //     ->join("usr_app_estados_usuario", "usr_app_estados_usuario.id", "=", "usr_app_usuarios.estado_id")
+        //     ->where('usr_app_usuarios.id', '=', $id)
+        //     ->select(
+        //         "usr_app_roles.nombre as rol",
+        //         "usr_app_usuarios.nombres",
+        //         "usr_app_usuarios.apellidos",
+        //         "usr_app_usuarios.documento_identidad",
+        //         "usr_app_usuarios.usuario",
+        //         "usr_app_usuarios.email",
+        //         "usr_app_roles.id",
+        //         'usr_app_usuarios.id as usuario_id',
+        //         "usr_app_estados_usuario.nombre as estado",
+        //         "usr_app_usuarios.vendedor_id",
+        //     )
+        //     ->get();
+        // if (count($users) == 0) {
+        //     $users = user::join("usr_app_roles", "usr_app_roles.id", "=", "usr_app_usuarios.rol_id")
+        //         ->join("usr_app_estados_usuario", "usr_app_estados_usuario.id", "=", "usr_app_usuarios.estado_id")
+        //         ->where('usr_app_usuarios.id', '=', $id)
+        //         ->select(
+        //             "usr_app_usuarios.nombres",
+        //             "usr_app_usuarios.apellidos",
+        //             "usr_app_usuarios.usuario",
+        //             "usr_app_usuarios.email",
+        //             "usr_app_usuarios.id as id_user",
+        //             "usr_app_roles.nombre as rol",
+        //             "usr_app_roles.id",
+        //             'usr_app_usuarios.id as usuario_id',
+        //             "estado_usuarios.nombre as estado",
+        //             "usr_app_estados_usuario.id as id_estado",
+        //         )
+        //         ->get();
+        //     return response()->json($users);
+        // } else {
+        //     return response()->json($users);
+        // }
     }
 
     public function userById($id)
