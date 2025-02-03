@@ -54,7 +54,7 @@ class AuthController extends Controller
                         ldap_close($ldapconn);
                         $user = User::where('email', $request->email)->first();
                         $uuid = $this->guadarMarcaTemporal($user->email);
-                        if($user->estado_id == 2){
+                        if ($user->estado_id == 2) {
                             return response()->json(['status' => 'error', 'message' => 'Este usuario se encuentra inactivo, por favor consulte al administrador del sistema']);
                         }
                         if ($user) {
@@ -83,7 +83,6 @@ class AuthController extends Controller
                     }
 
                     $token = auth()->attempt($validator->validated());
-                
                     if (!$token) {
                         return response()->json(['status' => 'error', 'message' => 'Por favor verifique sus datos de inicio de sesión e intente nuevamente']);
                     }
@@ -123,10 +122,10 @@ class AuthController extends Controller
         $user->contrasena_correo = Crypt::encryptString($request->contrasena_correo);
         $user->email = $request->email;
         $user->password = bcrypt($request->password);
-        if(is_numeric($request->email)){ // se verifica si el usuario a registrar es un número de documento para asignar el rol de cliente
+        if (is_numeric($request->email)) { // se verifica si el usuario a registrar es un número de documento para asignar el rol de cliente
             $user->rol_id = 53;
             $user->empresa_cliente = 1;
-        }else{
+        } else {
             $user->rol_id = $request->rol_id == '' ? 3 : $request->rol_id;
         }
 
