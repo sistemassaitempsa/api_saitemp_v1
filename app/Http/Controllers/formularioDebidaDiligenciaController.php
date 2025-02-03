@@ -87,7 +87,6 @@ class formularioDebidaDiligenciaController extends Controller
         $permisos = $this->validaPermiso();
 
         $user = auth()->user();
-        // $year_actual = date('Y');
 
         $result = cliente::join('gen_vendedor as ven', 'ven.cod_ven', '=', 'usr_app_clientes.vendedor_id')
             ->leftJoin('usr_app_estados_firma as estf', 'estf.id', '=', 'usr_app_clientes.estado_firma_id')
@@ -99,7 +98,6 @@ class formularioDebidaDiligenciaController extends Controller
                 '=',
                 'usr_app_clientes.id'
             )
-            // ->whereYear('usr_app_clientes.created_at', $year_actual)
             ->when(!in_array('39', $permisos), function ($query) use ($user) {
                 return $query->where(function ($subQuery) use ($user) {
                     $subQuery->where('usr_app_clientes.vendedor_id', $user->vendedor_id)
@@ -122,7 +120,7 @@ class formularioDebidaDiligenciaController extends Controller
                 'estf.id as estado_firma_id',
             )
             ->orderby('usr_app_clientes.created_at', 'DESC')
-			->orderby('usr_app_clientes.numero_radicado', 'DESC')
+            ->orderby('usr_app_clientes.numero_radicado', 'DESC')
             ->paginate($cantidad);
 
         return response()->json($result);
