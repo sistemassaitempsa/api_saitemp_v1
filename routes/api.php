@@ -165,7 +165,7 @@ use App\Models\SeguimientoCrm;
 use App\Http\Controllers\enviarCorreoDDController;
 use App\Http\Controllers\IndicadoresDDController;
 use App\Http\Controllers\MotivoServicioController;
-// prueba commit
+
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -816,6 +816,7 @@ Route::group([
   Route::get('/estadoResponsableFirma', [EstadosFirmaController::class, 'indexResponsableEstado2']);
   Route::get('/estadoResponsableFirma/{estado}', [EstadosFirmaController::class, 'indexResponsableEstado']);
   Route::get('/estadosfirma/{estado}', [EstadosFirmaController::class, 'byId']);
+  Route::put('/estadosfirma', [EstadosFirmaController::class, 'cambiarOrden']);
 
   // Historial de cambios
   Route::get('/registrocambios', [RegistroCambioController::class, 'index']);
@@ -857,6 +858,7 @@ Route::group([
   Route::get('/afp', [AfpFormularioIngresoController::class, 'index']);
 
   Route::get('/formularioingreso/{cantidad}', [formularioGestionIngresoController::class, 'index']);
+  Route::post('/formularioIngreso/filtrofechaingreso/{cantidad}', [formularioGestionIngresoController::class, 'filtroFechaIngreso']);
   Route::get('/formularioingresobyid/{id}', [formularioGestionIngresoController::class, 'byid']);
   Route::post('/formularioingreso', [formularioGestionIngresoController::class, 'create']);
   Route::post('/formularioingresopendientes', [formularioGestionIngresoController::class, 'pendientes']);
@@ -1017,7 +1019,7 @@ Route::group([
     echo Artisan::call('cache:clear');
     echo Artisan::call('route:clear');
   });
-
+  Route::post('/pruebaCorreo', [EnvioCorreoController::class, 'correoPrueba']);
 
 
   // Route::get('/otrosi/{id}', [OtroSiController::class, 'byid']);
