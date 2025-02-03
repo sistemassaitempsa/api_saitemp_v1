@@ -638,6 +638,9 @@ Route::group([
   Route::delete('/formulariocliente/{id}', [formularioDebidaDiligenciaController::class, 'destroy']);
   Route::get('/actualizaestadofirma/{item_id}/{estado_id}/{responsable_id}', [formularioDebidaDiligenciaController::class, 'actualizaestadofirma']);
   Route::get('/versiondebidadiligencia', [formularioDebidaDiligenciaController::class, 'versionformulario']);
+  
+  Route::get('/formularioclientenit/{nit}', [formularioDebidaDiligenciaController::class, 'formularioclientenit']);
+
 
   Route::get('/formulariocliente/generarpdf/{id}', [formularioDebidaDiligenciaController::class, 'generarPdf']);
 

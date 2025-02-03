@@ -7,7 +7,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
-use App\Models\LoginUsuariosModel;
 use App\Traits\AutenticacionGuard;
 
 class UsuarioController extends Controller
@@ -82,36 +81,8 @@ class UsuarioController extends Controller
     }
     public function userlogued()
     {
-
         $user = $this->getUserRelaciones();
         return $user;
-        $users = LoginUsuariosModel::join("usr_app_roles", "usr_app_roles.id", "=", "usr_app_login_usuarios.rol_id")
-            ->where('usr_app_login_usuarios.id', '=', $id)
-            ->select(
-                "usr_app_roles.nombre as rol",
-                "usr_app_login_usuarios.email",
-                "usr_app_login_usuarios.estado_id",
-                "usr_app_roles.id",
-                'usr_app_login_usuarios.oculto as oculto',
-                "usr_app_login_usuarios.tipo_usuario_id as tipo_usuario_id",
-            )
-            ->get();
-        if (count($users) == 0) {
-            $users = user::join("usr_app_roles", "usr_app_roles.id", "=", "usr_app_login_usuarios.rol_id")
-                ->where('usr_app_login_usuarios.id', '=', $id)
-                ->select(
-                    "usr_app_roles.nombre as rol",
-                    "usr_app_login_usuarios.email",
-                    "usr_app_login_usuarios.estado_id",
-                    "usr_app_roles.id",
-                    'usr_app_login_usuarios.oculto as oculto',
-                    "usr_app_login_usuarios.tipo_usuario_id as tipo_usuario_id",
-                )
-                ->get();
-            return response()->json($users);
-        } else {
-            return response()->json($users);
-        }
     }
 
     public function userById($id)
