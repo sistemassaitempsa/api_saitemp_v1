@@ -81,7 +81,7 @@ class ActualizarEstadoAutomatico extends Command
                 $controller = new formularioDebidaDiligenciaController();
                 $controller->actualizaestadofirma(
                     $cliente->id,
-                    1,
+                    16,
                     null,
                     null,
                     $cliente->estado_firma_id
