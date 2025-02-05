@@ -64,13 +64,11 @@ class AuthCandidatosController extends Controller
 
     public function createUserCandidato(Request $request)
     {
-
         $existingUser = UsuariosCandidatosModel::where('num_doc', $request->numero_documento)
             ->where('tip_doc_id', $request->doc_tip_id)
             ->first();
 
         if ($existingUser) {
-            return ($existingUser);
             return response()->json([
                 'status' => 'error',
                 'message' => 'Ya existe un usuario registrado con este número de documento'
