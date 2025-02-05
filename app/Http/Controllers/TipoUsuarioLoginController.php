@@ -3,12 +3,10 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Models\ServicioOrdenServicio;
-use App\Traits\AutenticacionGuard;
+use App\Models\TipoUsuarioLoginModel;
 
-class ServicioOrdenServicioController extends Controller
+class TipoUsuarioLoginController extends Controller
 {
-    use AutenticacionGuard;
     /**
      * Display a listing of the resource.
      *
@@ -16,17 +14,11 @@ class ServicioOrdenServicioController extends Controller
      */
     public function index()
     {
-        $result = ServicioOrdenServicio::select(
+        $result = TipoUsuarioLoginModel::select(
             'id',
-            'nombre'
-        )
-        ->get();
+            'nombre',
+        )->get();
         return response()->json($result);
-    }
-
-    public function datoscliente(){
-        $user = $this->getUserRelaciones();
-        return $user;
     }
 
     /**
