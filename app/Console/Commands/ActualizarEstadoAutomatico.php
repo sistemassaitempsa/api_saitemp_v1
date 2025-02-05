@@ -64,7 +64,7 @@ class ActualizarEstadoAutomatico extends Command
             $this->info("Procesando cliente: {$cliente->id}");
 
             $seguimiento2 = ClientesSeguimientoEstado::where('cliente_id', $cliente->id)
-                ->where('estados_firma_final', 5)
+                ->where('estados_firma_final', 4)
                 ->latest('created_at')
                 ->first();
 
@@ -76,7 +76,7 @@ class ActualizarEstadoAutomatico extends Command
             $meses = $seguimiento2->created_at->diffInMonths(Carbon::now());
             $this->info("minutos desde último estado 4: {$meses}");
 
-            if ($meses >= 1) {
+            if ($meses >= 2) {
                 $this->info("Actualizando cliente {$cliente->id}...");
                 $controller = new formularioDebidaDiligenciaController();
                 $controller->actualizaestadofirma(
