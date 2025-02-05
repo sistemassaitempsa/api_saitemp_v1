@@ -166,7 +166,8 @@ use App\Http\Controllers\AuthCandidatosController;
 use App\Http\Controllers\enviarCorreoDDController;
 use App\Http\Controllers\IndicadoresDDController;
 use App\Http\Controllers\MotivoServicioController;
-use App\Http\Controllers\TiposUsuarioController;
+use App\Http\Controllers\TipoUsuarioLoginController;
+use App\Http\Controllers\UsuariodebidaDiligenciaController;
 
 /*
 |--------------------------------------------------------------------------
@@ -212,7 +213,7 @@ Route::group([
 
   // Usuarios
   Route::get('/allUsers', [UsuarioController::class, 'index2']);
-  Route::get('/users/{cantidad}', [UsuarioController::class, 'index']);
+  Route::get('/users/{cantidad}/{tipo}', [UsuarioController::class, 'index']);
   Route::get('/users/{filtro}/{cantidad}', [UsuarioController::class, 'filtro']);
   Route::get('/userslist', [UsuarioController::class, 'userslist']);
   Route::get('/userlogued', [UsuarioController::class, 'userlogued']);
@@ -442,7 +443,7 @@ Route::group([
   // Tipo de proveedor
   Route::get('/tipoproveedor', [TipoProveedorController::class, 'index']);
 
-  // Tipo de cliente
+  // Tipo de archivo
   Route::get('/tipoarchivo', [TipoDocumentoController::class, 'index']);
   Route::get('/tipoarchivo/{id}', [TipoDocumentoController::class, 'byid']);
 
@@ -638,9 +639,8 @@ Route::group([
   Route::delete('/formulariocliente/{id}', [formularioDebidaDiligenciaController::class, 'destroy']);
   Route::get('/actualizaestadofirma/{item_id}/{estado_id}/{responsable_id}', [formularioDebidaDiligenciaController::class, 'actualizaestadofirma']);
   Route::get('/versiondebidadiligencia', [formularioDebidaDiligenciaController::class, 'versionformulario']);
-  
-  Route::get('/formularioclientenit/{nit}', [formularioDebidaDiligenciaController::class, 'formularioclientenit']);
 
+  Route::get('/formularioclientenit/{nit}', [formularioDebidaDiligenciaController::class, 'formularioclientenit']);
 
   Route::get('/formulariocliente/generarpdf/{id}', [formularioDebidaDiligenciaController::class, 'generarPdf']);
 
@@ -1033,6 +1033,12 @@ Route::group([
   Route::get('/tablasandroid_usr_app_estado_compromiso_crm', [VersionTablasAndroidController::class, 'usr_app_estado_compromiso_crm']);
   Route::get('/tablasandroid_usr_app_pqrsf_crm', [VersionTablasAndroidController::class, 'usr_app_pqrsf_crm']);
   Route::get('/tablasandroid_usr_app_cliente_debida_diligencia', [VersionTablasAndroidController::class, 'usr_app_clientes']);
+
+  Route::get('/tipousuariologin', [TipoUsuarioLoginController::class, 'index']);
+
+  Route::post('/usuariocliente', [UsuariodebidaDiligenciaController::class, 'create']);
+  Route::post('/usuariocliente/{id}', [UsuariodebidaDiligenciaController::class, 'update']);
+
 
   Route::get('/clear-cache', function () {
     echo Artisan::call('config:clear');

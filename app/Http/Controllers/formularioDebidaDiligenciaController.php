@@ -124,7 +124,6 @@ class formularioDebidaDiligenciaController extends Controller
             )
             ->orderby('usr_app_clientes.created_at', 'DESC')
             ->orderby('usr_app_clientes.numero_radicado', 'DESC')
-            ->orderby('usr_app_clientes.numero_radicado', 'DESC')
             ->paginate($cantidad);
 
         return response()->json($result);
@@ -812,7 +811,6 @@ class formularioDebidaDiligenciaController extends Controller
             return $e;
         }
     }
-
 
     public function formularioclientenit($nit)
     {

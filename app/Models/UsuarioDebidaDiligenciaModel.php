@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
 
-class UsuarioDebidaDiligencia extends Model
+class UsuarioDebidaDiligenciaModel extends Model
 {
     use HasFactory;
     protected $table = 'usr_app_usuarios_clientes';

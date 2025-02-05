@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use App\Traits\AutenticacionGuard;
+use App\Models\UsuariosInternosModel;
 
 class UsuarioController extends Controller
 {
@@ -17,30 +18,16 @@ class UsuarioController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index($cantidad)
+    public function index($cantidad, $tipo)
     {
+        $lista = $this->listaUsuarios($cantidad, $tipo);
+        return $lista;
 
-        $users = user::join("usr_app_roles", "usr_app_roles.id", "=", "usr_app_usuarios.rol_id")
-            ->join("usr_app_estados_usuario ", "usr_app_estados_usuario .id", "=", "usr_app_usuarios.estado_id")
-            ->select(
-                "usr_app_roles.nombre as rol",
-                "usr_app_usuarios.nombres",
-                "usr_app_usuarios.apellidos",
-                "usr_app_usuarios.usuario",
-                "usr_app_usuarios.email",
-                "usr_app_usuarios.id as id_user",
-                "usr_app_estados_usuario .nombre as estado",
-
-            )
-            ->paginate($cantidad);
-        return response()->json($users);
     }
 
     public function index2()
     {
         $users = user::select(
-            // "usr_app_usuarios.nombres",
-            // "usr_app_usuarios.apellidos",
             DB::raw("CONCAT(REPLACE(nombres, 'null', ''), ' ', REPLACE(apellidos, 'null', '')) AS nombre")
 
         )
@@ -87,25 +74,8 @@ class UsuarioController extends Controller
 
     public function userById($id)
     {
-
-        $users = user::join("usr_app_roles", "usr_app_roles.id", "=", "usr_app_usuarios.rol_id")
-            ->join("usr_app_estados_usuario", "usr_app_estados_usuario.id", "=", "usr_app_usuarios.estado_id")
-            ->where('usr_app_usuarios.id', '=', $id)
-            ->select(
-                "usr_app_usuarios.nombres",
-                "usr_app_usuarios.apellidos",
-                "usr_app_usuarios.documento_identidad",
-                "usr_app_usuarios.usuario",
-                "usr_app_usuarios.email",
-                "usr_app_usuarios.id as id_user",
-                "usr_app_roles.nombre as rol",
-                "usr_app_roles.id as id_rol",
-                "usr_app_estados_usuario.nombre as estado",
-                "usr_app_estados_usuario.id as id_estado",
-
-            )
-            ->get();
-        return response()->json($users);
+        $user = $this->getUserRelaciones($id);
+        return $user;
     }
 
     public function infoLogin($id)
@@ -113,7 +83,6 @@ class UsuarioController extends Controller
         $users = user::join("usr_app_roles", "usr_app_roles.id", "=", "usr_app_usuarios.rol_id")
             ->where('usr_app_usuarios.id', '=', $id)
             ->select(
-
                 "usr_app_roles.nombre as rol",
                 "usr_app_usuarios.nombres as nombres",
                 "usr_app_usuarios.apellidos as apellidos",
@@ -190,8 +159,8 @@ class UsuarioController extends Controller
      */
     public function update(Request $request)
     {
-        $user = user::find($request->id_user);
-
+        $user = UsuariosInternosModel::find($request->id_user);
+        $login = user::find($request->id_user);
         $archivos = $request->files->all();
 
         if ($user->imagen_firma_1 != null && count($archivos) > 0) {
@@ -224,13 +193,14 @@ class UsuarioController extends Controller
 
         try {
 
+            $login->estado_id = $request->estado_id !== "null" ? $request->estado_id : null;
+            $login->rol_id = $request->rol_id !== "null" ? $request->rol_id : null;
+            $login->save();
+
             $user->nombres = $request->nombres !== "null" ? $request->nombres : null;
             $user->apellidos = $request->apellidos !== "null" ? $request->apellidos : null;
             $user->documento_identidad = $request->documento_identidad !== "null" ? $request->documento_identidad : null;
-            $user->usuario = $request->usuario !== "null" ? $request->usuario : null;
-            $user->email = $request->email !== "null" ? $request->email : null;
-            $user->estado_id = $request->estado_id !== "null" ? $request->estado_id : null;
-            $user->rol_id = $request->rol_id !== "null" ? $request->rol_id : null;
+            $user->correo = $request->usuario !== "null" ? $request->usuario : null;
             if ($request->contrasena_correo != '') {
                 $user->contrasena_correo = Crypt::encryptString($request->contrasena_correo);
             }
