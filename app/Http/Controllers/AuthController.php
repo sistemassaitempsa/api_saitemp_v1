@@ -129,8 +129,6 @@ class AuthController extends Controller
         }else{
             $user->rol_id = $request->rol_id == '' ? 3 : $request->rol_id;
         }
-
-
         $archivos = $request->files->all();
         $contador = 1;
         foreach ($archivos as $archivo) {
