@@ -12,7 +12,6 @@ use App\Models\UsuariosInternosModel;
 
 class UsuarioController extends Controller
 {
-
     use AutenticacionGuard;
     /**
      * Display a listing of the resource.
@@ -67,8 +66,6 @@ class UsuarioController extends Controller
             ->get();
         return response()->json($result);
     }
-
-
     public function userlogued()
     {
         $user = $this->getUserRelaciones();
