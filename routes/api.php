@@ -168,6 +168,7 @@ use App\Http\Controllers\IndicadoresDDController;
 use App\Http\Controllers\MotivoServicioController;
 use App\Http\Controllers\TipoUsuarioLoginController;
 use App\Http\Controllers\UsuariodebidaDiligenciaController;
+use App\Http\Controllers\TiposUsuarioController;
 
 /*
 |--------------------------------------------------------------------------
