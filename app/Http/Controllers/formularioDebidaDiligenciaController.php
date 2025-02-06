@@ -49,8 +49,9 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\enviarCorreoDDController;
 use App\Models\NovedadesDD;
-
+use App\Models\HistoricoProfesionalesModel;
 use App\Models\VersionTablasAndroid;
+use App\Http\Controllers\HistoricoProfesionalesController;
 
 // use App\Events\EventoPrueba2;
 
@@ -340,6 +341,9 @@ class formularioDebidaDiligenciaController extends Controller
                 ->where('usr_app_clientes.id', '=', $id)
                 ->first();
 
+            $historico_profesionales_controller = new HistoricoProfesionalesController;
+            $historico = $historico_profesionales_controller->byClienteId($id, false);
+            $result['historico_profesionales'] = $historico;
 
             $seguimiento = RegistroCambio::join('usr_app_clientes as cli', 'cli.id', 'usr_app_registro_cambios.cliente_id')
                 ->select(
@@ -1021,6 +1025,19 @@ class formularioDebidaDiligenciaController extends Controller
             $cliente->contratacion_observacion = $request['contratacion_observacion'];
             $cliente->save();
 
+            $historico_profesionales = new HistoricoProfesionalesModel;
+            $historico_profesionales->cliente_id = $cliente->id;
+            $historico_profesionales->profesional_seleccion = $request['profesional_seleccion'];
+            $historico_profesionales->usuario_selecion_id  = $request['usuario_selecion_id'];
+            $historico_profesionales->anotacion_seleccion = $request['anotacion_seleccion'];
+            $historico_profesionales->profesional_cartera = $request['profesional_cartera'];
+            $historico_profesionales->usuario_cartera_id = $request['usuario_cartera_id'];
+            $historico_profesionales->anotacion_cartera = $request['anotacion_cartera'];
+            $historico_profesionales->profesional_sst = $request['profesional_sst'];
+            $historico_profesionales->usuario_sst_id = $request['usuario_sst_id'];
+            $historico_profesionales->anotacion_sst = $request['anotacion_sst'];
+
+
 
             $seguimiento_estado = new ClientesSeguimientoEstado;
             $seguimiento_estado->responsable_inicial =  $user->nombres . ' ' . $user->apellidos;
@@ -1491,6 +1508,54 @@ class formularioDebidaDiligenciaController extends Controller
                 $novedad->usuario_guarda = $user->nombres . ' ' . $user->apellidos;
                 $novedad->usuario_corrige = $request['usuario_corregir_id'];
                 $novedad->save();
+            }
+
+            $historico_profesionales_controller = new HistoricoProfesionalesController;
+            $historico = $historico_profesionales_controller->byClienteId($id, false);
+            $historico_profesionales = new HistoricoProfesionalesModel;
+            $historico_profesionales->cliente_id = $id;
+
+            if (!$historico) {
+                if ($request['usuario_sst_id']) {
+                    $historico_profesionales->profesional_sst = $request['profesional_sst'];
+                    $historico_profesionales->usuario_sst_id = $request['usuario_sst_id'];
+                    $historico_profesionales->anotacion_sst = $request['anotacion_sst'];
+                }
+                if ($request['usuario_cartera_id']) {
+                    $historico_profesionales->profesional_cartera = $request['profesional_cartera'];
+                    $historico_profesionales->usuario_cartera_id = $request['usuario_cartera_id'];
+                    $historico_profesionales->anotacion_cartera = $request['anotacion_cartera'];
+                }
+                if ($request['usuario_selecion_id']) {
+                    $historico_profesionales->profesional_seleccion = $request['profesional_seleccion'];
+                    $historico_profesionales->usuario_selecion_id  = $request['usuario_selecion_id'];
+                    $historico_profesionales->anotacion_seleccion = $request['anotacion_seleccion'];
+                }
+                $historico_profesionales->save();
+            } else {
+                if ($historico->usuario_selecion_id == $request['usuario_selecion_id'] &&  $historico->usuario_cartera_id == $request['usuario_cartera_id'] && $historico->profesional_sst == $request['profesional_sst']) {
+                    $historico_profesionales->anotacion_seleccion = $request['anotacion_seleccion'];
+                    $historico_profesionales->anotacion_cartera = $request['anotacion_cartera'];
+                    $historico_profesionales->anotacion_sst = $request['anotacion_sst'];
+                    $historico_profesionales->save();
+                } else {
+                    if ($request['usuario_sst_id']) {
+                        $historico_profesionales->profesional_sst = $request['profesional_sst'];
+                        $historico_profesionales->usuario_sst_id = $request['usuario_sst_id'];
+                        $historico_profesionales->anotacion_sst = $request['anotacion_sst'];
+                    }
+                    if ($request['usuario_cartera_id']) {
+                        $historico_profesionales->profesional_cartera = $request['profesional_cartera'];
+                        $historico_profesionales->usuario_cartera_id = $request['usuario_cartera_id'];
+                        $historico_profesionales->anotacion_cartera = $request['anotacion_cartera'];
+                    }
+                    if ($request['usuario_selecion_id']) {
+                        $historico_profesionales->profesional_seleccion = $request['profesional_seleccion'];
+                        $historico_profesionales->usuario_selecion_id  = $request['usuario_selecion_id'];
+                        $historico_profesionales->anotacion_seleccion = $request['anotacion_seleccion'];
+                    }
+                    $historico_profesionales->save();
+                }
             }
 
 

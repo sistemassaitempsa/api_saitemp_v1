@@ -26,8 +26,10 @@ class UsuarioController extends Controller
                 "usr_app_usuarios.apellidos",
                 "usr_app_usuarios.usuario",
                 "usr_app_usuarios.email",
+                "usr_app_usuarios.rol_usuario_interno_id",
                 "usr_app_usuarios.id as id_user",
                 "usr_app_estados_usuario .nombre as estado",
+
 
             )
             ->paginate($cantidad);
@@ -281,6 +283,22 @@ class UsuarioController extends Controller
         }
     }
 
+
+    public function update2(Request $request)
+    {
+        $user = user::find($request->id_user);
+
+        try {
+
+            $user->rol_usuario_interno_id = $request->rol_usuario_interno_id;
+
+            if ($user->save()) {
+                return response()->json(['status' => 'success', 'message' => 'Usuario actualizado exitosamente']);
+            }
+        } catch (\Exception $e) {
+            return $e;
+        }
+    }
 
 
 

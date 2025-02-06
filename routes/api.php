@@ -165,6 +165,8 @@ use App\Http\Controllers\limitesCrmController;
 use App\Models\SeguimientoCrm;
 use App\Http\Controllers\enviarCorreoDDController;
 use App\Http\Controllers\IndicadoresDDController;
+use App\Http\Controllers\RolesUsuariosInternosController;
+use App\Http\Controllers\HistoricoProfesionalesController;
 
 /*
 |--------------------------------------------------------------------------
@@ -183,6 +185,16 @@ Route::group([
   'prefix' => 'v1'
 
 ], function ($router) {
+  //Historico pofesionales
+  Route::get('/historicoprofesionalesdd', [HistoricoProfesionalesController::class, 'index']);
+  Route::get('/historicoprofesionalesdd/{cliente_id}', [HistoricoProfesionalesController::class, 'index']);
+
+  //Roles usuarios internos
+  Route::get('/rolesusuariosinternos', [RolesUsuariosInternosController::class, 'index']);
+  Route::post('/rolesusuariosinternos', [RolesUsuariosInternosController::class, 'create']);
+  Route::put('/rolesusuariosinternos', [RolesUsuariosInternosController::class, 'update']);
+  Route::delete('/rolesusuariosinternos', [RolesUsuariosInternosController::class, 'destroy']);
+
 
   Route::post('/login', [AuthController::class, 'login']);
   Route::post('/register', [AuthController::class, 'register']);
@@ -201,6 +213,7 @@ Route::group([
   Route::delete('/user/{id}', [UsuarioController::class, 'destroy']);
   // Route::post('/user', [UsuarioController::class, 'create']); 
   Route::post('/user', [UsuarioController::class, 'update']);
+  Route::post('/user2', [UsuarioController::class, 'update2']);
   Route::put('/updateUserVendedor/{id}', [UsuarioController::class, 'updateVendedorId']);
   // Route::get('/usuariosporcontrato', [UsuarioController::class, 'usuariosporcontrato']); 
   // Route::get('/usuariosporcontrato/{id}', [UsuarioController::class, 'usuariosporcontrato2']); 
