@@ -326,4 +326,16 @@ class UsuarioController extends Controller
         $result->vendedor_id = $request->vendedor_id;
         $result->save();
     }
+
+    public function byRolInterno($rol)
+    {
+        $result = user::select(
+            'id',
+            DB::raw("CONCAT(nombres,' ',apellidos)  AS nombre"),
+            'usuario AS email',
+            'lider',
+        )->where('rol_usuario_interno_id', $rol)
+            ->get();
+        return response()->json($result);
+    }
 }

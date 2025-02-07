@@ -206,6 +206,7 @@ Route::group([
   // Usuarios
   Route::get('/allUsers', [UsuarioController::class, 'index2']);
   Route::get('/users/{cantidad}', [UsuarioController::class, 'index']);
+  Route::get('/usersbyrolinterno/{rol}', [UsuarioController::class, 'byRolInterno']);
   Route::get('/users/{filtro}/{cantidad}', [UsuarioController::class, 'filtro']);
   Route::get('/userslist', [UsuarioController::class, 'userslist']);
   Route::get('/userlogued', [UsuarioController::class, 'userlogued']);
