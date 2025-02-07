@@ -42,6 +42,9 @@ class HistoricoProfesionalesController extends Controller
                 "usr_app_historico_profesionales_dd.profesional_sst",
                 "usr_app_historico_profesionales_dd.usuario_sst_id",
                 "usr_app_historico_profesionales_dd.anotacion_sst",
+                "usr_app_historico_profesionales_dd.profesional_nomina",
+                "usr_app_historico_profesionales_dd.usuario_nomina_id",
+                "usr_app_historico_profesionales_dd.anotacion_nomina",
                 "usr_app_clientes.nit as nit",
                 "usr_app_clientes.numero_identificacion as numero_identificacion"
             )->latest("usr_app_historico_profesionales_dd.id") // Asegúrate de que `id` sea una columna válida

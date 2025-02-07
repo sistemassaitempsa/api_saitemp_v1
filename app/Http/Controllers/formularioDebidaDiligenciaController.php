@@ -1499,7 +1499,7 @@ class formularioDebidaDiligenciaController extends Controller
             $historico_profesionales_controller = new HistoricoProfesionalesController;
             $historico = $historico_profesionales_controller->byClienteId($id, false);
 
-            if (!$historico || (/* $historico->usuario_nomina_id !== $request['profesional_nomina_id'] ||  */$historico->usuario_cartera_id !== $request['profesional_cartera_id'] || $historico->usuario_sst_id !== $request['profesional_sst'])) {
+            if (!$historico || ($historico->usuario_nomina_id !== $request['profesional_nomina_id'] ||  $historico->usuario_cartera_id !== $request['profesional_cartera_id'] || $historico->usuario_sst_id !== $request['profesional_sst'])) {
                 $historico_profesionales = new HistoricoProfesionalesModel;
                 $historico_profesionales->cliente_id = $id;
                 if ($request['profesional_sst_id']) {
@@ -1512,15 +1512,15 @@ class formularioDebidaDiligenciaController extends Controller
                     $historico_profesionales->usuario_cartera_id = $request['profesional_cartera_id'];
                     $historico_profesionales->anotacion_cartera = $request['anotacion_cartera'];
                 }
-                /*   if ($request['profesional_nomina_id']) {
+                if ($request['profesional_nomina_id']) {
                     $historico_profesionales->profesional_nomina = $request['profesional_nomina'];
                     $historico_profesionales->usuario_nomina_id  = $request['profesional_nomina_id'];
                     $historico_profesionales->anotacion_nomina = $request['anotacion_nomina'];
-                } */
+                }
                 $historico_profesionales->save();
             } else {
 
-                /* $historico_profesionales->anotacion_nomina = $request['anotacion_nomina']; */
+                $historico->anotacion_nomina = $request['anotacion_nomina'];
                 $historico->anotacion_cartera = $request['anotacion_cartera'];
                 $historico->anotacion_sst = $request['anotacion_sst'];
                 $historico->save();
