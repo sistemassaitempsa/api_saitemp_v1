@@ -1025,20 +1025,6 @@ class formularioDebidaDiligenciaController extends Controller
             $cliente->contratacion_observacion = $request['contratacion_observacion'];
             $cliente->save();
 
-            $historico_profesionales = new HistoricoProfesionalesModel;
-            $historico_profesionales->cliente_id = $cliente->id;
-            $historico_profesionales->profesional_seleccion = $request['profesional_seleccion'];
-            $historico_profesionales->usuario_selecion_id  = $request['usuario_selecion_id'];
-            $historico_profesionales->anotacion_seleccion = $request['anotacion_seleccion'];
-            $historico_profesionales->profesional_cartera = $request['profesional_cartera'];
-            $historico_profesionales->usuario_cartera_id = $request['usuario_cartera_id'];
-            $historico_profesionales->anotacion_cartera = $request['anotacion_cartera'];
-            $historico_profesionales->profesional_sst = $request['profesional_sst'];
-            $historico_profesionales->usuario_sst_id = $request['usuario_sst_id'];
-            $historico_profesionales->anotacion_sst = $request['anotacion_sst'];
-
-
-
             $seguimiento_estado = new ClientesSeguimientoEstado;
             $seguimiento_estado->responsable_inicial =  $user->nombres . ' ' . $user->apellidos;
             $seguimiento_estado->responsable_final = $cliente->responsable = $request->responsable;
@@ -1512,51 +1498,34 @@ class formularioDebidaDiligenciaController extends Controller
 
             $historico_profesionales_controller = new HistoricoProfesionalesController;
             $historico = $historico_profesionales_controller->byClienteId($id, false);
-            $historico_profesionales = new HistoricoProfesionalesModel;
-            $historico_profesionales->cliente_id = $id;
 
-            if (!$historico) {
-                if ($request['usuario_sst_id']) {
+            if (!$historico || (/* $historico->usuario_nomina_id !== $request['profesional_nomina_id'] ||  */$historico->usuario_cartera_id !== $request['profesional_cartera_id'] || $historico->usuario_sst_id !== $request['profesional_sst'])) {
+                $historico_profesionales = new HistoricoProfesionalesModel;
+                $historico_profesionales->cliente_id = $id;
+                if ($request['profesional_sst_id']) {
                     $historico_profesionales->profesional_sst = $request['profesional_sst'];
-                    $historico_profesionales->usuario_sst_id = $request['usuario_sst_id'];
+                    $historico_profesionales->usuario_sst_id = $request['profesional_sst_id'];
                     $historico_profesionales->anotacion_sst = $request['anotacion_sst'];
                 }
-                if ($request['usuario_cartera_id']) {
+                if ($request['profesional_cartera_id']) {
                     $historico_profesionales->profesional_cartera = $request['profesional_cartera'];
-                    $historico_profesionales->usuario_cartera_id = $request['usuario_cartera_id'];
+                    $historico_profesionales->usuario_cartera_id = $request['profesional_cartera_id'];
                     $historico_profesionales->anotacion_cartera = $request['anotacion_cartera'];
                 }
-                if ($request['usuario_selecion_id']) {
-                    $historico_profesionales->profesional_seleccion = $request['profesional_seleccion'];
-                    $historico_profesionales->usuario_selecion_id  = $request['usuario_selecion_id'];
-                    $historico_profesionales->anotacion_seleccion = $request['anotacion_seleccion'];
-                }
+                /*   if ($request['profesional_nomina_id']) {
+                    $historico_profesionales->profesional_nomina = $request['profesional_nomina'];
+                    $historico_profesionales->usuario_nomina_id  = $request['profesional_nomina_id'];
+                    $historico_profesionales->anotacion_nomina = $request['anotacion_nomina'];
+                } */
                 $historico_profesionales->save();
             } else {
-                if ($historico->usuario_selecion_id == $request['usuario_selecion_id'] &&  $historico->usuario_cartera_id == $request['usuario_cartera_id'] && $historico->profesional_sst == $request['profesional_sst']) {
-                    $historico_profesionales->anotacion_seleccion = $request['anotacion_seleccion'];
-                    $historico_profesionales->anotacion_cartera = $request['anotacion_cartera'];
-                    $historico_profesionales->anotacion_sst = $request['anotacion_sst'];
-                    $historico_profesionales->save();
-                } else {
-                    if ($request['usuario_sst_id']) {
-                        $historico_profesionales->profesional_sst = $request['profesional_sst'];
-                        $historico_profesionales->usuario_sst_id = $request['usuario_sst_id'];
-                        $historico_profesionales->anotacion_sst = $request['anotacion_sst'];
-                    }
-                    if ($request['usuario_cartera_id']) {
-                        $historico_profesionales->profesional_cartera = $request['profesional_cartera'];
-                        $historico_profesionales->usuario_cartera_id = $request['usuario_cartera_id'];
-                        $historico_profesionales->anotacion_cartera = $request['anotacion_cartera'];
-                    }
-                    if ($request['usuario_selecion_id']) {
-                        $historico_profesionales->profesional_seleccion = $request['profesional_seleccion'];
-                        $historico_profesionales->usuario_selecion_id  = $request['usuario_selecion_id'];
-                        $historico_profesionales->anotacion_seleccion = $request['anotacion_seleccion'];
-                    }
-                    $historico_profesionales->save();
-                }
+
+                /* $historico_profesionales->anotacion_nomina = $request['anotacion_nomina']; */
+                $historico->anotacion_cartera = $request['anotacion_cartera'];
+                $historico->anotacion_sst = $request['anotacion_sst'];
+                $historico->save();
             }
+
 
 
 
