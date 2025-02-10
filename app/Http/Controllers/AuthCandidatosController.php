@@ -248,7 +248,7 @@ class AuthCandidatosController extends Controller
             $user->tip_doc_id = $request->tip_doc_id;
             $login->email = $request->email;
             if (!empty($request->password)) {
-                $login->password = app('hash')->make($request->password);
+                $login->password = bcrypt($request->password);
             }
             $user->save();
             $login->save();
@@ -259,7 +259,6 @@ class AuthCandidatosController extends Controller
         } catch (\Exception $e) {
 
             DB::rollback();
-            return $e;
             return response()->json(['status' => 'error', 'message' => 'Error al guardar el formulario: utilice otro correo electrónico']);
         }
     }
