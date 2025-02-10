@@ -205,7 +205,7 @@ Route::group([
   Route::post('/register', [AuthController::class, 'register']);
   Route::post('/enviartoken', [AuthCandidatosController::class, 'enviarTokenRecuperacion']);
   Route::post('/recuperarcontrasena', [AuthCandidatosController::class, 'recuperarContraseña']);
-  Route::put('/actualizarcandidatousuario', [AuthCandidatosController::class, 'updateCandidatoUser']);
+  Route::put('/actualizarcandidatousuario/{id}', [AuthCandidatosController::class, 'updateCandidatoUser']);
 
   // Route::post('/register2', [AuthUsuarioController::class, 'register']);
   Route::post('/logout', [AuthController::class, 'logout']);

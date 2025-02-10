@@ -213,24 +213,54 @@ class AuthCandidatosController extends Controller
         return response()->json(['status' => 'success', 'message' => 'La contraseña se ha restablecido correctamente.']);
     }
 
-    public function  updateCandidatoUser(Request $request)
+    public function updateCandidatoUser(Request $request, $id)
     {
+        DB::beginTransaction();
         try {
-            $user = UsuariosCandidatosModel::find($request->id);
-            $user->nombre = $request->nombre;
-            $user->apellidos = $request->apellidos;
-            $user->correo = $request->correo;
-            $user->rol_id = $request->rol_id;
-            $user->telefono = $request->telefono;
-            if ($request->password != null || $request->password != "") {
-                $user->password = app('hash')->make($request->password);
+            $login = User::find($id);
+            $user = UsuariosCandidatosModel::where('usuario_id', $id)->first();
+
+            if (!$user) {
+                return response()->json(['status' => 'error', 'message' => 'Usuario no encontrado'], 404);
             }
 
-            if ($user->save()) {
-                return response()->json(['status' => 'success', 'message' => 'Usuario actualizado exitosamente']);
+            $existingUser = UsuariosCandidatosModel::where('num_doc', $user->num_doc)
+                ->where('tip_doc_id', $request->tip_doc_id)
+                ->first();
+            if ($existingUser && $existingUser->usuario_id != $id) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Ya existe un usuario registrado con este número de documento'
+                ], 422);
             }
+            $existingUser2 = User::where('email', $request->email)->first();
+
+            if ($existingUser2 && $existingUser2->id != $id) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Ya existe un usuario registrado con este correo electrónico'
+                ], 422);
+            }
+
+            $user->primer_nombre = $request->nombre;
+            $user->primer_apellido = $request->apellidos;
+            $user->celular = $request->celular;
+            $user->tip_doc_id = $request->tip_doc_id;
+            $login->email = $request->email;
+            if (!empty($request->password)) {
+                $login->password = app('hash')->make($request->password);
+            }
+            $user->save();
+            $login->save();
+
+            DB::commit();
+
+            return response()->json(['status' => 'success', 'message' => 'Usuario actualizado exitosamente']);
         } catch (\Exception $e) {
+
+            DB::rollback();
             return $e;
+            return response()->json(['status' => 'error', 'message' => 'Error al guardar el formulario: utilice otro correo electrónico']);
         }
     }
 }
