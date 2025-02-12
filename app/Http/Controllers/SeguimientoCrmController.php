@@ -1442,6 +1442,7 @@ class SeguimientoCrmController extends Controller
         $numeroRadicado = $formulario->numero_radicado;
         $tipo_atencion_id = $formulario->tipo_atencion_id;
         if ($tipo_atencion_id == 5 || $tipo_atencion_id == 6) {
+            $subject = 'Confirmación acta de reunión';
             if ((($formulario->nit_documento == "900032514" || $formulario->nit_documento == "811025401") && $formulario->correo == $destinatario) || (($formulario->nit_documento == "900032514" || $formulario->nit_documento == "811025401") && $booleanCompromiso == false)) {
                 $body = "Coordial saludo, Informamos que el acta de la reunion interna ha sido creado satisfactoriamente con radicado:  <b><i>$numeroRadicado</i></b>";
             } else {
@@ -1452,18 +1453,20 @@ class SeguimientoCrmController extends Controller
                     \n\n Atentamente:";
             }
         } else {
-            $body = "Cordial saludo, esperamos se encuentren muy bien.\n\n Informamos que el registro de servicio ha sido creado satisfactoriamente con número de radicado: <b><i>$numeroRadicado</i></b>, Cualquier información adicional podrá ser atendida en la línea Servisai de Saitemp S.A. marcando  al (604) 4485744, con gusto uno de nuestros facilitadores atenderá su llamada.\n\n simplificando conexiones, facilitando experiencias.";
+            $subject = 'Confirmación acta de pqrsf';
+            $body = "Cordial saludo, esperamos se encuentren muy bien.\n\n Informamos que el registro de pqrsf ha sido creado satisfactoriamente con número de radicado: <b><i>$numeroRadicado</i></b>, Cualquier información adicional podrá ser atendida en la línea Servisai de Saitemp S.A. marcando  al (604) 4485744, con gusto uno de nuestros facilitadores atenderá su llamada.\n\n simplificando conexiones, facilitando experiencias.";
         }
 
         $body = nl2br($body);
 
         if ($booleanCompromiso == true) {
+
             $body = "Cordial saludo, tiene nuevos compromisos asignados en el radicado CRM número: <b><i>$numeroRadicado</i></b> adjunto con las siguientes observaciones: $observacion.
         \n\n Atentamente:";
         }
 
 
-        $subject = 'Confirmación registro de servicio.';
+
         $nomb_membrete = 'Informe de servicio';
 
         // Datos del correo
