@@ -41,7 +41,10 @@ class formularioGestionIngresoController extends Controller
             ->leftJoin('usr_app_registro_ingreso_laboraorio as ilab', 'ilab.registro_ingreso_id', 'usr_app_formulario_ingreso.id')
             ->leftJoin('usr_app_ciudad_laboraorio as ciulab', 'ciulab.id', 'ilab.laboratorio_medico_id')
             ->when(!in_array('42', $permisos), function ($query) {
-                return $query->whereNotIn('cli.nit', ["811025401", "900032514"]);
+                return $query->where(function ($query) {
+                    $query->whereNotIn('cli.nit', ['811025401', '900032514'])
+                        ->orWhereNull('cli.nit');
+                });
             })
             ->select(
                 'usr_app_formulario_ingreso.id',
@@ -1500,7 +1503,10 @@ class formularioGestionIngresoController extends Controller
             ->leftJoin('usr_app_registro_ingreso_laboraorio as ilab', 'ilab.registro_ingreso_id', 'usr_app_formulario_ingreso.id')
             ->leftJoin('usr_app_ciudad_laboraorio as ciulab', 'ciulab.id', 'ilab.laboratorio_medico_id')
             ->when(!in_array('42', $permisos), function ($query) {
-                return $query->whereNotIn('cli.nit', ["811025401", "900032514"]);
+                return $query->where(function ($query) {
+                    $query->whereNotIn('cli.nit', ['811025401', '900032514'])
+                        ->orWhereNull('cli.nit');
+                });
             })
             ->select(
                 'usr_app_formulario_ingreso.id',
@@ -1588,7 +1594,10 @@ class formularioGestionIngresoController extends Controller
             ->leftJoin('usr_app_registro_ingreso_laboraorio as ilab', 'ilab.registro_ingreso_id', 'usr_app_formulario_ingreso.id')
             ->leftJoin('usr_app_ciudad_laboraorio as ciulab', 'ciulab.id', 'ilab.laboratorio_medico_id')
             ->when(!in_array('42', $permisos), function ($query) {
-                return $query->whereNotIn('cli.nit', ["811025401", "900032514"]);
+                return $query->where(function ($query) {
+                    $query->whereNotIn('cli.nit', ['811025401', '900032514'])
+                        ->orWhereNull('cli.nit');
+                });
             })
             ->select(
                 'usr_app_formulario_ingreso.id',
