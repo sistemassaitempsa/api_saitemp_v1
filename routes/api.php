@@ -170,6 +170,7 @@ use App\Http\Controllers\TipoUsuarioLoginController;
 use App\Http\Controllers\UsuariodebidaDiligenciaController;
 use App\Http\Controllers\TiposUsuarioController;
 use App\Http\Controllers\EpsController;
+use App\Http\Controllers\SectorAcademicoController;
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -237,6 +238,11 @@ Route::group([
   //eps
   Route::get('/eps', [EpsController::class, 'index']);
   Route::post('/eps', [EpsController::class, 'create']);
+
+  //sector academico
+  Route::get('/sectoracademico', [SectorAcademicoController::class, 'index']);
+  Route::post('/sectoracademico', [SectorAcademicoController::class, 'create']);
+
 
   // Opciones de menú
   Route::get('/menuslista', [MenuController::class, 'index']);
