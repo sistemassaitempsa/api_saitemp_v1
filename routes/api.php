@@ -169,7 +169,7 @@ use App\Http\Controllers\MotivoServicioController;
 use App\Http\Controllers\TipoUsuarioLoginController;
 use App\Http\Controllers\UsuariodebidaDiligenciaController;
 use App\Http\Controllers\TiposUsuarioController;
-
+use App\Http\Controllers\EpsController;
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -234,6 +234,9 @@ Route::group([
   Route::get('/categoriasMenulista', [categoriaMenuController::class, 'lista']);
   Route::post('/categoriasMenuborradomasivo', [categoriaMenuController::class, 'borradomasivo']);
 
+  //eps
+  Route::get('/eps', [EpsController::class, 'index']);
+  Route::post('/eps', [EpsController::class, 'create']);
 
   // Opciones de menú
   Route::get('/menuslista', [MenuController::class, 'index']);
