@@ -172,6 +172,8 @@ use App\Http\Controllers\TiposUsuarioController;
 use App\Http\Controllers\EpsController;
 use App\Http\Controllers\IdiomasController;
 use App\Http\Controllers\SectorAcademicoController;
+use App\Http\Controllers\SectorEconomicoCandidatosController;
+
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -247,6 +249,10 @@ Route::group([
   //idiomas
   Route::get('/idiomas', [IdiomasController::class, 'index']);
   Route::post('/idiomas', [IdiomasController::class, 'create']);
+
+  //sectores economicos candidatos
+  Route::get('/sectoreconomicocandidato', [SectorEconomicoCandidatosController::class, 'index']);
+  Route::post('/sectoreconomicocandidato', [SectorEconomicoCandidatosController::class, 'create']);
 
   // Opciones de menú
   Route::get('/menuslista', [MenuController::class, 'index']);
