@@ -16,6 +16,7 @@ use App\Models\LoginUsuariosModel;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Config;
+use App\Models\ExperienciasLaboralesCandidatosModel;
 
 
 class AuthCandidatosController extends Controller

@@ -9,6 +9,10 @@ use Illuminate\Support\Carbon;
 use App\Models\ReferenciasModel;
 use App\Models\ReferenciasFormularioEmpleado;
 use App\Models\UsuariosCandidatosModel;
+use App\Models\ReferenciasPersonalesCandidatosModel;
+use App\Models\ExperienciasLaboralesCandidatosModel;
+use App\Models\IdiomasCandidatosModel;
+use App\Models\Municipios;
 
 class RecepcionEmpleadoController extends Controller
 {
@@ -105,48 +109,49 @@ class RecepcionEmpleadoController extends Controller
             return response()->json(['status' => 'success', 'message' => 'Registro guardado de manera exitosa', 'id' => $novasoft]);
         } catch (\Exception $e) {
             DB::rollback();
-            return response()->json(['status' => 'error', 'message' => 'Error al guardar el formulario, por favor intenta nuevamente']);
+            return $e;
+            return response()->json(['status' => 'error', 'message' => 'Error al guardar el formulario, por favor intenta nuevamente nova']);
         }
     }
 
-    public function searchByCodEmp($cod_emp)
+    public function searchByCodEmp($cod_emp, $noJsonresponse = false)
     {
         try {
-            $novasoft = RecepcionEmpleado::join('gen_tipide as tipoId', 'tipoId.cod_tip', 'GTH_RptEmplea.tip_ide')
-                ->join('gen_paises as pais_exp_name', 'pais_exp_name.cod_pai', 'GTH_RptEmplea.pai_exp')
-                ->join('gen_paises as pais_res_name', 'pais_res_name.cod_pai', 'GTH_RptEmplea.pai_res')
-                ->join('gen_paises as pais_nac_name', 'pais_nac_name.cod_pai', 'GTH_RptEmplea.cod_pai')
-                ->join('gen_deptos as depto_exp_name', function ($join) {
+            $novasoft = RecepcionEmpleado::leftjoin('gen_tipide as tipoId', 'tipoId.cod_tip', 'GTH_RptEmplea.tip_ide')
+                ->leftjoin('gen_paises as pais_exp_name', 'pais_exp_name.cod_pai', 'GTH_RptEmplea.pai_exp')
+                ->leftjoin('gen_paises as pais_res_name', 'pais_res_name.cod_pai', 'GTH_RptEmplea.pai_res')
+                ->leftjoin('gen_paises as pais_nac_name', 'pais_nac_name.cod_pai', 'GTH_RptEmplea.cod_pai')
+                ->leftjoin('gen_deptos as depto_exp_name', function ($join) {
                     $join->on('depto_exp_name.cod_dep', '=', 'GTH_RptEmplea.dpt_exp')
                         ->orOn('depto_exp_name.cod_dep', '=', 'GTH_RptEmplea.pai_exp');
                 })
-                ->join('gen_deptos as depto_res_name', function ($join) {
+                ->leftjoin('gen_deptos as depto_res_name', function ($join) {
                     $join->on('depto_res_name.cod_dep', '=', 'GTH_RptEmplea.dpt_res')
                         ->orOn('depto_res_name.cod_dep', '=', 'GTH_RptEmplea.pai_res');
                 })
-                ->join('gen_deptos as depto_nac_name', function ($join) {
+                ->leftjoin('gen_deptos as depto_nac_name', function ($join) {
                     $join->on('depto_nac_name.cod_dep', '=', 'GTH_RptEmplea.cod_dep')
                         ->orOn('depto_nac_name.cod_dep', '=', 'GTH_RptEmplea.cod_pai');
                 })
-                ->join('gen_ciudad as ciudad_exp_name', function ($join) {
+                ->leftjoin('gen_ciudad as ciudad_exp_name', function ($join) {
                     $join->on('ciudad_exp_name.cod_ciu', '=', 'GTH_RptEmplea.ciu_exp')
                         ->orOn('ciudad_exp_name.cod_ciu', '=', 'GTH_RptEmplea.dpt_exp')
                         ->where('ciudad_exp_name.cod_pai', '=', 'GTH_RptEmplea.pai_exp');
                 })
-                ->join('gen_ciudad as ciudad_res_name', function ($join) {
+                ->leftjoin('gen_ciudad as ciudad_res_name', function ($join) {
                     $join->on('ciudad_res_name.cod_ciu', '=', 'GTH_RptEmplea.ciu_res')
                         ->orOn('ciudad_res_name.cod_ciu', '=', 'GTH_RptEmplea.dpt_res')
                         ->where('ciudad_res_name.cod_pai', '=', 'GTH_RptEmplea.pai_res');
                 })
-                ->join('gen_ciudad as ciudad_nac_name', function ($join) {
+                ->leftjoin('gen_ciudad as ciudad_nac_name', function ($join) {
                     $join->on('ciudad_nac_name.cod_ciu', '=', 'GTH_RptEmplea.cod_ciu')
                         ->orOn('ciudad_nac_name.cod_ciu', '=', 'GTH_RptEmplea.cod_dep')
                         ->where('ciudad_nac_name.cod_pai', '=', 'GTH_RptEmplea.cod_pai');
                 })
-                ->join('gen_bancos as banco_name', 'banco_name.cod_ban', 'GTH_RptEmplea.cod_ban')
-                ->join('rhh_tbclaest as nivelAcademico_name', 'nivelAcademico_name.tip_est', 'GTH_RptEmplea.Niv_aca')
-                ->join('GTH_EstCivil as estadoCivil_name', 'estadoCivil_name.cod_est', 'GTH_RptEmplea.cod_est')
-                ->join('gen_grupoetnico as etnia_name', 'etnia_name.cod_grupo', 'GTH_RptEmplea.cod_grupo')
+                ->leftjoin('gen_bancos as banco_name', 'banco_name.cod_ban', 'GTH_RptEmplea.cod_ban')
+                ->leftjoin('rhh_tbclaest as nivelAcademico_name', 'nivelAcademico_name.tip_est', 'GTH_RptEmplea.Niv_aca')
+                ->leftjoin('GTH_EstCivil as estadoCivil_name', 'estadoCivil_name.cod_est', 'GTH_RptEmplea.cod_est')
+                ->leftjoin('gen_grupoetnico as etnia_name', 'etnia_name.cod_grupo', 'GTH_RptEmplea.cod_grupo')
                 ->where('cod_emp', $cod_emp)
                 ->select(
                     'tipoId.des_tip as tipIde_nombre',
@@ -170,12 +175,24 @@ class RecepcionEmpleadoController extends Controller
             $familiares = ReferenciasModel::where('cod_emp', $cod_emp)->get();
             $novasoft["familiares"] = $familiares;
             if ($novasoft->cod_emp != null) {
-                return response()->json(['status' => 'success', 'data' => $novasoft]);
+                if ($noJsonresponse == false) {
+                    return response()->json(['status' => 'success', 'data' => $novasoft]);
+                } else {
+                    return $novasoft;
+                }
             } else {
-                return response()->json(['status' => 'error', 'message' => 'Empleado no encontrado'], 404);
+                if ($noJsonresponse == false) {
+                    return response()->json(['status' => 'error', 'message' => 'Empleado no encontrado'], 404);
+                } else {
+                    return $novasoft;
+                }
             }
         } catch (\Exception $e) {
-            return response()->json(['status' => 'error', 'message' => 'Error al buscar el empleado, por favor intenta nuevamente']);
+            if ($noJsonresponse == false) {
+                return response()->json(['status' => 'error', 'message' => 'Error al buscar el empleado, por favor intenta nuevamente']);
+            } else {
+                return $novasoft;
+            }
         }
     }
 
@@ -235,8 +252,26 @@ class RecepcionEmpleadoController extends Controller
                         $novasoftReferencia->ocu_ref = 0; // Si necesitas cambiar este valor, asegúrate de que sea correcto
                         $novasoftReferencia->save();
                     } else {
+                        $novasoftReferencia = new ReferenciasFormularioEmpleado;
+                        $novasoftReferencia->cod_emp = $novasoft->cod_emp;
+                        $novasoftReferencia->num_ref = $referencia['num_ref'];
+                        $novasoftReferencia->parent = $referencia['parent'];
+                        $novasoftReferencia->cel_ref = $referencia['cel_ref'];
+                        $novasoftReferencia->nom_ref = $referencia['nom_ref'];
+                        $novasoftReferencia->tip_ref = $referencia['tip_ref'];
+                        $novasoftReferencia->ocu_ref = 0;
+                        $novasoftReferencia->save();
                     }
                 } else {
+                    $novasoftReferencia = new ReferenciasFormularioEmpleado;
+                    $novasoftReferencia->cod_emp = $novasoft->cod_emp;
+                    $novasoftReferencia->num_ref = $referencia['num_ref'];
+                    $novasoftReferencia->parent = $referencia['parent'];
+                    $novasoftReferencia->cel_ref = $referencia['cel_ref'];
+                    $novasoftReferencia->nom_ref = $referencia['nom_ref'];
+                    $novasoftReferencia->tip_ref = $referencia['tip_ref'];
+                    $novasoftReferencia->ocu_ref = 0;
+                    $novasoftReferencia->save();
                 }
             }
             foreach ($request->familiaresConsulta as $index => $referencia) {
@@ -279,6 +314,7 @@ class RecepcionEmpleadoController extends Controller
         } catch (\Exception $e) {
 
             DB::rollback();
+
             return response()->json(['status' => 'error', 'message' => 'Error al guardar el formulario, por favor intenta nuevamente']);
         }
     }
@@ -290,6 +326,14 @@ class RecepcionEmpleadoController extends Controller
 
 
             /*  $novasoft->est_civ = $request->est_civ; */
+
+            $ciu_exp_formated = trim($request->ciu_exp, '0');
+            $ciu_nac_formated = trim($request->cod_ciu, '0');
+            $ciu_res_formated = trim($request->ciu_res, '0');
+
+            $ciu_exp_seiya =  Municipios::where('codigo_dane', $ciu_exp_formated)->first();
+            $ciu_nac_seiya =  Municipios::where('codigo_dane', $ciu_nac_formated)->first();
+            $ciu_res_seiya =  Municipios::where('codigo_dane', $ciu_res_formated)->first();
 
 
             $fechaNacimientoFormated = Carbon::parse($request->fec_nac)->format('d-m-Y H:i:s');
@@ -313,6 +357,7 @@ class RecepcionEmpleadoController extends Controller
             $user->acidente_laboral = $request->acidente_laboral;
             $user->enfermedad = $request->enfermedad;
             $user->tratamiento_medico = $request->tratamiento_medico;
+            $user->tratamiento_psiquiatrico = $request->tratamiento_psiquiatrico;
             $user->tratamiento_psicologico = $request->tratamiento_psicologico;
             $user->tratamiento_odontologico = $request->tratamiento_odontologico;
             $user->cirugia = $request->cirugia;
@@ -330,31 +375,177 @@ class RecepcionEmpleadoController extends Controller
             $user->licencia_conduccion = $request->licencia_conduccion;
             $user->categoria_licencia = $request->categoria_licencia;
             $user->tip_doc_id = $request->tip_ide;
-            $user->ciudad_expedicion_id = $request->ciu_exp;
-            $user->ciudad_nacimiento_id = $request->cod_ciu;
-            $user->ciudad_residencia_id = $request->ciu_res;
+            $user->ciudad_expedicion_id = $ciu_exp_seiya ? $ciu_exp_seiya['id'] : null;
+            $user->ciudad_nacimiento_id = $ciu_nac_seiya ? $ciu_nac_seiya['id'] : null;
+            $user->ciudad_residencia_id = $ciu_res_seiya ? $ciu_res_seiya['id'] : null;
             $user->gen_banco_id = $request->cod_ban;
             $user->nivel_academico_id = $request->Niv_aca;
             $user->genero_id = $request->sex_emp;
             $user->grupo_etnico_id = $request->cod_grupo;
             $user->save();
 
-            $novasoft = RecepcionEmpleado::find($user->num_doc)->where('tip_ide', $request->tip_ide)->first();
+            /*      foreach ($request->referencias as $item) {
+                if ($item['nom_ref'] != "") {
+                    $referencia = new ReferenciasPersonalesCandidatosModel;
+                    $referencia->usuario_id =  $usuario_id;
+                    $referencia->nombre = $item['nom_ref'];
+                    $referencia->telefono = $item['cel_ref'];
+                    $referencia->relacion = $item['parent'];
+                    $referencia->fecha_nacimiento = $item['fecha_nacimiento']; 
+                    $referencia->save();
+                }
+            } */
+
+            if (count($request->experiencias_laborales) > 0) {
+                foreach ($request->experiencias_laborales as $item) {
+                    if (isset($item['id'])) {
+                        $fecha_inicio = Carbon::parse($item['fecha_inicio'])->format('27-m-Y H:i:s');
+                        $fecha_fin = Carbon::parse($item['fecha_fin'])->format('28-m-Y H:i:s');
+                        $experiencia = ExperienciasLaboralesCandidatosModel::find($item['id']);
+                        $experiencia->usuario_id = $usuario_id;
+                        $experiencia->empresa = $item['empresa'];
+                        $experiencia->cargo = $item['cargo'];
+                        $experiencia->sector_econimico_id = $item['sector_econimico_id'];
+                        $experiencia->motivo_retiro = $item['motivo_retiro'];
+                        $experiencia->fecha_inicio = $fecha_inicio;
+                        $experiencia->fecha_fin = $fecha_fin;
+                        $experiencia->tiempo = Carbon::parse($fecha_inicio)
+                            ->diffInMonths(Carbon::parse($fecha_fin));
+                        $experiencia->save();
+                    } else {
+                        $fecha_inicio = Carbon::parse($item['fecha_inicio'])->format('27-m-Y H:i:s');
+                        $fecha_fin = Carbon::parse($item['fecha_fin'])->format('28-m-Y H:i:s');
+                        $experiencia = new ExperienciasLaboralesCandidatosModel;
+                        $experiencia->usuario_id = $usuario_id;
+                        $experiencia->empresa = $item['empresa'];
+                        $experiencia->cargo = $item['cargo'];
+                        $experiencia->sector_econimico_id = $item['sector_econimico_id'];
+                        $experiencia->motivo_retiro = $item['motivo_retiro'];
+                        $experiencia->fecha_inicio = $fecha_inicio;
+                        $experiencia->fecha_fin = $fecha_fin;
+                        $experiencia->tiempo = Carbon::parse($fecha_inicio)
+                            ->diffInMonths(Carbon::parse($fecha_fin));
+                        $experiencia->save();
+                    }
+                }
+            }
+
+            if (count($request->idiomas) > 0) {
+
+                foreach ($request->idiomas as $item) {
+                    if (isset($item['id'])) {
+                        $idioma = IdiomasCandidatosModel::find($item['id']);
+                        $idioma->usuario_id = $usuario_id;
+                        $idioma->idioma_id = $item['idioma_id'];
+                        $idioma->nivel = $item['nivel'];
+                        $idioma->save();
+                    } else {
+
+                        $idioma = new IdiomasCandidatosModel;
+                        $idioma->usuario_id = $usuario_id;
+                        $idioma->idioma_id = $item['idioma_id'];
+                        $idioma->nivel = $item['nivel'];
+                        $idioma->save();
+                    }
+                }
+            }
+
+            $novasoft = RecepcionEmpleado::where('cod_emp', $user->num_doc)
+                ->where('tip_ide', $request->tip_ide)
+                ->first();
+
             $response = "";
             if ($novasoft) {
                 $response = $this->updateByCodEmpNovasoft($request, $user->num_doc);
             } else {
                 $response = $this->createNovasoft($request);
             }
+            $responseData = $response->getData(true);
             DB::commit();
-            if ($response['status'] == "success") {
+
+            if ($responseData['status'] == "success") {
                 return response()->json(['status' => 'success', 'message' => 'Registro actualizado de manera exitosa', 'id' => $user->id]);
             } else {
                 return response()->json(['status' => 'error', 'message' => 'Error al guardar el formulario, por favor intenta nuevamente']);
             }
         } catch (\Exception $e) {
             DB::rollback();
+
             return response()->json(['status' => 'error', 'message' => 'Error al guardar el formulario, por favor intenta nuevamente']);
+        }
+    }
+
+    public function searchByIdOnUsuariosCandidato($usuario_id)
+    {
+        $user = auth()->user();
+        $user_candidato = UsuariosCandidatosModel::leftjoin('usr_app_eps_c as eps', 'eps.id', 'usr_app_candidatos_c.eps_id')
+            ->leftjoin('usr_app_afp as afp', 'afp.id', 'usr_app_candidatos_c.afp_id')
+            ->leftjoin('usr_app_sector_academico_c as sector_academico', 'sector_academico.id', 'usr_app_candidatos_c.sector_academico_id')
+            ->leftjoin('usr_app_municipios as ciudad_expedicion', 'ciudad_expedicion.id', 'usr_app_candidatos_c.ciudad_expedicion_id')
+            ->leftjoin('usr_app_municipios as ciudad_nacimiento', 'ciudad_nacimiento.id', 'usr_app_candidatos_c.ciudad_nacimiento_id')
+            ->leftjoin('usr_app_municipios as ciudad_residencia', 'ciudad_residencia.id', 'usr_app_candidatos_c.ciudad_residencia_id')
+            ->leftjoin('gen_tipide as tipo_documento', 'tipo_documento.cod_tip', 'usr_app_candidatos_c.tip_doc_id')
+            ->leftjoin('gen_bancos as banco', 'banco.cod_ban', 'usr_app_candidatos_c.gen_banco_id')
+            ->leftjoin('rhh_tbclaest as nivel_academico', 'nivel_academico.tip_est', 'usr_app_candidatos_c.nivel_academico_id')
+            ->leftjoin('usr_app_genero as genero', 'genero.id', 'usr_app_candidatos_c.genero_id')
+            ->leftjoin('gen_grupoetnico as grupo_etnico', 'grupo_etnico.cod_grupo', 'usr_app_candidatos_c.grupo_etnico_id')
+            ->select(
+                'usr_app_candidatos_c.*',
+                'eps.nombre as eps_nombre',
+                'afp.nombre as afp_nombre',
+                'sector_academico.nombre as sector_academico_nombre',
+                'tipo_documento.des_tip as des_tip',
+                'banco.nom_ban as nom_ban',
+                'nivel_academico.des_est as des_est',
+                'genero.nombre as genero_nombre',
+                'grupo_etnico.descripcion as descripcion'
+            )
+            ->where('usuario_id', $usuario_id)->first();
+
+        $experiencias_laborales = ExperienciasLaboralesCandidatosModel::join('usr_app_sector_econimico_c as sector_economico', 'sector_economico.id', 'usr_app_experiencias_laborales_c.sector_econimico_id')
+            ->select(
+                'usr_app_experiencias_laborales_c.*',
+                'sector_economico.nombre as nombre',
+            )
+            ->where('usuario_id', $usuario_id)->get();
+
+        $idiomas = IdiomasCandidatosModel::join('usr_app_idiomas_c as idioma', 'idioma.id', 'usr_app_candidatos_idiomas_c.idioma_id')
+            ->select(
+                'usr_app_candidatos_idiomas_c.*',
+                'idioma.nombre as nombre',
+            )
+            ->where('usuario_id', $usuario_id)->get();
+
+        $user_candidato['experiencias_laborales'] = $experiencias_laborales;
+        $user_candidato['idiomas'] = $idiomas;
+        $novasoft = $this->searchByCodEmp($user_candidato->num_doc, true);
+        $user_candidato["novasoft"] = $novasoft;
+        return response()->json($user_candidato);
+    }
+    /*  public function searchByIdOnUsuariosCandidato(Request $request, usuario_id){
+
+        $user = UsuariosCandidatosModel::where('usuario_id', $usuario_id)->first();
+
+    } */
+
+    public function deleteExperienciaLaboral($id)
+    {
+        try {
+            $result = ExperienciasLaboralesCandidatosModel::find($id);
+            $result->delete();
+            return response()->json(['status' => 'success', 'message' => 'Experiencia laboral eliminada de manera exitosa']);
+        } catch (\Exception $e) {
+            return response()->json(['status' => 'error', 'message' => 'Error al eliminar experiencia, por favor intenta nuevamente']);
+        }
+    }
+    public function deleteIdiomaCandidato($id)
+    {
+        try {
+            $result = IdiomasCandidatosModel::find($id);
+            $result->delete();
+            return response()->json(['status' => 'success', 'message' => 'Idioma eliminado de manera exitosa']);
+        } catch (\Exception $e) {
+            return response()->json(['status' => 'error', 'message' => 'Error al eliminar exeriencia, por favor intenta nuevamente']);
         }
     }
 }

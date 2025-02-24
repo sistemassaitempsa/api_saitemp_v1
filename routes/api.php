@@ -170,6 +170,7 @@ use App\Http\Controllers\TipoUsuarioLoginController;
 use App\Http\Controllers\UsuariodebidaDiligenciaController;
 use App\Http\Controllers\TiposUsuarioController;
 use App\Http\Controllers\EpsController;
+use App\Http\Controllers\GeneroCandidatosController;
 use App\Http\Controllers\IdiomasController;
 use App\Http\Controllers\SectorAcademicoController;
 use App\Http\Controllers\SectorEconomicoCandidatosController;
@@ -237,6 +238,12 @@ Route::group([
   Route::delete('/categoriasMenu/{id}', [categoriaMenuController::class, 'destroy']);
   Route::get('/categoriasMenulista', [categoriaMenuController::class, 'lista']);
   Route::post('/categoriasMenuborradomasivo', [categoriaMenuController::class, 'borradomasivo']);
+
+  //Genero Candidatos
+  Route::get('/generoCandidatos', [GeneroCandidatosController::class, 'index']);
+  Route::post('/generoCandidatos', [GeneroCandidatosController::class, 'create']);
+  Route::put('/generoCandidatos/{id}', [GeneroCandidatosController::class, 'update']);
+
 
   //eps
   Route::get('/eps', [EpsController::class, 'index']);
@@ -597,7 +604,6 @@ Route::group([
   Route::post('/categoriacargo', [CategoriaCargoController::class, 'create']);
   Route::post('/categoriacargo/{id}', [CategoriaCargoController::class, 'update']);
   Route::delete('/categoriacargo/{id}', [CategoriaCargoController::class, 'destroy']);
-
 
   // Subcategorias cargos
   Route::get('/subcategoriacargo/{id}', [SubCategoriaCargoController::class, 'index']);
@@ -963,6 +969,7 @@ Route::group([
   Route::get('/recepcionEmpleado', [RecepcionEmpleadoController::class, 'index']);
   Route::post('/recepcionEmpleado', [RecepcionEmpleadoController::class, 'createNovasoft']);
   Route::put('/recepcionEmpleado/{cod_emp}', [RecepcionEmpleadoController::class, 'updateByCodEmpNovasoft']);
+  Route::put('/recepcionEmpleadoseiya/{usuario_id}', [RecepcionEmpleadoController::class, 'createSeiya']);
   Route::get('/recepcionEmpleado/{cod_emp}', [RecepcionEmpleadoController::class, 'searchByCodEmp']);
   Route::get('/paisesFormularioEmpleado', [PaisesFormualrioEmpleadoController::class, 'index']);
   Route::get('/ciudadesFormularioEmpleado', [CiudadesFormularioEmpleadoController::class, 'index']);
@@ -973,6 +980,9 @@ Route::group([
   Route::get('/nivelAcademicoFormEmpleado', [NivelAcademicoFormEmpleadoController::class, 'index']);
   Route::get('/grupoEtnicoEmpleado', [GrupoEtnicoFormEmpleadoController::class, 'index']);
   Route::get('/familiaresFormularioEmpleado', [FamiliaresFormEmpleadoController::class, 'index']);
+  Route::get('/formulariocandidato/{usuario_id}', [RecepcionEmpleadoController::class, 'searchByIdOnUsuariosCandidato']);
+  Route::delete('/experiencialaboralcanidato/{id}', [RecepcionEmpleadoController::class, 'deleteExperienciaLaboral']);
+  Route::delete('/idiomacandidato/{id}', [RecepcionEmpleadoController::class, 'deleteIdiomaCandidato']);
 
   //ruta para generar el archivo zip de seiya
   Route::get('/descargarZip/{idRadicado}/{idCliente}', [GenerarZipController::class, 'descargarArchivosById']);
