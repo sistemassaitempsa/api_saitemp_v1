@@ -548,4 +548,104 @@ class RecepcionEmpleadoController extends Controller
             return response()->json(['status' => 'error', 'message' => 'Error al eliminar exeriencia, por favor intenta nuevamente']);
         }
     }
+    public function indexFormularioCandidatos($cantidad)
+    {
+        $result = UsuariosCandidatosModel::leftjoin('usr_app_municipios as ciudad_residencia', 'ciudad_residencia.id', 'usr_app_candidatos_c.ciudad_residencia_id')
+            ->leftjoin('usr_app_genero as genero', 'genero.id', 'usr_app_candidatos_c.genero_id')
+            ->leftjoin('gen_tipide as tipo_documento', 'tipo_documento.cod_tip', 'usr_app_candidatos_c.tip_doc_id')
+            ->select(
+
+                'usr_app_candidatos_c.id',
+                'usr_app_candidatos_c.num_doc',
+                'tipo_documento.des_tip as tipo_documento',
+                'usr_app_candidatos_c.primer_nombre',
+                'usr_app_candidatos_c.primer_apellido',
+                'usr_app_candidatos_c.fecha_nacimiento',
+                'ciudad_residencia.nombre as ciudad_residencia',
+                'usr_app_candidatos_c.celular',
+                'genero.nombre as genero_nombre',
+                'usr_app_candidatos_c.created_at',
+                'usr_app_candidatos_c.usuario_id',
+            )->paginate($cantidad);
+
+        return response()->json($result);
+    }
+    public function candidatosFiltro($cadena)
+    {
+
+        try {
+            $cadenaJSON = base64_decode($cadena);
+            $cadenaUTF8 = mb_convert_encoding($cadenaJSON, 'UTF-8', 'ISO-8859-1');
+            $valores = explode("/", $cadenaUTF8);
+            $campo = $valores[0];
+            $operador = $valores[1];
+            $valor = $valores[2];
+            $valor2 = isset($valores[3]) ? $valores[3] : null;
+            $query = UsuariosCandidatosModel::leftjoin('usr_app_municipios as ciudad_residencia', 'ciudad_residencia.id', 'usr_app_candidatos_c.ciudad_residencia_id')
+                ->leftjoin('usr_app_genero as genero', 'genero.id', 'usr_app_candidatos_c.genero_id')
+                ->leftjoin('gen_tipide as tipo_documento', 'tipo_documento.cod_tip', 'usr_app_candidatos_c.tip_doc_id')
+                ->select(
+                    'usr_app_candidatos_c.id',
+                    'usr_app_candidatos_c.num_doc',
+                    'tipo_documento.des_tip as tipo_documento',
+                    'usr_app_candidatos_c.primer_nombre',
+                    'usr_app_candidatos_c.primer_apellido',
+                    'usr_app_candidatos_c.fecha_nacimiento',
+                    'ciudad_residencia.nombre as ciudad_residencia',
+                    'usr_app_candidatos_c.celular',
+                    'genero.nombre as genero_nombre',
+                    'usr_app_candidatos_c.created_at',
+                    'usr_app_candidatos_c.usuario_id',
+                )->orderby('usr_app_candidatos_c.id', 'DESC');
+
+            switch ($operador) {
+                case 'Contiene':
+                    if ($campo == "num_doc") {
+                        $query->where('usr_app_candidatos_c.num_doc', 'like', '%' . $valor . '%');
+                    } else if ($campo == "tipo_documento") {
+                        $query->where('tipo_documento.des_tip', 'like', '%' . $valor . '%');
+                    } else if ($campo == "primer_nombre") {
+                        $query->where('usr_app_candidatos_c.primer_nombre', 'like', '%' . $valor . '%');
+                    } else if ($campo == "primer_apellido") {
+                        $query->where('usr_app_candidatos_c.primer_apellido', 'like', '%' . $valor . '%');
+                    } else if ($campo == "ciudad_residencia") {
+                        $query->where('ciudad_residencia.nombre', 'like', '%' . $valor . '%');
+                    } else if ($campo == "celular") {
+                        $query->where('usr_app_candidatos_c.celular', 'like', '%' . $valor . '%');
+                    } else {
+                        $query->where($campo, 'like', '%' . $valor . '%');
+                    }
+                    break;
+                case 'Igual a':
+                    if ($campo == "num_doc") {
+                        $query->where('usr_app_candidatos_c.num_doc', '=',  $valor);
+                    } else if ($campo == "tipo_documento") {
+                        $query->where('tipo_documento.des_tip', '=', $valor);
+                    } else if ($campo == "primer_nombre") {
+                        $query->where('usr_app_candidatos_c.primer_nombre', '=', $valor);
+                    } else if ($campo == "primer_apellido") {
+                        $query->where('usr_app_candidatos_c.primer_apellido', '=', $valor);
+                    } else if ($campo == "ciudad_residencia") {
+                        $query->where('ciudad_residencia.nombre',  '=', $valor);
+                    } else if ($campo == "celular") {
+                        $query->where('usr_app_candidatos_c.celular', '=', $valor);
+                    } else {
+                        $query->where($campo, '=', $valor);
+                    }
+                    break;
+                case 'Igual a fecha':
+                    $query->whereDate('usr_app_matriz_riesgo.' . $campo, '=', $valor);
+                    break;
+                case 'Entre':
+                    $query->whereDate('usr_app_matriz_riesgo.' . $campo, '>=', $valor)
+                        ->whereDate('usr_app_matriz_riesgo.' . $campo, '<=', $valor2);
+                    break;
+            }
+
+            $result = $query->paginate();
+            return response()->json($result);
+        } catch (\Exception $e) {
+            return $e;
+        }
+    }
 }

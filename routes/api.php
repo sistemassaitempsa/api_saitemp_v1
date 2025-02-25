@@ -983,6 +983,9 @@ Route::group([
   Route::get('/formulariocandidato/{usuario_id}', [RecepcionEmpleadoController::class, 'searchByIdOnUsuariosCandidato']);
   Route::delete('/experiencialaboralcanidato/{id}', [RecepcionEmpleadoController::class, 'deleteExperienciaLaboral']);
   Route::delete('/idiomacandidato/{id}', [RecepcionEmpleadoController::class, 'deleteIdiomaCandidato']);
+  Route::get('/consultaFormularioCandidato/{cantidad}', [RecepcionEmpleadoController::class, 'indexFormularioCandidatos']);
+  Route::get('/consultaFormularioCandidatofiltro/{cadena}', [RecepcionEmpleadoController::class, 'candidatosFiltro']);
+
 
   //ruta para generar el archivo zip de seiya
   Route::get('/descargarZip/{idRadicado}/{idCliente}', [GenerarZipController::class, 'descargarArchivosById']);
