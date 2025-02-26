@@ -108,7 +108,7 @@ trait AutenticacionGuard
     public function listaUsuarios($cantidad, $tipo_usaurio)
     {
         if ($tipo_usaurio == "1") {
-            $result = UsuariosInternosModel::join("usr_app_roles as rol", "rol.id", "=", "usr_app_usuarios_internos.rol_usuario_id")
+            $result = UsuariosInternosModel::join("usr_app_roles as rol", "rol.id", "=", "usr_app_usuarios_internos.rol_usuario_interno_id")
                 ->join("usr_app_usuarios", "usr_app_usuarios.id", "=", "usr_app_usuarios_internos.usuario_id")
                 ->join("usr_app_estados_usuario as estado", "estado.id", "=", "usr_app_usuarios.estado_id")
                 ->select(

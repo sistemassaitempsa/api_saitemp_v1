@@ -382,6 +382,7 @@ class RecepcionEmpleadoController extends Controller
             $user->nivel_academico_id = $request->Niv_aca;
             $user->genero_id = $request->sex_emp;
             $user->grupo_etnico_id = $request->cod_grupo;
+            $user->concepto = $request->concepto;
             $user->save();
 
             /*      foreach ($request->referencias as $item) {
@@ -404,6 +405,7 @@ class RecepcionEmpleadoController extends Controller
                         $experiencia = ExperienciasLaboralesCandidatosModel::find($item['id']);
                         $experiencia->usuario_id = $usuario_id;
                         $experiencia->empresa = $item['empresa'];
+                        $experiencia->funciones = $item['funciones'];
                         $experiencia->cargo = $item['cargo'];
                         $experiencia->sector_econimico_id = $item['sector_econimico_id'];
                         $experiencia->motivo_retiro = $item['motivo_retiro'];
@@ -418,6 +420,7 @@ class RecepcionEmpleadoController extends Controller
                         $experiencia = new ExperienciasLaboralesCandidatosModel;
                         $experiencia->usuario_id = $usuario_id;
                         $experiencia->empresa = $item['empresa'];
+                        $experiencia->funciones = $item['funciones'];
                         $experiencia->cargo = $item['cargo'];
                         $experiencia->sector_econimico_id = $item['sector_econimico_id'];
                         $experiencia->motivo_retiro = $item['motivo_retiro'];
