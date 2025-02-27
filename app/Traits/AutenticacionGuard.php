@@ -159,6 +159,7 @@ trait AutenticacionGuard
             $result = UsuariosCandidatosModel::join("gen_tipide", "gen_tipide.cod_tip", "=", "usr_app_candidatos_c.tip_doc_id")
                 ->join("usr_app_usuarios", "usr_app_usuarios.id", "=", "usr_app_candidatos_c.usuario_id")
                 ->join("usr_app_roles", "usr_app_roles.id", "=", "usr_app_usuarios.rol_id")
+                ->join("usr_app_estados_usuario as estado", "estado.id", "=", "usr_app_usuarios.estado_id")
                 ->select(
                     "usr_app_candidatos_c.usuario_id",
                     'usr_app_candidatos_c.primer_nombre',
@@ -169,10 +170,14 @@ trait AutenticacionGuard
                     'gen_tipide.cod_tip as tip_doc_id',
                     'usr_app_roles.id as rol_id',
                     'usr_app_roles.nombre as rol',
+                    "estado.nombre as estado",
+                    "estado.id as estado_id",
                     'usr_app_usuarios.estado_id',
                     'usr_app_usuarios.email',
                     'usr_app_usuarios.tipo_usuario_id',
-                    'usr_app_usuarios.id'
+                    'usr_app_usuarios.id',
+                    'usr_app_candidatos_c.primer_nombre as nombres',
+                    'usr_app_candidatos_c.primer_apellido as apellidos',
                 )->paginate($cantidad);
             return response()->json($result);
         }

@@ -282,7 +282,7 @@ class EnvioCorreoController extends Controller
                 .bodyContainer {
                     width: 100%;
                     max-width: 100%;
-                    padding: 15px;
+                    padding: 30px;
                     box-sizing: border-box; /* Mantiene el ancho consistente */
                     word-wrap: break-word; /* Rompe palabras largas */
                 }
