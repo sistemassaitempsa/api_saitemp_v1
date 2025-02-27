@@ -243,7 +243,8 @@ class EnvioCorreoController extends Controller
         $adjuntos = [];
         $archivos = $request->files->all();
         $adjunto_candidato = $request->adjunto_candidato;
-
+        $rutaImagen1 = public_path("/upload/Encabezado.jpg");
+        $rutaImagen2 = public_path("/upload/piedepagina.jpg");
 
 
         $smtpHost = 'smtp.gmail.com';
@@ -257,25 +258,95 @@ class EnvioCorreoController extends Controller
         $transport = Transport::fromDsn($dsn);
         $mailer = new Mailer($transport);
 
-        // Adjuntar imágenes de la firma
-        /*  $firmaGmail = '
-            <br><br>
-            <img src="cid:logo_firma1" style="width: 50%;"><br>
-            <img src="cid:logo_firma2" style="width: 50%;"></p>
-        ';
-     */
-        // Combinar cuerpo del mensaje con la firma
-        $body = $request->body;
+        $firmaGmail = "
+        <html>
+        <head>
+            <style>
+                /* Estilos corregidos */
+                .divContainer {
+                    width: 100%;
+                    max-width: 600px; /* Ancho máximo para dispositivos de escritorio */
+                    margin: auto;
+                }
+                .table {
+                    width: 100%;
+                   
+                    background-color:rgb(243, 243, 243);
+                    box-sizing: border-box; /* Incluye bordes en el ancho total */
+                }
+                .firma {
+                    width: 100%;
+                    max-width: 100%;
+                    display: block; /* Elimina espacios no deseados */
+                }
+                .bodyContainer {
+                    width: 100%;
+                    max-width: 100%;
+                    padding: 15px;
+                    box-sizing: border-box; /* Mantiene el ancho consistente */
+                    word-wrap: break-word; /* Rompe palabras largas */
+                }
+                /* Mejora para compatibilidad con clientes de correo */
+                table {
+                    border-collapse: collapse;
+                    mso-table-lspace: 0pt;
+                    mso-table-rspace: 0pt;
+                }
+                /* Estilos móviles mejorados */
+                @media only screen and (max-width: 600px) {
+                    .divContainer {
+                        width: 100% !important;
+                    }
+                    .bodyContainer {
+                        padding: 10px !important;
+                        
+                    }
+                }
+            </style>
+        </head>
+        <body>
+        <div class='divContainer'>
+            <table class='table' width='100%' cellpadding='0' cellspacing='0'>
+                <tr>
+                    <td>
+                        <img src='cid:logo_firma1' class='firma' style='width: 100%; height: auto;'>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <div class='bodyContainer'>" . $request->body . "</div>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <img src='cid:logo_firma2' class='firma' style='width: 100%; height: auto;'>
+                    </td>
+                </tr>
+            </table>
+        </div>
+        </body>
+        </html>
+        ";
+
+
+        $body = $firmaGmail;
 
         $email = (new Email())
             ->from(new Address($correo_no_reply))
             ->subject($request->subject)
             ->html($body);
 
-        // Adjuntar imágenes de la firma como recursos embebidos
+        if (file_exists($rutaImagen1)) {
+            $email->embed(fopen($rutaImagen1, 'r'), 'logo_firma1');
+        } else {
+            return response()->json(['status' => 'error', 'message' => 'El correo electrónico no tiene configurada una firma.']);
+        }
 
-        // Adjuntar formularios si existen
-
+        if (file_exists($rutaImagen2)) {
+            $email->embed(fopen($rutaImagen2, 'r'), 'logo_firma2');
+        } else {
+            return response()->json(['status' => 'error', 'message' => 'El correo electrónico no tiene configurada una segunda firma.']);
+        }
         foreach ($destinatarios as $destinatario) {
             $email->addTo($destinatario);
         }

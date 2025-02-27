@@ -122,7 +122,8 @@ class AuthCandidatosController extends Controller
         $subject = 'Cambio de contraseña';
         $nomb_membrete = 'Informe de servicio';
 
-        $body = "Hemos recibido una solicitud para el reestablecimiento de su contraseña.<br><br> 
+        $body = "<h2>Recuperación de contraseña</h2>
+        <br>Hemos recibido una solicitud para el reestablecimiento de su contraseña.<br><br> 
         Por favor <a href=\"$resetUrl\">clic aquí</a> para continuar con el proceso.<br><br>
         Cualquier información adicional podrá ser atendida en la línea Servisai de Saitemp S.A. marcando al (604) 4485744. Con gusto uno de nuestros facilitadores atenderá su llamada.<br><br> 
         <b>Simplificando conexiones, facilitando experiencias.</b>";

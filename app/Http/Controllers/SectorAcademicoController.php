@@ -4,12 +4,17 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\SectorAcademicoModel;
+use Illuminate\Support\Str;
 
 class SectorAcademicoController extends Controller
 {
     public function index()
     {
-        $sector = SectorAcademicoModel::orderby('usr_app_sector_academico_c.nombre', 'ASC')->get();
+        $sector = SectorAcademicoModel::orderby('usr_app_sector_academico_c.nombre', 'ASC')->get()
+            ->map(function ($sector) {
+                $sector->nombre = Str::ucfirst(Str::lower($sector->nombre));
+                return $sector;
+            });;
         return response()->json($sector);
     }
     public function create(Request $request)

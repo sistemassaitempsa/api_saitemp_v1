@@ -13,6 +13,8 @@ use App\Models\ReferenciasPersonalesCandidatosModel;
 use App\Models\ExperienciasLaboralesCandidatosModel;
 use App\Models\IdiomasCandidatosModel;
 use App\Models\Municipios;
+use League\CommonMark\Reference\Reference;
+use Illuminate\Support\Str;
 
 class RecepcionEmpleadoController extends Controller
 {
@@ -30,8 +32,6 @@ class RecepcionEmpleadoController extends Controller
 
     public function createNovasoft(Request $request)
     {
-
-        DB::beginTransaction();
         try {
             $novasoft = new RecepcionEmpleado;
             $fechaNacimientoFormated = Carbon::parse($request->fec_nac)->format('d-m-Y H:i:s');
@@ -77,15 +77,19 @@ class RecepcionEmpleadoController extends Controller
 
 
             foreach ($request->referencias as $referencia) {
-                $novasoftReferencia = new ReferenciasFormularioEmpleado;
-                $novasoftReferencia->cod_emp = $novasoft->cod_emp;
-                $novasoftReferencia->num_ref = $referencia['num_ref'];
-                $novasoftReferencia->parent = $referencia['parent'];
-                $novasoftReferencia->cel_ref = $referencia['cel_ref'];
-                $novasoftReferencia->nom_ref = $referencia['nom_ref'];
-                $novasoftReferencia->tip_ref = $referencia['tip_ref'];
-                $novasoftReferencia->ocu_ref = 0;
-                $novasoftReferencia->save();
+
+                if ($referencia['nom_ref'] == '' || $referencia['nom_ref'] == null) {
+                } else {
+                    $novasoftReferencia = new ReferenciasFormularioEmpleado;
+                    $novasoftReferencia->cod_emp = $novasoft->cod_emp;
+                    $novasoftReferencia->num_ref = $referencia['num_ref'];
+                    $novasoftReferencia->parent = $referencia['parent'];
+                    $novasoftReferencia->cel_ref = $referencia['cel_ref'];
+                    $novasoftReferencia->nom_ref = $referencia['nom_ref'];
+                    $novasoftReferencia->tip_ref = $referencia['tip_ref'];
+                    $novasoftReferencia->ocu_ref = 0;
+                    $novasoftReferencia->save();
+                }
             }
             foreach ($request->familiares as $referencia) {
                 $novasoftReferencia = new ReferenciasModel;
@@ -105,11 +109,10 @@ class RecepcionEmpleadoController extends Controller
 
 
 
-            DB::commit();
+
             return response()->json(['status' => 'success', 'message' => 'Registro guardado de manera exitosa', 'id' => $novasoft]);
         } catch (\Exception $e) {
-            DB::rollback();
-            return $e;
+            throw $e;
             return response()->json(['status' => 'error', 'message' => 'Error al guardar el formulario, por favor intenta nuevamente nova']);
         }
     }
@@ -170,6 +173,20 @@ class RecepcionEmpleadoController extends Controller
                     'etnia_name.descripcion as etnia_nombre',
                     '*'
                 )->first();
+            if ($novasoft) {
+                // Formatear el campo eps_nombre
+                $novasoft->pais_exp_nombre = Str::ucfirst(Str::lower($novasoft->pais_exp_nombre));
+                $novasoft->pais_res_nombre = Str::ucfirst(Str::lower($novasoft->pais_res_nombre));
+                $novasoft->pais_nac_nombre = Str::ucfirst(Str::lower($novasoft->pais_nac_nombre));
+                $novasoft->dep_exp_nombre = Str::ucfirst(Str::lower($novasoft->dep_exp_nombre));
+                $novasoft->dep_res_nombre = Str::ucfirst(Str::lower($novasoft->dep_res_nombre));
+                $novasoft->dep_nac_nombre = Str::ucfirst(Str::lower($novasoft->dep_nac_nombre));
+                $novasoft->ciudad_exp_nombre = Str::ucfirst(Str::lower($novasoft->ciudad_exp_nombre));
+                $novasoft->ciudad_res_nombre = Str::ucfirst(Str::lower($novasoft->ciudad_res_nombre));
+                $novasoft->ciudad_nac_nombre = Str::ucfirst(Str::lower($novasoft->ciudad_nac_nombre));
+                $novasoft->banco_nombre = Str::ucfirst(Str::lower($novasoft->banco_nombre));
+                $novasoft->nivelAcademico_nombre = Str::ucfirst(Str::lower($novasoft->nivelAcademico_nombre));
+            }
             $referencias = ReferenciasFormularioEmpleado::where('cod_emp', $cod_emp)->get();
             $novasoft["referencias"] = $referencias;
             $familiares = ReferenciasModel::where('cod_emp', $cod_emp)->get();
@@ -199,7 +216,7 @@ class RecepcionEmpleadoController extends Controller
     public function updateByCodEmpNovasoft(Request $request, $cod_emp)
     {
         try {
-            DB::beginTransaction();
+
             $novasoft = RecepcionEmpleado::find($cod_emp);
             $fechaNacimientoFormated = Carbon::parse($request->fec_nac)->format('d-m-Y H:i:s');
             $fechaExpedicionFormated = Carbon::parse($request->fec_expdoc)->format('d-m-Y H:i:s');
@@ -309,11 +326,11 @@ class RecepcionEmpleadoController extends Controller
                     }
                 }
             }
-            DB::commit();
+
             return response()->json(['status' => 'success', 'message' => 'Registro actualizado de manera exitosa', 'id' => $novasoft->cod_emp]);
         } catch (\Exception $e) {
 
-            DB::rollback();
+            throw $e;
 
             return response()->json(['status' => 'error', 'message' => 'Error al guardar el formulario, por favor intenta nuevamente']);
         }
@@ -473,7 +490,7 @@ class RecepcionEmpleadoController extends Controller
             }
         } catch (\Exception $e) {
             DB::rollback();
-
+            return $e;
             return response()->json(['status' => 'error', 'message' => 'Error al guardar el formulario, por favor intenta nuevamente']);
         }
     }
@@ -504,6 +521,12 @@ class RecepcionEmpleadoController extends Controller
                 'grupo_etnico.descripcion as descripcion'
             )
             ->where('usuario_id', $usuario_id)->first();
+
+        if ($user_candidato) {
+            // Formatear el campo eps_nombre
+            $user_candidato->eps_nombre = Str::ucfirst(Str::lower($user_candidato->eps_nombre));
+            $user_candidato->nom_ban = Str::ucfirst(Str::lower($user_candidato->nom_ban));
+        }
 
         $experiencias_laborales = ExperienciasLaboralesCandidatosModel::join('usr_app_sector_econimico_c as sector_economico', 'sector_economico.id', 'usr_app_experiencias_laborales_c.sector_econimico_id')
             ->select(
