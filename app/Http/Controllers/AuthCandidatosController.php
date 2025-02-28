@@ -210,6 +210,7 @@ class AuthCandidatosController extends Controller
             }
 
             $user->primer_nombre = $request->nombre;
+            $login->estado_id = $request->estado_id;
             $user->primer_apellido = $request->apellidos;
             $user->celular = $request->celular;
             $user->tip_doc_id = $request->tip_doc_id;

@@ -120,47 +120,44 @@ class RecepcionEmpleadoController extends Controller
     public function searchByCodEmp($cod_emp, $noJsonresponse = false)
     {
         try {
-            $novasoft = RecepcionEmpleado::leftjoin('gen_tipide as tipoId', 'tipoId.cod_tip', 'GTH_RptEmplea.tip_ide')
-                ->leftjoin('gen_paises as pais_exp_name', 'pais_exp_name.cod_pai', 'GTH_RptEmplea.pai_exp')
-                ->leftjoin('gen_paises as pais_res_name', 'pais_res_name.cod_pai', 'GTH_RptEmplea.pai_res')
-                ->leftjoin('gen_paises as pais_nac_name', 'pais_nac_name.cod_pai', 'GTH_RptEmplea.cod_pai')
-                ->leftjoin('gen_deptos as depto_exp_name', function ($join) {
+            $novasoft = RecepcionEmpleado::leftJoin('gen_tipide as tipoId', 'tipoId.cod_tip', '=', 'GTH_RptEmplea.tip_ide')
+                ->leftJoin('gen_paises as pais_exp_name', 'pais_exp_name.cod_pai', '=', 'GTH_RptEmplea.pai_exp')
+                ->leftJoin('gen_paises as pais_res_name', 'pais_res_name.cod_pai', '=', 'GTH_RptEmplea.pai_res')
+                ->leftJoin('gen_paises as pais_nac_name', 'pais_nac_name.cod_pai', '=', 'GTH_RptEmplea.cod_pai')
+                ->leftJoin('gen_deptos as depto_exp_name', function ($join) {
                     $join->on('depto_exp_name.cod_dep', '=', 'GTH_RptEmplea.dpt_exp')
-                        ->orOn('depto_exp_name.cod_dep', '=', 'GTH_RptEmplea.pai_exp');
+                        ->whereColumn('depto_exp_name.cod_pai', 'GTH_RptEmplea.pai_exp'); // Corregida relación con país
                 })
-                ->leftjoin('gen_deptos as depto_res_name', function ($join) {
+                ->leftJoin('gen_deptos as depto_res_name', function ($join) {
                     $join->on('depto_res_name.cod_dep', '=', 'GTH_RptEmplea.dpt_res')
-                        ->orOn('depto_res_name.cod_dep', '=', 'GTH_RptEmplea.pai_res');
+                        ->whereColumn('depto_res_name.cod_pai', 'GTH_RptEmplea.pai_res'); // Corregida relación con país
                 })
-                ->leftjoin('gen_deptos as depto_nac_name', function ($join) {
+                ->leftJoin('gen_deptos as depto_nac_name', function ($join) {
                     $join->on('depto_nac_name.cod_dep', '=', 'GTH_RptEmplea.cod_dep')
-                        ->orOn('depto_nac_name.cod_dep', '=', 'GTH_RptEmplea.cod_pai');
+                        ->whereColumn('depto_nac_name.cod_pai', 'GTH_RptEmplea.cod_pai'); // Corregida relación con país
                 })
-                ->leftjoin('gen_ciudad as ciudad_exp_name', function ($join) {
+                ->leftJoin('gen_ciudad as ciudad_exp_name', function ($join) {
                     $join->on('ciudad_exp_name.cod_ciu', '=', 'GTH_RptEmplea.ciu_exp')
-                        ->orOn('ciudad_exp_name.cod_ciu', '=', 'GTH_RptEmplea.dpt_exp')
-                        ->where('ciudad_exp_name.cod_pai', '=', 'GTH_RptEmplea.pai_exp');
+                        ->whereColumn('ciudad_exp_name.cod_dep', 'GTH_RptEmplea.dpt_exp');
                 })
-                ->leftjoin('gen_ciudad as ciudad_res_name', function ($join) {
+                ->leftJoin('gen_ciudad as ciudad_res_name', function ($join) {
                     $join->on('ciudad_res_name.cod_ciu', '=', 'GTH_RptEmplea.ciu_res')
-                        ->orOn('ciudad_res_name.cod_ciu', '=', 'GTH_RptEmplea.dpt_res')
-                        ->where('ciudad_res_name.cod_pai', '=', 'GTH_RptEmplea.pai_res');
+                        ->whereColumn('ciudad_res_name.cod_dep', 'GTH_RptEmplea.dpt_res');
                 })
-                ->leftjoin('gen_ciudad as ciudad_nac_name', function ($join) {
+                ->leftJoin('gen_ciudad as ciudad_nac_name', function ($join) {
                     $join->on('ciudad_nac_name.cod_ciu', '=', 'GTH_RptEmplea.cod_ciu')
-                        ->orOn('ciudad_nac_name.cod_ciu', '=', 'GTH_RptEmplea.cod_dep')
-                        ->where('ciudad_nac_name.cod_pai', '=', 'GTH_RptEmplea.cod_pai');
+                        ->whereColumn('ciudad_nac_name.cod_dep', 'GTH_RptEmplea.cod_dep');
                 })
-                ->leftjoin('gen_bancos as banco_name', 'banco_name.cod_ban', 'GTH_RptEmplea.cod_ban')
-                ->leftjoin('rhh_tbclaest as nivelAcademico_name', 'nivelAcademico_name.tip_est', 'GTH_RptEmplea.Niv_aca')
-                ->leftjoin('GTH_EstCivil as estadoCivil_name', 'estadoCivil_name.cod_est', 'GTH_RptEmplea.cod_est')
-                ->leftjoin('gen_grupoetnico as etnia_name', 'etnia_name.cod_grupo', 'GTH_RptEmplea.cod_grupo')
+                ->leftJoin('gen_bancos as banco_name', 'banco_name.cod_ban', '=', 'GTH_RptEmplea.cod_ban')
+                ->leftJoin('rhh_tbclaest as nivelAcademico_name', 'nivelAcademico_name.tip_est', '=', 'GTH_RptEmplea.Niv_aca')
+                ->leftJoin('GTH_EstCivil as estadoCivil_name', 'estadoCivil_name.cod_est', '=', 'GTH_RptEmplea.cod_est')
+                ->leftJoin('gen_grupoetnico as etnia_name', 'etnia_name.cod_grupo', '=', 'GTH_RptEmplea.cod_grupo')
                 ->where('cod_emp', $cod_emp)
                 ->select(
                     'tipoId.des_tip as tipIde_nombre',
                     'pais_exp_name.nom_pai as pais_exp_nombre',
                     'pais_res_name.nom_pai as pais_res_nombre',
-                    'pais_res_name.nom_pai as pais_nac_nombre',
+                    'pais_nac_name.nom_pai as pais_nac_nombre',
                     'depto_exp_name.nom_dep as dep_exp_nombre',
                     'depto_res_name.nom_dep as dep_res_nombre',
                     'depto_nac_name.nom_dep as dep_nac_nombre',
@@ -173,46 +170,44 @@ class RecepcionEmpleadoController extends Controller
                     'etnia_name.descripcion as etnia_nombre',
                     '*'
                 )->first();
+
             if ($novasoft) {
-                // Formatear el campo eps_nombre
-                $novasoft->pais_exp_nombre = Str::ucfirst(Str::lower($novasoft->pais_exp_nombre));
-                $novasoft->pais_res_nombre = Str::ucfirst(Str::lower($novasoft->pais_res_nombre));
-                $novasoft->pais_nac_nombre = Str::ucfirst(Str::lower($novasoft->pais_nac_nombre));
-                $novasoft->dep_exp_nombre = Str::ucfirst(Str::lower($novasoft->dep_exp_nombre));
-                $novasoft->dep_res_nombre = Str::ucfirst(Str::lower($novasoft->dep_res_nombre));
-                $novasoft->dep_nac_nombre = Str::ucfirst(Str::lower($novasoft->dep_nac_nombre));
-                $novasoft->ciudad_exp_nombre = Str::ucfirst(Str::lower($novasoft->ciudad_exp_nombre));
-                $novasoft->ciudad_res_nombre = Str::ucfirst(Str::lower($novasoft->ciudad_res_nombre));
-                $novasoft->ciudad_nac_nombre = Str::ucfirst(Str::lower($novasoft->ciudad_nac_nombre));
-                $novasoft->banco_nombre = Str::ucfirst(Str::lower($novasoft->banco_nombre));
-                $novasoft->nivelAcademico_nombre = Str::ucfirst(Str::lower($novasoft->nivelAcademico_nombre));
+                // Formatear los nombres
+                foreach (
+                    [
+                        'pais_exp_nombre',
+                        'pais_res_nombre',
+                        'pais_nac_nombre',
+                        'dep_exp_nombre',
+                        'dep_res_nombre',
+                        'dep_nac_nombre',
+                        'ciudad_exp_nombre',
+                        'ciudad_res_nombre',
+                        'ciudad_nac_nombre',
+                        'banco_nombre',
+                        'nivelAcademico_nombre'
+                    ] as $campo
+                ) {
+                    $novasoft->$campo = $novasoft->$campo ? Str::ucfirst(Str::lower($novasoft->$campo)) : null;
+                }
             }
+
             $referencias = ReferenciasFormularioEmpleado::where('cod_emp', $cod_emp)->get();
             $novasoft["referencias"] = $referencias;
             $familiares = ReferenciasModel::where('cod_emp', $cod_emp)->get();
             $novasoft["familiares"] = $familiares;
-            if ($novasoft->cod_emp != null) {
-                if ($noJsonresponse == false) {
-                    return response()->json(['status' => 'success', 'data' => $novasoft]);
-                } else {
-                    return $novasoft;
-                }
+
+            if ($novasoft && $novasoft->cod_emp) {
+                return $noJsonresponse ? $novasoft : response()->json(['status' => 'success', 'data' => $novasoft]);
             } else {
-                if ($noJsonresponse == false) {
-                    return response()->json(['status' => 'error', 'message' => 'Empleado no encontrado'], 404);
-                } else {
-                    return $novasoft;
-                }
+                return $noJsonresponse ? $novasoft : response()->json(['status' => 'error', 'message' => 'Empleado no encontrado'], 404);
             }
         } catch (\Exception $e) {
-            if ($noJsonresponse == false) {
-                return response()->json(['status' => 'error', 'message' => 'Error al buscar el empleado, por favor intenta nuevamente']);
-            } else {
-                return $novasoft;
-            }
+            return $noJsonresponse
+                ? null
+                : response()->json(['status' => 'error', 'message' => 'Error al buscar el empleado, por favor intenta nuevamente']);
         }
     }
-
     public function updateByCodEmpNovasoft(Request $request, $cod_emp)
     {
         try {
@@ -241,6 +236,7 @@ class RecepcionEmpleadoController extends Controller
             $novasoft->nac_emp = $request->nac_emp;
             $novasoft->pai_res = $request->pai_res;
             $novasoft->dpt_res = $request->dpt_res;
+            $novasoft->ciu_res = $request->ciu_res;
             $novasoft->per_car = $request->per_car;
             $novasoft->e_mail = $request->e_mail;
             $novasoft->tel_cel = $request->tel_cel;
@@ -252,7 +248,6 @@ class RecepcionEmpleadoController extends Controller
             $novasoft->cod_grupo = $request->cod_grupo;
             $novasoft->cod_ban = $request->cod_ban;
             $novasoft->fec_expdoc = $fechaExpedicionFormated;
-            $novasoft->ciu_res = $request->ciu_res;
             $novasoft->est_soc = $request->est_soc;
             $novasoft->num_ide = $request->cod_emp;
             $novasoft->save();
