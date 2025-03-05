@@ -61,6 +61,8 @@ return [
     'PASSWORD_VALIDART' => env('PASSWORD_VALIDART'),
     'CONTRASENA_NO_REPLY' => env('CONTRASENA_NO_REPLY'),
     'CORREO_NO_REPLY' => env('CORREO_NO_REPLY'),
+    'CAPTCHA_KEY' => env('CAPTCHA_KEY'),
+    'CAPTCHA_URL' => env('CAPTCHA_URL'),
 
     /*
     |--------------------------------------------------------------------------

@@ -15,6 +15,7 @@ use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Validator;
+use App\Models\UsuariosInternosModel;
 
 
 class AuthController extends Controller
@@ -115,38 +116,49 @@ class AuthController extends Controller
      */
     public function register(Request $request)
     {
-        $user = new User;
-        $user->nombres = $request->nombres;
-        $user->apellidos = $request->apellidos;
-        $user->documento_identidad = $request->documento_identidad;
-        $user->usuario = $request->usuario;
-        $user->contrasena_correo = Crypt::encryptString($request->contrasena_correo);
-        $user->email = $request->email;
-        $user->password = bcrypt($request->password);
-        if (is_numeric($request->email)) { // se verifica si el usuario a registrar es un número de documento para asignar el rol de cliente
-            $user->rol_id = 53;
-            $user->empresa_cliente = 1;
-        } else {
-            $user->rol_id = $request->rol_id == '' ? 3 : $request->rol_id;
-        }
-        $archivos = $request->files->all();
-        $contador = 1;
-        foreach ($archivos as $archivo) {
-            if ($contador <= 2) {
 
-                $nombreArchivoOriginal = ($archivo)->getClientOriginalName();
-                $nuevoNombre = Carbon::now()->timestamp . "_" . $nombreArchivoOriginal;
-
-                $carpetaDestino = './upload/';
-                ($archivo)->move($carpetaDestino, $nuevoNombre);
-                $user->{'imagen_firma_' . $contador} = ltrim($carpetaDestino, '.') . $nuevoNombre;
-                $contador++;
+        try {
+            DB::beginTransaction();
+            $user = new User;
+            $user->email = $request->email;
+            $user->password = bcrypt($request->password);
+            if (is_numeric($request->email)) { // se verifica si el usuario a registrar es un número de documento para asignar el rol de cliente
+                $user->rol_id = 53;
+                $user->tipo_usuario_id = 2;
+            } else {
+                $user->rol_id = $request->rol_id == '' ? 3 : $request->rol_id;
+                $user->tipo_usuario_id = 1;
             }
-        }
+            $user->save();
+            if ($user->tipo_usuario_id == 1) {
+                $user_interno = new UsuariosInternosModel;
+                $user_interno->nombres = $request->nombres;
+                $user_interno->rol_usuario_interno_id = 1;
+                $user_interno->apellidos = $request->apellidos;
+                $user_interno->documento_identidad = $request->documento_identidad;
+                $user_interno->correo = $request->usuario;
+                $user_interno->contrasena_correo = Crypt::encryptString($request->contrasena_correo);
+                $user_interno->usuario_id = $user->id;
+                $archivos = $request->files->all();
+                $contador = 1;
+                foreach ($archivos as $archivo) {
+                    if ($contador <= 2) {
 
-        if ($user->save()) {
+                        $nombreArchivoOriginal = ($archivo)->getClientOriginalName();
+                        $nuevoNombre = Carbon::now()->timestamp . "_" . $nombreArchivoOriginal;
+
+                        $carpetaDestino = './upload/';
+                        ($archivo)->move($carpetaDestino, $nuevoNombre);
+                        $user_interno->{'imagen_firma_' . $contador} = ltrim($carpetaDestino, '.') . $nuevoNombre;
+                        $contador++;
+                    }
+                }
+                $user_interno->save();
+            }
+            DB::commit();
             return response()->json(['status' => 'success', 'message' => 'Registro guardado exitosamente']);
-        } else {
+        } catch (\Exception $e) {
+            DB::rollback();
             return response()->json(['status' => 'error', 'message' => 'Ha ocurrido un error al guardar los datos de usuario']);
         }
     }

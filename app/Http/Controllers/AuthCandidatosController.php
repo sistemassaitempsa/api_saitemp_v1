@@ -17,6 +17,7 @@ use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Config;
 use App\Models\ExperienciasLaboralesCandidatosModel;
+use Illuminate\Support\Facades\Http;
 
 
 class AuthCandidatosController extends Controller
@@ -53,6 +54,30 @@ class AuthCandidatosController extends Controller
 
     public function createUserCandidato(Request $request)
     {
+        // Validar presencia del token
+        if (!$request->has('captchaToken')) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Token de seguridad faltante'
+            ], 400);
+        }
+
+        // Verificar CAPTCHA con manejo de errores
+        try {
+            $captchaValid = $this->verificarCaptcha($request->captchaToken);
+
+            if (!$captchaValid) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Verificación de seguridad fallida'
+                ], 403);
+            }
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'No se pudo validar la seguridad del formulario'
+            ], 500);
+        }
         $existingUser = UsuariosCandidatosModel::where('num_doc', $request->numero_documento)
             ->where('tip_doc_id', $request->doc_tip_id)
             ->first();
@@ -91,6 +116,7 @@ class AuthCandidatosController extends Controller
             $candidato->celular = $request->telefono;
             $candidato->save();
 
+            $this->enviarBienvenida($candidato->tip_doc_id, $candidato->num_doc);
             DB::commit();
             return response()->json(['status' => 'success', 'message' => 'Registro guardado de manera exitosa']);
         } catch (\Exception $e) {
@@ -229,5 +255,72 @@ class AuthCandidatosController extends Controller
             DB::rollback();
             return response()->json(['status' => 'error', 'message' => 'Error al guardar el formulario: utilice otro correo electrónico']);
         }
+    }
+    public function enviarBienvenida($doc_tip_id, $num_doc)
+    {
+
+        $urlFront = Config::get('app.URL_FRONT') . "#";
+        $candidato = UsuariosCandidatosModel::where('num_doc', $num_doc)->where('tip_doc_id', $doc_tip_id)->first();
+        if (!$candidato) {
+            return response()->json(['status' => 'error', 'message' => 'No existe cuenta con este número de documento']);
+        }
+        $user = User::where('id', $candidato->usuario_id)->first();
+
+        // Generar token
+        $token = Str::random(60);
+
+        $resetUrl = $urlFront . "/logincandidatos";
+        $subject = 'Bienvenido al portal Saitemp';
+        $nomb_membrete = 'Informe de servicio';
+        $nombre = ucwords(strtolower($candidato->primer_nombre));
+
+        $body = "<h2>Bienvenido $nombre</h2>
+        <brSu cuenta ha sido creada satisfactoriamente<br><br> 
+        Para iniciar sesión haz <a href=\"$resetUrl\">clic aquí</a> en donde podrás completar tu hoja de vida.<br><br>
+        Cualquier información adicional podrá ser atendida en la línea Servisai de Saitemp S.A. marcando al (604) 4485744. Con gusto uno de nuestros facilitadores atenderá su llamada.<br><br> 
+        <b>Simplificando conexiones, facilitando experiencias.</b>";
+
+
+        // Datos del correo
+        $correo = [
+            'subject' => $subject,
+            'body' => $body,
+            'to' => $user->email,
+            'cc' => '',
+        ];
+
+        $EnvioCorreoController = new EnvioCorreoController();
+        $requestEmail = Request::createFromBase(new Request($correo));
+
+
+        return $EnvioCorreoController->sendEmailExternal($requestEmail);
+    }
+    public function verificarCaptcha($token)
+    {
+        $secret = Config::get('app.CAPTCHA_KEY');
+
+
+        $response = Http::asForm()->post('https://www.google.com/recaptcha/api/siteverify', [
+            'secret' => $secret,
+            'response' => $token,
+            'remoteip' => request()->ip()
+        ]);
+
+        if ($response->failed()) {
+            throw new \Exception('Error en la API de reCAPTCHA: ' . $response->status());
+        }
+
+        $body = $response->json();
+
+        if (!isset($body['success'])) {
+            throw new \Exception('Respuesta inválida de reCAPTCHA');
+        }
+
+        // Para reCAPTCHA v3: Verificar score (ajustar según necesidades)
+        if (isset($body['score']) && $body['score'] < 0.5) {
+            return false;
+        }
+
+        return $body['success'];
     }
 }
