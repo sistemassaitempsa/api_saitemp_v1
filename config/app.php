@@ -59,9 +59,9 @@ return [
     'VALIDART_URL' => env('VALIDART_URL'),
     'URL_FRONT' => env('URL_FRONT'),
     'PASSWORD_VALIDART' => env('PASSWORD_VALIDART'),
+    'CAPTCHA_KEY' => env('CAPTCHA_KEY'),
     'CONTRASENA_NO_REPLY' => env('CONTRASENA_NO_REPLY'),
     'CORREO_NO_REPLY' => env('CORREO_NO_REPLY'),
-    'CAPTCHA_KEY' => env('CAPTCHA_KEY'),
     'CAPTCHA_URL' => env('CAPTCHA_URL'),
 
     /*
