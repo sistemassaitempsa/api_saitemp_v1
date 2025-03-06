@@ -286,7 +286,7 @@ class RecepcionEmpleadoController extends Controller
                     $novasoftReferencia->save();
                 }
             }
-            foreach ($request->familiaresConsulta as $index => $referencia) {
+            /*       foreach ($request->familiaresConsulta as $index => $referencia) {
                 $requestFamiliares = $request->familiares;
                 if (isset($referencia['cod_emp']) && isset($referencia['ap1_fam'])) {
                     $novasoftReferencia = ReferenciasModel::where('cod_emp', $referencia['cod_emp'])
@@ -320,7 +320,7 @@ class RecepcionEmpleadoController extends Controller
                         $novasoftReferencia->save();
                     }
                 }
-            }
+            } */
 
             return response()->json(['status' => 'success', 'message' => 'Registro actualizado de manera exitosa', 'id' => $novasoft->cod_emp]);
         } catch (\Exception $e) {

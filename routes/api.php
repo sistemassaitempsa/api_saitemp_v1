@@ -201,7 +201,7 @@ Route::group([
   Route::put('/tiposUsuario', [TiposUsuarioController::class, 'update']);
 
   Route::get('userloguedCandidatos', [AuthCandidatosController::class, 'userloguedCandidato']);
-  Route::post('/loginCandidatos', [AuthCandidatosController::class, 'login']);
+  Route::post('/loginCandidatos', [AuthController::class, 'login']);
   Route::post('/registerCandidatos', [AuthCandidatosController::class, 'createUserCandidato']);
   Route::get('/mostrarcandidatos', [AuthCandidatosController::class, 'mostrarUsuarios']);
   /*  Route::get('userloguedCandidatos', [UsuarioController::class, 'userloguedCandidato']); */
