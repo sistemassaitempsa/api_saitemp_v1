@@ -211,7 +211,7 @@ Route::group([
   Route::post('/enviartoken/{num_doc}', [AuthCandidatosController::class, 'enviarTokenRecuperacion']);
   Route::post('/recuperarcontrasena', [AuthCandidatosController::class, 'recuperarContraseña']);
   Route::put('/actualizarcandidatousuario/{id}', [AuthCandidatosController::class, 'updateCandidatoUser']);
-
+  Route::post('/verificarCorreo', [AuthCandidatosController::class, 'verificarCorreo']);
   // Route::post('/register2', [AuthUsuarioController::class, 'register']);
   Route::post('/logout', [AuthController::class, 'logout']);
   Route::post('/refresh', [AuthController::class, 'refresh']);

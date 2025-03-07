@@ -252,17 +252,30 @@ class RecepcionEmpleadoController extends Controller
             $novasoft->num_ide = $request->cod_emp;
             $novasoft->save();
             foreach ($request->referencias as $referencia) {
-                if (isset($referencia['cod_emp']) && isset($referencia['num_ref'])) {
-                    $novasoftReferencia = ReferenciasFormularioEmpleado::where('cod_emp', $referencia['cod_emp'])
-                        ->where('num_ref', $referencia['num_ref'])
-                        ->first();
+                if ($referencia['nom_ref'] == '' || $referencia['nom_ref'] == null) {
+                } else {
+                    if (isset($referencia['cod_emp']) && isset($referencia['num_ref'])) {
+                        $novasoftReferencia = ReferenciasFormularioEmpleado::where('cod_emp', $referencia['cod_emp'])
+                            ->where('num_ref', $referencia['num_ref'])
+                            ->first();
 
-                    if ($novasoftReferencia) {
-                        $novasoftReferencia->parent = $referencia['parent'];
-                        $novasoftReferencia->cel_ref = $referencia['cel_ref'];
-                        $novasoftReferencia->nom_ref = $referencia['nom_ref'];
-                        $novasoftReferencia->ocu_ref = 0; // Si necesitas cambiar este valor, asegúrate de que sea correcto
-                        $novasoftReferencia->save();
+                        if ($novasoftReferencia) {
+                            $novasoftReferencia->parent = $referencia['parent'];
+                            $novasoftReferencia->cel_ref = $referencia['cel_ref'];
+                            $novasoftReferencia->nom_ref = $referencia['nom_ref'];
+                            $novasoftReferencia->ocu_ref = 0; // Si necesitas cambiar este valor, asegúrate de que sea correcto
+                            $novasoftReferencia->save();
+                        } else {
+                            $novasoftReferencia = new ReferenciasFormularioEmpleado;
+                            $novasoftReferencia->cod_emp = $novasoft->cod_emp;
+                            $novasoftReferencia->num_ref = $referencia['num_ref'];
+                            $novasoftReferencia->parent = $referencia['parent'];
+                            $novasoftReferencia->cel_ref = $referencia['cel_ref'];
+                            $novasoftReferencia->nom_ref = $referencia['nom_ref'];
+                            $novasoftReferencia->tip_ref = $referencia['tip_ref'];
+                            $novasoftReferencia->ocu_ref = 0;
+                            $novasoftReferencia->save();
+                        }
                     } else {
                         $novasoftReferencia = new ReferenciasFormularioEmpleado;
                         $novasoftReferencia->cod_emp = $novasoft->cod_emp;
@@ -274,16 +287,6 @@ class RecepcionEmpleadoController extends Controller
                         $novasoftReferencia->ocu_ref = 0;
                         $novasoftReferencia->save();
                     }
-                } else {
-                    $novasoftReferencia = new ReferenciasFormularioEmpleado;
-                    $novasoftReferencia->cod_emp = $novasoft->cod_emp;
-                    $novasoftReferencia->num_ref = $referencia['num_ref'];
-                    $novasoftReferencia->parent = $referencia['parent'];
-                    $novasoftReferencia->cel_ref = $referencia['cel_ref'];
-                    $novasoftReferencia->nom_ref = $referencia['nom_ref'];
-                    $novasoftReferencia->tip_ref = $referencia['tip_ref'];
-                    $novasoftReferencia->ocu_ref = 0;
-                    $novasoftReferencia->save();
                 }
             }
             /*       foreach ($request->familiaresConsulta as $index => $referencia) {
@@ -325,7 +328,6 @@ class RecepcionEmpleadoController extends Controller
             return response()->json(['status' => 'success', 'message' => 'Registro actualizado de manera exitosa', 'id' => $novasoft->cod_emp]);
         } catch (\Exception $e) {
 
-            throw $e;
 
             return response()->json(['status' => 'error', 'message' => 'Error al guardar el formulario, por favor intenta nuevamente']);
         }

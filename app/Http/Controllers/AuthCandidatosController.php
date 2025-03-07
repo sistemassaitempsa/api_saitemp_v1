@@ -97,6 +97,7 @@ class AuthCandidatosController extends Controller
             ], 422);
         }
         DB::beginTransaction();
+        $token = Str::random(60);
         try {
             $loginUser =  new User;
             $loginUser->email = $request->email;
@@ -105,6 +106,8 @@ class AuthCandidatosController extends Controller
             $loginUser->rol_id = 54;
             $loginUser->oculto = 0;
             $loginUser->tipo_usuario_id = 3;
+            $loginUser->marca_temporal = $token;
+            $loginUser->confirma_correo = 0;
             $loginUser->save();
 
             $candidato = new UsuariosCandidatosModel;
@@ -265,11 +268,10 @@ class AuthCandidatosController extends Controller
             return response()->json(['status' => 'error', 'message' => 'No existe cuenta con este número de documento']);
         }
         $user = User::where('id', $candidato->usuario_id)->first();
-
+        $token = $user->marca_temporal;
         // Generar token
-        $token = Str::random(60);
-
-        $resetUrl = $urlFront . "/logincandidatos";
+        $resetUrl = $urlFront . "/logincandidatos?token=$token&email={$user->email}";
+        /*    $resetUrl = $urlFront . "/logincandidatos"; */
         $subject = 'Bienvenido al portal Saitemp';
         $nomb_membrete = 'Informe de servicio';
         $nombre = ucwords(strtolower($candidato->primer_nombre));
@@ -322,5 +324,27 @@ class AuthCandidatosController extends Controller
         }
 
         return $body['success'];
+    }
+    public function verificarCorreo(Request $request)
+    {
+        $user = User::where('email', $request->email)
+            ->where('marca_temporal', $request->token)
+            ->first();
+        if (!$user) {
+            return response()->json(['status' => 'error', 'message' => 'Enlace inválido o expirado.'], 400);
+        }
+
+
+        // Verificar caducidad (1 hora)
+        $tokenLifetime = 10; // En minutos
+        if (Carbon::parse($user->updated_at)->addMinutes($tokenLifetime)->isPast()) {
+            return response()->json(['status' => 'error', 'message' => 'El enlace ha expirado.'], 400);
+        }
+        $user->confirma_correo = 1;
+        $user->marca_temporal = null; // Eliminar el token
+        $user->updated_at = now();
+        $user->save();
+
+        return response()->json(['status' => 'success', 'message' => 'Correo verificado, ahora puede iniciar sesión']);
     }
 }

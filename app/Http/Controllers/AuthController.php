@@ -65,6 +65,7 @@ class AuthController extends Controller
                             return response()->json([
                                 'access_token' => $token,
                                 'token_type' => 'bearer',
+                                'tipo_usuario_id' => $user->tipo_usuario_id,
                                 'expires_in' => auth()->factory()->getTTL() / 60 / 60 / 8,
                                 'marca' => $uuid
                             ]);
@@ -73,6 +74,7 @@ class AuthController extends Controller
                         return response()->json(['error' => 'Unauthenticated.'], 401);
                     }
                 } catch (\Exception $e) {
+                    $user = User::where('email', $request->email)->first();
                     ldap_close($ldapconn);
                     $validator = Validator::make($request->all(), [
                         'email' => 'required',
@@ -89,12 +91,11 @@ class AuthController extends Controller
                         return response()->json(['status' => 'error', 'message' => 'Por favor verifique sus datos de inicio de sesión e intente nuevamente']);
                     }
 
-                    $token = $this->createNewToken($token);
+                    $token = $this->createNewToken($token, $user->tipo_usuario_id);
                     return $token;
                 }
             }
         } catch (\Exception $e) {
-            return $e;
             return response()->json(['status' => 'error', 'message' => 'No se pudo establecer la conexión con el servidor LDAP.']);
         }
     }
@@ -202,11 +203,12 @@ class AuthController extends Controller
      *
      * @return \Illuminate\Http\JsonResponse
      */
-    protected function createNewToken($token, $uuid = null)
+    protected function createNewToken($token, $tipo_usuario_id, $uuid = null)
     {
         return response()->json([
             'access_token' => $token,
             'token_type' => 'bearer',
+            'tipo_usuario_id' => $tipo_usuario_id,
             'expires_in' => auth()->factory()->getTTL() * 60 * 60 * 8
         ]);
     }
