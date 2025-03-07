@@ -107,6 +107,8 @@ trait AutenticacionGuard
                     'usr_app_roles.nombre as rol',
                     'usr_app_usuarios.estado_id',
                     'usr_app_usuarios.email',
+                    'usr_app_usuarios.confirma_correo',
+                    'usr_app_usuarios.confirma_terminos',
                     'usr_app_usuarios.tipo_usuario_id',
                     'usr_app_usuarios.id'
                 )->first();

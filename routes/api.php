@@ -204,6 +204,7 @@ Route::group([
   Route::post('/loginCandidatos', [AuthController::class, 'login']);
   Route::post('/registerCandidatos', [AuthCandidatosController::class, 'createUserCandidato']);
   Route::get('/mostrarcandidatos', [AuthCandidatosController::class, 'mostrarUsuarios']);
+  Route::get('/updatePoliticasTratamiento/{id}', [AuthCandidatosController::class, 'updateTratamientoDatos']);
   /*  Route::get('userloguedCandidatos', [UsuarioController::class, 'userloguedCandidato']); */
   /*  Route::get('/userloguedCandidatos/{userType}', [UsuarioController::class, 'userlogued']); */
   Route::post('/login', [AuthController::class, 'login']);

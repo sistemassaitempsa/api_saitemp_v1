@@ -108,6 +108,7 @@ class AuthCandidatosController extends Controller
             $loginUser->tipo_usuario_id = 3;
             $loginUser->marca_temporal = $token;
             $loginUser->confirma_correo = 0;
+            $loginUser->confirma_terminos = 1;
             $loginUser->save();
 
             $candidato = new UsuariosCandidatosModel;
@@ -346,5 +347,15 @@ class AuthCandidatosController extends Controller
         $user->save();
 
         return response()->json(['status' => 'success', 'message' => 'Correo verificado, ahora puede iniciar sesión']);
+    }
+    public function updateTratamientoDatos($id)
+    {
+        $login = User::find($id);
+        $login->confirma_terminos = 1;
+        if ($login->save()) {
+            return response()->json(['status' => 'success', 'message' => 'Politica de tratamiento de daots actualizada, ahora puede iniciar sesión']);
+        } else {
+            return response()->json(['status' => 'error', 'message' => 'Error a actualizar'], 400);
+        }
     }
 }
