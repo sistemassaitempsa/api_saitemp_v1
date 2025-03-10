@@ -397,6 +397,7 @@ class RecepcionEmpleadoController extends Controller
             $user->genero_id = $request->sex_emp;
             $user->grupo_etnico_id = $request->cod_grupo;
             $user->concepto = $request->concepto;
+            $user->otro_transporte = $request->otro_transporte;
             $user->save();
 
             /*      foreach ($request->referencias as $item) {
