@@ -165,6 +165,8 @@ use App\Models\SeguimientoCrm;
 use App\Http\Controllers\AuthCandidatosController;
 use App\Http\Controllers\enviarCorreoDDController;
 use App\Http\Controllers\IndicadoresDDController;
+use App\Http\Controllers\RolesUsuariosInternosController;
+use App\Http\Controllers\HistoricoProfesionalesController;
 use App\Http\Controllers\MotivoServicioController;
 use App\Http\Controllers\TipoUsuarioLoginController;
 use App\Http\Controllers\UsuariodebidaDiligenciaController;
@@ -206,7 +208,17 @@ Route::group([
   Route::get('/mostrarcandidatos', [AuthCandidatosController::class, 'mostrarUsuarios']);
   Route::get('/updatePoliticasTratamiento/{id}', [AuthCandidatosController::class, 'updateTratamientoDatos']);
   /*  Route::get('userloguedCandidatos', [UsuarioController::class, 'userloguedCandidato']); */
-  /*  Route::get('/userloguedCandidatos/{userType}', [UsuarioController::class, 'userlogued']); */
+  /*  Route::get('/userloguedCandidatos/{userType}', [UsuarioController::class, 'userlogued']); */  //Historico pofesionales
+  Route::get('/historicoprofesionalesdd', [HistoricoProfesionalesController::class, 'index']);
+  Route::get('/historicoprofesionalesdd/{cliente_id}', [HistoricoProfesionalesController::class, 'index']);
+
+  //Roles usuarios internos
+  Route::get('/rolesusuariosinternos', [RolesUsuariosInternosController::class, 'index']);
+  Route::post('/rolesusuariosinternos', [RolesUsuariosInternosController::class, 'create']);
+  Route::put('/rolesusuariosinternos', [RolesUsuariosInternosController::class, 'update']);
+  Route::delete('/rolesusuariosinternos', [RolesUsuariosInternosController::class, 'destroy']);
+
+
   Route::post('/login', [AuthController::class, 'login']);
   Route::post('/register', [AuthController::class, 'register']);
   Route::post('/enviartoken/{num_doc}', [AuthCandidatosController::class, 'enviarTokenRecuperacion']);
@@ -221,6 +233,7 @@ Route::group([
   // Usuarios
   Route::get('/allUsers', [UsuarioController::class, 'index2']);
   Route::get('/users/{cantidad}/{tipo}', [UsuarioController::class, 'index']);
+  Route::get('/usersbyrolinterno/{rol}', [UsuarioController::class, 'byRolInterno']);
   Route::get('/users/{filtro}/{cantidad}', [UsuarioController::class, 'filtro']);
   Route::get('/userslist', [UsuarioController::class, 'userslist']);
   Route::get('/userlogued', [UsuarioController::class, 'userlogued']);
@@ -228,6 +241,7 @@ Route::group([
   Route::delete('/user/{id}', [UsuarioController::class, 'destroy']);
   // Route::post('/user', [UsuarioController::class, 'create']); 
   Route::post('/user', [UsuarioController::class, 'update']);
+  Route::post('/user2', [UsuarioController::class, 'update2']);
   Route::put('/updateUserVendedor/{id}', [UsuarioController::class, 'updateVendedorId']);
   // Route::get('/usuariosporcontrato', [UsuarioController::class, 'usuariosporcontrato']); 
   // Route::get('/usuariosporcontrato/{id}', [UsuarioController::class, 'usuariosporcontrato2']); 
@@ -857,6 +871,7 @@ Route::group([
 
   // Estados firma
   Route::get('/estadosfirma', [EstadosFirmaController::class, 'index']);
+  Route::get('/estadosfirma2', [EstadosFirmaController::class, 'index2']);
   Route::post('/estadosfirma', [EstadosFirmaController::class, 'create']);
   Route::put('/estadosfirma/{id}', [EstadosFirmaController::class, 'update']);
   Route::delete('/estadosfirma/{id}', [EstadosFirmaController::class, 'destroy']);

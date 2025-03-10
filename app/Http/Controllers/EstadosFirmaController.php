@@ -38,6 +38,29 @@ class EstadosFirmaController extends Controller
         return response()->json($result);
     }
 
+
+    public function index2()
+    {
+
+        /* $hoy = Carbon::now();
+        $diaSemana = $hoy->dayName;
+        formatoFechaCarbon= 2024-10-28T20:06:44.820417Z; */
+
+
+        $result = EstadosFirma::select(
+            'id',
+            'nombre',
+            'color',
+            'tiempo_respuesta',
+            'posicion'
+        )->orderBy('posicion')
+            /*  ->orderByRaw("
+        TRY_CAST(LEFT(nombre, CHARINDEX('.', nombre + '.') - 1) AS INT), nombre") */
+            ->get();
+        return response()->json($result);
+    }
+
+
     /**
      * Show the form for creating a new resource.
      *

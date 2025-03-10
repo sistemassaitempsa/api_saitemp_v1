@@ -22,7 +22,6 @@ class UsuarioController extends Controller
     {
         $lista = $this->listaUsuarios($cantidad, $tipo);
         return $lista;
-
     }
 
     public function index2()
@@ -215,6 +214,22 @@ class UsuarioController extends Controller
         }
     }
 
+
+    public function update2(Request $request)
+    {
+        $user = user::find($request->id_user);
+
+        try {
+
+            $user->rol_usuario_interno_id = $request->rol_usuario_interno_id;
+
+            if ($user->save()) {
+                return response()->json(['status' => 'success', 'message' => 'Usuario actualizado exitosamente']);
+            }
+        } catch (\Exception $e) {
+            return $e;
+        }
+    }
 
 
 
