@@ -806,6 +806,7 @@ Route::group([
 
   // Estados firma
   Route::get('/estadosfirma', [EstadosFirmaController::class, 'index']);
+  Route::get('/estadosfirma2', [EstadosFirmaController::class, 'index2']);
   Route::post('/estadosfirma', [EstadosFirmaController::class, 'create']);
   Route::put('/estadosfirma/{id}', [EstadosFirmaController::class, 'update']);
   Route::delete('/estadosfirma/{id}', [EstadosFirmaController::class, 'destroy']);
