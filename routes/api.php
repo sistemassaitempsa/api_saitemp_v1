@@ -176,6 +176,7 @@ use App\Http\Controllers\GeneroCandidatosController;
 use App\Http\Controllers\IdiomasController;
 use App\Http\Controllers\SectorAcademicoController;
 use App\Http\Controllers\SectorEconomicoCandidatosController;
+use App\Http\Controllers\CentrosDeTrabajoSeiyaController;
 
 /*
 |--------------------------------------------------------------------------
@@ -197,6 +198,13 @@ Route::group([
   'middleware' => ['api', \Fruitcake\Cors\HandleCors::class],
   'prefix' => 'v1'
 ], function ($router) {
+
+  //centros de trabajo
+  Route::get('/centrosdetarabajobyid/{id}', [CentrosDeTrabajoSeiyaController::class, 'searchById']);
+  Route::get('/centrosdetarabajo', [CentrosDeTrabajoSeiyaController::class, 'index']);
+  Route::get('/centrosdetarabajobycliente/{cliente_id}', [CentrosDeTrabajoSeiyaController::class, 'searchByClienteId']);
+  Route::post('/centrosdetarabajo', [CentrosDeTrabajoSeiyaController::class, 'create']);
+  Route::post('/importar-centros-trabajo', [CentrosDeTrabajoSeiyaController::class, 'inyectarCentrosTrabajo']);
   //tipos de usuario
   Route::get('/tiposUsuario', [TiposUsuarioController::class, 'index']);
   Route::post('/tiposUsuario', [TiposUsuarioController::class, 'create']);
