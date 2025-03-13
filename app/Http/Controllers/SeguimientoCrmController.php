@@ -1380,7 +1380,6 @@ class SeguimientoCrmController extends Controller
             } else {
                 $body = "Cordial saludo, esperamos se encuentren muy bien.\n\n Informamos que el registro de visita ha sido creado satisfactoriamente con número de radicado: <b><i>$numeroRadicado</i></b>, Cualquier información adicional puede comunicarse con:
                     Katerin Andrea Nuno: (+57) 311-437-0207
-                    William Hernán Hernandez: (+57) 311-586-4835
                     o a nuestra línea de atención general (604) 4485744, con gusto uno de nuestros facilitadores atenderá su llamada.\n\n simplificando conexiones, facilitando experiencias.
                     \n\n Atentamente:";
             }
