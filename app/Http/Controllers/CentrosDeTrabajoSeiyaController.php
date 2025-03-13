@@ -8,6 +8,7 @@ use Maatwebsite\Excel\Facades\Excel;
 use App\Models\cliente;
 use App\Models\ActividadCiiu;
 use Illuminate\Support\Facades\DB;
+use App\Models\CentroTrabajo;
 
 class CentrosDeTrabajoSeiyaController extends Controller
 {
@@ -35,9 +36,11 @@ class CentrosDeTrabajoSeiyaController extends Controller
             ->select(
                 'usr_app_centros_trabajo.id',
                 'usr_app_centros_trabajo.cliente_id',
+                'usr_app_centros_trabajo.codigo_centro_trabajo',
                 'usr_app_centros_trabajo.nombre',
                 'actividad_ciiu.codigo_actividad as codigo_actividad',
-                'actividad_ciiu.descripcion as actividad_ciiu_descripcion'
+                'actividad_ciiu.descripcion as actividad_ciiu_descripcion',
+                'usr_app_centros_trabajo.created_at',
             )
             ->where('usr_app_centros_trabajo.cliente_id', $cliente_id)
             ->orderBy('usr_app_centros_trabajo.id', 'DESC')
@@ -62,12 +65,23 @@ class CentrosDeTrabajoSeiyaController extends Controller
     }
     public function create(Request $request)
     {
-        $ultimoCentro = CentrosDeTrabajoSeiyaModel::orderBy('codigo_centro_trabajo', 'desc')->first();
-        $nuevoCodigo = $ultimoCentro ? $ultimoCentro->codigo_centro_trabajo + 1 : 1;
+        $ultimoCentroSeiya = CentrosDeTrabajoSeiyaModel::orderBy('codigo_centro_trabajo', 'desc')->first();
+        $nuevoCodigo = $ultimoCentroSeiya ? $ultimoCentroSeiya->codigo_centro_trabajo + 1 : 1;
+        $centroTrabajoFounded = true;
+        do {
+            $centroTrabajoNovasoft = CentroTrabajo::where('rhh_CentroTrab.cod_CT', $nuevoCodigo)->first();
+            if ($centroTrabajoNovasoft) {
+                $nuevoCodigo = $nuevoCodigo + 1;
+                $centroTrabajoFounded = true;
+            } else {
+                $centroTrabajoFounded = false;
+            }
+        } while ($centroTrabajoFounded == true);
+        $actividadCiiuSearched = ActividadCiiu::where('usr_app_actividades_ciiu.codigo_actividad', $request->actividad_ciiu)->first();
         $centro = new CentrosDeTrabajoSeiyaModel;
         $centro->cliente_id = $request->cliente_id;
-        $centro->actividad_ciiu_id = $request->actividad_ciiu_id;
-        $centro->codigo_centro_trabajo = $request->$nuevoCodigo;
+        $centro->actividad_ciiu_id = $actividadCiiuSearched['id'];
+        $centro->codigo_centro_trabajo = $nuevoCodigo;
         $centro->nombre = $request->nombre;
         if ($centro->save()) {
             return response()->json(['status' => 'success', 'message' => 'Centro de trabajo creado exitosamente']);
@@ -133,8 +147,7 @@ class CentrosDeTrabajoSeiyaController extends Controller
                     'nombre' => $nombre,
                     'cliente_id' => $clienteId,
                     'actividad_ciiu_id' => $actividadId,
-                    'created_at' => now(),
-                    'updated_at' => now()
+
                 ];
             }
 
