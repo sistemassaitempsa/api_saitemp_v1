@@ -658,11 +658,11 @@ class RecepcionEmpleadoController extends Controller
                     }
                     break;
                 case 'Igual a fecha':
-                    $query->whereDate('usr_app_matriz_riesgo.' . $campo, '=', $valor);
+                    $query->whereDate('usr_app_candidatos_c.' . $campo, '=', $valor);
                     break;
                 case 'Entre':
-                    $query->whereDate('usr_app_matriz_riesgo.' . $campo, '>=', $valor)
-                        ->whereDate('usr_app_matriz_riesgo.' . $campo, '<=', $valor2);
+                    $query->whereDate('usr_app_candidatos_c.' . $campo, '>=', $valor)
+                        ->whereDate('usr_app_candidatos_c.' . $campo, '<=', $valor2);
                     break;
             }
 

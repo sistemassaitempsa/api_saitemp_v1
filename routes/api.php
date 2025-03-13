@@ -201,7 +201,8 @@ Route::group([
 
   //centros de trabajo
   Route::get('/centrosdetarabajobyid/{id}', [CentrosDeTrabajoSeiyaController::class, 'searchById']);
-  Route::get('/centrosdetarabajo', [CentrosDeTrabajoSeiyaController::class, 'index']);
+  Route::get('/centrosdetarabajo/{cantidad}', [CentrosDeTrabajoSeiyaController::class, 'index']);
+  Route::get('/centrosdetarabajofiltro/{cadena}', [CentrosDeTrabajoSeiyaController::class, 'candidatosFiltro']);
   Route::get('/centrosdetarabajobycliente/{cliente_id}', [CentrosDeTrabajoSeiyaController::class, 'searchByClienteId']);
   Route::post('/centrosdetarabajo', [CentrosDeTrabajoSeiyaController::class, 'create']);
   Route::post('/importar-centros-trabajo', [CentrosDeTrabajoSeiyaController::class, 'inyectarCentrosTrabajo']);

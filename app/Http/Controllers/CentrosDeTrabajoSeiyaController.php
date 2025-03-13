@@ -15,12 +15,17 @@ class CentrosDeTrabajoSeiyaController extends Controller
     public function index($cantidad)
     {
         $result = CentrosDeTrabajoSeiyaModel::join('usr_app_actividades_ciiu as actividad_ciiu', 'actividad_ciiu.id', 'usr_app_centros_trabajo.actividad_ciiu_id')
+            ->join('usr_app_clientes as cliente', 'cliente.id', 'usr_app_centros_trabajo.cliente_id')
             ->select(
                 'usr_app_centros_trabajo.id',
-                'usr_app_centros_trabajo.cliente_id',
+                DB::raw('COALESCE(cliente.nit, cliente.numero_identificacion) as nit'),
+                'cliente.razon_social as razon_social',
+                'usr_app_centros_trabajo.codigo_centro_trabajo',
                 'usr_app_centros_trabajo.nombre',
                 'actividad_ciiu.codigo_actividad as codigo_actividad',
-                'actividad_ciiu.descripcion as actividad_ciiu_descripcion',
+                'usr_app_centros_trabajo.created_at',
+                'usr_app_centros_trabajo.cliente_id',
+
             )
             ->orderby('usr_app_centros_trabajo.id', 'DESC')
             ->paginate($cantidad);
@@ -162,6 +167,76 @@ class CentrosDeTrabajoSeiyaController extends Controller
             return response()->json(['message' => 'Importación completada', 'registros_insertados' => count($nuevosRegistros)], 200);
         } catch (\Exception $e) {
             return response()->json(['message' => 'Error en la importación', 'error' => $e->getMessage()], 500);
+        }
+    }
+    public function candidatosFiltro($cadena)
+    {
+
+        try {
+            $cadenaJSON = base64_decode($cadena);
+            $cadenaUTF8 = mb_convert_encoding($cadenaJSON, 'UTF-8', 'ISO-8859-1');
+            $valores = explode("/", $cadenaUTF8);
+            $campo = $valores[0];
+            $operador = $valores[1];
+            $valor = $valores[2];
+            $valor2 = isset($valores[3]) ? $valores[3] : null;
+            $query = CentrosDeTrabajoSeiyaModel::join('usr_app_actividades_ciiu as actividad_ciiu', 'actividad_ciiu.id', 'usr_app_centros_trabajo.actividad_ciiu_id')
+                ->join('usr_app_clientes as cliente', 'cliente.id', 'usr_app_centros_trabajo.cliente_id')
+                ->select(
+                    'usr_app_centros_trabajo.id',
+                    DB::raw('COALESCE(cliente.nit, cliente.numero_identificacion) as nit'),
+                    'cliente.razon_social as razon_social',
+                    'usr_app_centros_trabajo.codigo_centro_trabajo',
+                    'usr_app_centros_trabajo.nombre',
+                    'actividad_ciiu.codigo_actividad as codigo_actividad',
+                    'usr_app_centros_trabajo.created_at',
+                    'usr_app_centros_trabajo.cliente_id',
+                )->orderby('usr_app_centros_trabajo.id', 'DESC');
+
+            switch ($operador) {
+                case 'Contiene':
+                    if ($campo == "nit") {
+                        $query->where('cliente.nit', 'like', '%' . $valor . '%');
+                    } else if ($campo == "razon_social") {
+                        $query->where('cliente.razon_social', 'like', '%' . $valor . '%');
+                    } else if ($campo == "codigo_centro_trabajo") {
+                        $query->where('usr_app_centros_trabajo.codigo_centro_trabajo', 'like', '%' . $valor . '%');
+                    } else if ($campo == "nombre") {
+                        $query->where('usr_app_centros_trabajo.nombre', 'like', '%' . $valor . '%');
+                    } else if ($campo == "codigo_actividad") {
+                        $query->where('actividad_ciiu.codigo_actividad', 'like', '%' . $valor . '%');
+                    } else {
+                        $query->where($campo, 'like', '%' . $valor . '%');
+                    }
+                    break;
+                case 'Igual a':
+                    if ($campo == "nit") {
+                        $query->where('cliente.nit', '=',  $valor);
+                    } else if ($campo == "razon_social") {
+                        $query->where('cliente.razon_social', '=', $valor);
+                    } else if ($campo == "codigo_centro_trabajo") {
+                        $query->where('usr_app_centros_trabajo.codigo_centro_trabajo', '=', $valor);
+                    } else if ($campo == "nombre") {
+                        $query->where('usr_app_centros_trabajo.nombre', '=', $valor);
+                    } else if ($campo == "codigo_actividad") {
+                        $query->where('actividad_ciiu.codigo_actividad',  '=', $valor);
+                    } else {
+                        $query->where($campo, '=', $valor);
+                    }
+                    break;
+                case 'Igual a fecha':
+                    $query->whereDate('usr_app_centros_trabajo.' . $campo, '=', $valor);
+                    break;
+                case 'Entre':
+                    $query->whereDate('usr_app_centros_trabajo.' . $campo, '>=', $valor)
+                        ->whereDate('usr_app_centros_trabajo.' . $campo, '<=', $valor2);
+                    break;
+            }
+
+            $result = $query->paginate();
+            return response()->json($result);
+        } catch (\Exception $e) {
+            return $e;
         }
     }
 }
