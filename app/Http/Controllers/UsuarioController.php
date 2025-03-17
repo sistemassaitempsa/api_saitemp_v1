@@ -26,7 +26,7 @@ class UsuarioController extends Controller
 
     public function index2()
     {
-        $users = user::select(
+        $users = UsuariosInternosModel::select(
             DB::raw("CONCAT(REPLACE(nombres, 'null', ''), ' ', REPLACE(apellidos, 'null', '')) AS nombre")
 
         )
