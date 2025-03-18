@@ -200,7 +200,9 @@ Route::group([
 ], function ($router) {
 
   //centros de trabajo
+  Route::post('/centrosdetarabajoborradomasivo', [CentrosDeTrabajoSeiyaController::class, 'borradomasivo']);
   Route::get('/centrosdetarabajobyid/{id}', [CentrosDeTrabajoSeiyaController::class, 'searchById']);
+  Route::put('/centrosdetarabajobyid/{id}', [CentrosDeTrabajoSeiyaController::class, 'logicDelete']);
   Route::get('/centrosdetarabajo/{cantidad}', [CentrosDeTrabajoSeiyaController::class, 'index']);
   Route::get('/centrosdetarabajofiltro/{cadena}', [CentrosDeTrabajoSeiyaController::class, 'candidatosFiltro']);
   Route::get('/centrosdetarabajobycliente/{cliente_id}', [CentrosDeTrabajoSeiyaController::class, 'searchByClienteId']);

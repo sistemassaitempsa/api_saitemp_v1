@@ -87,6 +87,7 @@ class CentrosDeTrabajoSeiyaController extends Controller
         $centro->cliente_id = $request->cliente_id;
         $centro->actividad_ciiu_id = $actividadCiiuSearched['id'];
         $centro->codigo_centro_trabajo = $nuevoCodigo;
+        $centro->activo = 1;
         $centro->nombre = $request->nombre;
         if ($centro->save()) {
             return response()->json(['status' => 'success', 'message' => 'Centro de trabajo creado exitosamente']);
@@ -151,6 +152,7 @@ class CentrosDeTrabajoSeiyaController extends Controller
                     'codigo_centro_trabajo' => $codigoCentroTrabajo,
                     'nombre' => $nombre,
                     'cliente_id' => $clienteId,
+                    'activo' => 1,
                     'actividad_ciiu_id' => $actividadId,
 
                 ];
@@ -237,6 +239,31 @@ class CentrosDeTrabajoSeiyaController extends Controller
             return response()->json($result);
         } catch (\Exception $e) {
             return $e;
+        }
+    }
+    public function logicDelete($id)
+    {
+        try {
+            $result = CentrosDeTrabajoSeiyaModel::where('id', $id)->first();
+            $result->activo = 0;
+            $result->save();
+            return response()->json(['message' => 'Centro de trabajo deshabilitado correctamente', 'status' => 'success'], 200);
+        } catch (\Exception $e) {
+            return response()->json(['message' => 'No fue posible actualizar el centro de trabajo', 'status' => 'success'], 500);
+        }
+    }
+
+    public function borradomasivo(Request $request)
+    {
+        try {
+            for ($i = 0; $i < count($request->id); $i++) {
+                $result = CentrosDeTrabajoSeiyaModel::find($request->id[$i]);
+                $result->activo = 0;
+                $result->save();
+            }
+            return response()->json(['status' => 'success', 'message' => 'Registros eliminados exitosamente']);
+        } catch (\Exception $e) {
+            return response()->json(['status' => 'error', 'message' => 'Error al eliminar el registro, por favor intente nuevamente']);
         }
     }
 }
