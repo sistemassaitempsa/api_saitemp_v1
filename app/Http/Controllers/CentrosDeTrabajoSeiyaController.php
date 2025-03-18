@@ -27,6 +27,7 @@ class CentrosDeTrabajoSeiyaController extends Controller
                 'usr_app_centros_trabajo.cliente_id',
 
             )
+            ->where('usr_app_centros_trabajo.activo', 1)
             ->orderby('usr_app_centros_trabajo.id', 'DESC')
             ->paginate($cantidad);
         return response()->json($result);
@@ -48,6 +49,7 @@ class CentrosDeTrabajoSeiyaController extends Controller
                 'usr_app_centros_trabajo.created_at',
             )
             ->where('usr_app_centros_trabajo.cliente_id', $cliente_id)
+            ->where('usr_app_centros_trabajo.activo', 1)
             ->orderBy('usr_app_centros_trabajo.id', 'DESC')
             ->get();
 
