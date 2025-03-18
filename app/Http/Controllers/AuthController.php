@@ -65,7 +65,7 @@ class AuthController extends Controller
                         }
 
                         // 🚨 Validación para usuarios tipo 3
-                        if ($user->tipo_usuario_id == 3 && ($user->confirma_correo == 0 || $user->confirma_terminos == 0)) {
+                        if ($user->tipo_usuario_id == 3 && ($user->confirma_correo == 0)) {
                             return response()->json([
                                 'status' => 'error',
                                 'message' => 'Debe confirmar su correo y aceptar los términos para iniciar sesión.'
@@ -105,7 +105,7 @@ class AuthController extends Controller
                     }
 
                     // 🚨 Validación para usuarios tipo 3
-                    if ($user->tipo_usuario_id == 3 && ($user->confirma_correo == 0 || $user->confirma_terminos == 0)) {
+                    if ($user->tipo_usuario_id == 3 && ($user->confirma_correo == 0)) {
                         return response()->json([
                             'status' => 'error',
                             'message' => 'Debe confirmar su correo y aceptar los términos para iniciar sesión.'
