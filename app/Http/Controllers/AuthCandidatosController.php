@@ -337,7 +337,7 @@ class AuthCandidatosController extends Controller
 
 
         // Verificar caducidad (1 hora)
-        $tokenLifetime = 10; // En minutos
+        $tokenLifetime = 1440; // En minutos
         if (Carbon::parse($user->updated_at)->addMinutes($tokenLifetime)->isPast()) {
             return response()->json(['status' => 'error', 'message' => 'El enlace ha expirado.'], 400);
         }
