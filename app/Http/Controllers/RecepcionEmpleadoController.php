@@ -11,9 +11,12 @@ use App\Models\ReferenciasFormularioEmpleado;
 use App\Models\UsuariosCandidatosModel;
 use App\Models\ReferenciasPersonalesCandidatosModel;
 use App\Models\ExperienciasLaboralesCandidatosModel;
+use App\Models\DashboardActivos;
 use App\Models\IdiomasCandidatosModel;
 use App\Models\Municipios;
-use League\CommonMark\Reference\Reference;
+use App\Models\ListaTrump;
+use App\Models\formularioGestionIngreso;
+use App\Models\User;
 use Illuminate\Support\Str;
 
 class RecepcionEmpleadoController extends Controller
@@ -276,6 +279,7 @@ class RecepcionEmpleadoController extends Controller
                             $novasoftReferencia->ocu_ref = 0;
                             $novasoftReferencia->save();
                         }
+
                     } else {
                         $novasoftReferencia = new ReferenciasFormularioEmpleado;
                         $novasoftReferencia->cod_emp = $novasoft->cod_emp;
@@ -289,46 +293,8 @@ class RecepcionEmpleadoController extends Controller
                     }
                 }
             }
-            /*       foreach ($request->familiaresConsulta as $index => $referencia) {
-                $requestFamiliares = $request->familiares;
-                if (isset($referencia['cod_emp']) && isset($referencia['ap1_fam'])) {
-                    $novasoftReferencia = ReferenciasModel::where('cod_emp', $referencia['cod_emp'])
-                        ->where('ap1_fam', $referencia['ap1_fam'])
-                        ->where('nom_fam', $referencia['nom_fam'])
-                        ->first();
-                    $fechaNacimientoFormated = Carbon::parse($requestFamiliares[$index]['fec_nac'])->format('d-m-Y H:i:s');
-                    $novasoftReferencia->ap1_fam = $requestFamiliares[$index]['ap1_fam'];
-                    $novasoftReferencia->ap2_fam = $requestFamiliares[$index]['ap2_fam'];
-                    $novasoftReferencia->nom_fam = $requestFamiliares[$index]['nom_fam'];
-                    $novasoftReferencia->tip_fam = $requestFamiliares[$index]['tip_fam'];
-                    $novasoftReferencia->fec_nac = $fechaNacimientoFormated;
-                    $novasoftReferencia->ocu_fam = $requestFamiliares[$index]['ocu_fam'];
-                    $novasoftReferencia->save();
-                }
-            }
-            if (count($request->familiaresConsulta) < count($request->familiares)) {
-                $tamanoInicial = count($request->familiaresConsulta);
-                for ($i = $tamanoInicial; $i < count($request->familiares); $i++) {
-                    $referencia = $request->familiares[$i];
-                    $novasoftReferencia = new ReferenciasModel;
-                    if ($referencia['ap1_fam'] != "") {
-                        $fechaNacimientoFormated = Carbon::parse($referencia['fec_nac'])->format('d-m-Y H:i:s');
-                        $novasoftReferencia->cod_emp = $novasoft->cod_emp;
-                        $novasoftReferencia->ap1_fam = $referencia['ap1_fam'];
-                        $novasoftReferencia->ap2_fam = $referencia['ap2_fam'];
-                        $novasoftReferencia->nom_fam = $referencia['nom_fam'];
-                        $novasoftReferencia->tip_fam = $referencia['tip_fam'];
-                        $novasoftReferencia->fec_nac = $fechaNacimientoFormated;
-                        $novasoftReferencia->ocu_fam = $referencia['ocu_fam'];
-                        $novasoftReferencia->save();
-                    }
-                }
-            } */
-
-            return response()->json(['status' => 'success', 'message' => 'Registro actualizado de manera exitosa', 'id' => $novasoft->cod_emp]);
+               return response()->json(['status' => 'success', 'message' => 'Registro actualizado de manera exitosa', 'id' => $novasoft->cod_emp]);
         } catch (\Exception $e) {
-
-
             return response()->json(['status' => 'error', 'message' => 'Error al guardar el formulario, por favor intenta nuevamente']);
         }
     }
@@ -337,9 +303,6 @@ class RecepcionEmpleadoController extends Controller
     {
         try {
             DB::beginTransaction();
-
-
-            /*  $novasoft->est_civ = $request->est_civ; */
 
             $ciu_exp_formated = trim($request->ciu_exp, '0');
             $ciu_nac_formated = trim($request->cod_ciu, '0');
@@ -398,19 +361,8 @@ class RecepcionEmpleadoController extends Controller
             $user->grupo_etnico_id = $request->cod_grupo;
             $user->concepto = $request->concepto;
             $user->otro_transporte = $request->otro_transporte;
-            $user->save();
 
-            /*      foreach ($request->referencias as $item) {
-                if ($item['nom_ref'] != "") {
-                    $referencia = new ReferenciasPersonalesCandidatosModel;
-                    $referencia->usuario_id =  $usuario_id;
-                    $referencia->nombre = $item['nom_ref'];
-                    $referencia->telefono = $item['cel_ref'];
-                    $referencia->relacion = $item['parent'];
-                    $referencia->fecha_nacimiento = $item['fecha_nacimiento']; 
-                    $referencia->save();
-                }
-            } */
+            $user->save();
 
             if (count($request->experiencias_laborales) > 0) {
                 foreach ($request->experiencias_laborales as $item) {
@@ -546,11 +498,7 @@ class RecepcionEmpleadoController extends Controller
         $user_candidato["novasoft"] = $novasoft;
         return response()->json($user_candidato);
     }
-    /*  public function searchByIdOnUsuariosCandidato(Request $request, usuario_id){
 
-        $user = UsuariosCandidatosModel::where('usuario_id', $usuario_id)->first();
-
-    } */
 
     public function deleteExperienciaLaboral($id)
     {
@@ -670,6 +618,84 @@ class RecepcionEmpleadoController extends Controller
             return response()->json($result);
         } catch (\Exception $e) {
             return $e;
+        }
+    }
+
+
+    public function validacandidato($numero_identificacion, $index, $tipo_documento, $validacion_interna = false)
+    {
+
+        $trump = ListaTrump::where('cod_emp', '=',  (string) $numero_identificacion)->select('nombre', 'bloqueado')->first();
+        if (isset($trump) && $trump->bloqueado == '1') {
+            if ($validacion_interna) {
+                return  response()->json(['status' => 'error', 'motivo' => '1', 'documento' => $numero_identificacion]);
+            }
+            return response()->json(['status' => 'error', 'titulo' => 'Error', 'message' => 'El candidato con número de documento ' . $numero_identificacion . ' no pudo ser registrado, por favor ponsagase en contacto con un asesor',  'documento' => $numero_identificacion]);
+        }
+
+        $activo = DashboardActivos::where('cod_emp', '=',  (string) $numero_identificacion)
+            ->where('tip_ide', '=', $tipo_documento)
+            ->select()
+            ->first();
+        if (isset($activo)) {
+            if ($validacion_interna) {
+                return  response()->json(['status' => 'error', 'motivo' => '1', 'documento' => $numero_identificacion]);
+            }
+            return response()->json(['status' => 'error', 'titulo' => 'Candidato laborando', 'message' => 'El candidato con número de documento ' . $numero_identificacion . ' se encuentra laborando actualmente, comuniquese con un asesor para más información.', 'documento' => $numero_identificacion]);
+        }
+
+        $en_proceso = formularioGestionIngreso::join('usr_app_usuarios as us', 'us.id', 'usr_app_formulario_ingreso.candidato_id')
+            ->join('usr_app_candidatos_c as can', 'can.usuario_id', 'us.id')
+            ->join('usr_app_estados_ingreso as est', 'est.id', 'usr_app_formulario_ingreso.estado_ingreso_id')
+            ->where('can.num_doc', '=', (string) $numero_identificacion)
+            ->where('can.tip_doc_id', '=', $tipo_documento)
+            ->select(
+                'us.id',
+                'est.nombre as nombre_estado',
+                'est.id as estado_id'
+            )
+            ->first();
+        $estados_id = array(1, 35, 2, 3, 4, 5, 6, 13, 33, 34, 14, 16, 36, 37, 9, 10); // estos son los id de los estados de seiya que son bloqueantes para registrar un candidato en un servicio
+        if (isset($en_proceso)) {
+            $estado = $en_proceso->estado_id;
+            if (in_array($estado, $estados_id)) {
+                if ($validacion_interna) {
+                    return  response()->json(['status' => 'error', 'motivo' => '1', 'documento' => $numero_identificacion]);
+                }
+                return response()->json(['status' => 'error', 'titulo' => 'Candidato en proceso', 'message' => 'El candidato con número de documento ' . $numero_identificacion . ' se encuentra en proceso de seleción o contratación actualmente, comuniquese con un asesor para más información.', 'documento' => $numero_identificacion]);
+            }
+        }
+
+        $usuario = UsuariosCandidatosModel::join('usr_app_usuarios as us', 'us.id', 'usr_app_candidatos_c.usuario_id')
+            ->where('num_doc', '=', (string) $numero_identificacion)
+            ->where('tip_doc_id', '=', $tipo_documento)
+            ->select(
+                'usr_app_candidatos_c.usuario_id',
+                DB::RAW("CONCAT(usr_app_candidatos_c.primer_nombre,' ',usr_app_candidatos_c.segundo_nombre) AS nombres"),
+                DB::RAW("CONCAT(usr_app_candidatos_c.primer_apellido,' ',usr_app_candidatos_c.segundo_apellido) AS apellidos"),
+                'usr_app_candidatos_c.celular',
+                'us.email as correo'
+            )
+            ->first();
+        if (isset($usuario)) {
+            if ($validacion_interna) {
+                return  response()->json(['status' => 'success', 'motivo' => '1', 'usuario' => $usuario]);
+            }
+            $usuario->index = $index;
+            return response()->json(['status' => 'success', 'titulo' => 'success', 'index' => $index, 'motivo' => '1',  'usuario_id' => $usuario]);
+        }
+
+        if ($validacion_interna) {
+            return  response()->json(['status' => 'success', 'motivo' => '2']);
+        }
+        return response()->json(['status' => 'success', 'titulo' => 'success', 'index' => $index, 'motivo' => '2']);
+    }
+
+    public function validaCorreoCandidato($correo)
+    {
+        $usuario = User::where('email', '=', $correo)->first();
+        if ($usuario) {
+            return response()->json(['status' => 'error', 'correo' => $correo]);
         }
     }
 }

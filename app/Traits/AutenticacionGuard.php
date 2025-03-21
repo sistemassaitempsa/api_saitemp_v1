@@ -6,6 +6,7 @@ use App\Models\User;
 use App\Models\UsuarioDebidaDiligencia;
 use App\Models\UsuariosCandidatosModel;
 use App\Models\UsuariosInternosModel;
+use Illuminate\Support\Facades\DB;
 
 trait AutenticacionGuard
 {
@@ -74,6 +75,7 @@ trait AutenticacionGuard
             $result = user::join("usr_app_roles", "usr_app_roles.id", "=", "usr_app_usuarios.rol_id")
                 ->join("usr_app_estados_usuario as est ", "est .id", "=", "usr_app_usuarios.estado_id")
                 ->join("usr_app_usuarios_clientes as uc ", "uc.usuario_id", "=", "usr_app_usuarios.id")
+                // ->leftJoin("usr_app_clientes as cli ", "cli.id", "=", "uc.cliente_id")
                 ->where('usr_app_usuarios.id', '=', $user['user']->id)
                 ->select(
                     "usr_app_roles.nombre as rol",
@@ -116,7 +118,8 @@ trait AutenticacionGuard
         }
     }
 
-    public function listaUsuarios($cantidad, $tipo_usaurio)
+
+    public function listaUsuarios($cantidad, $tipo_usaurio, $paginate = true)
     {
         if ($tipo_usaurio == "1") {
             $result = UsuariosInternosModel::join("usr_app_roles_usuarios_internos as rol_interno", "rol_interno.id", "=", "usr_app_usuarios_internos.rol_usuario_interno_id")
@@ -124,7 +127,8 @@ trait AutenticacionGuard
                 ->join("usr_app_roles as rol_usuario", "rol_usuario.id", "=", "usr_app_usuarios.rol_id")
                 ->join("usr_app_estados_usuario as estado", "estado.id", "=", "usr_app_usuarios.estado_id")
                 ->select(
-                    'usr_app_usuarios_internos.id as usuario_id',
+                    'usr_app_usuarios_internos.id',
+                    'usr_app_usuarios_internos.usuario_id',
                     'usr_app_usuarios.tipo_usuario_id',
                     "usr_app_usuarios_internos.nombres",
                     "usr_app_usuarios_internos.apellidos",
@@ -183,5 +187,31 @@ trait AutenticacionGuard
                 )->paginate($cantidad);
             return response()->json($result);
         }
+    }
+
+
+    public function usuariosInternosRol($rol)
+    {
+        $result = UsuariosInternosModel::join("usr_app_roles_usuarios_internos as rol", "rol.id", "=", "usr_app_usuarios_internos.rol_usuario_interno_id")
+            ->join("usr_app_usuarios", "usr_app_usuarios.id", "=", "usr_app_usuarios_internos.usuario_id")
+            ->join("usr_app_estados_usuario as estado", "estado.id", "=", "usr_app_usuarios.estado_id")
+            ->where('usr_app_usuarios_internos.rol_usuario_interno_id ', '=', $rol)
+            ->select(
+                'usr_app_usuarios_internos.usuario_id',
+                'usr_app_usuarios.tipo_usuario_id',
+                DB::raw("CONCAT(usr_app_usuarios_internos.nombres,' ',usr_app_usuarios_internos.apellidos)  AS nombres"),
+                "usr_app_usuarios_internos.documento_identidad",
+                "usr_app_usuarios_internos.correo",
+                "rol.nombre as rol",
+                "rol.id as rol_id",
+                "estado.nombre as estado",
+                "estado.id as estado_id",
+                "usr_app_usuarios_internos.vendedor_id",
+                'usr_app_usuarios.email',
+                'usr_app_usuarios.id',
+                'usr_app_usuarios_internos.rol_usuario_interno_id'
+            )
+            ->get();
+        return response()->json($result);
     }
 }

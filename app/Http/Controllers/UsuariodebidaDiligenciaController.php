@@ -31,7 +31,7 @@ class UsuariodebidaDiligenciaController extends Controller
             DB::beginTransaction();
             $usuario = new user;
             $usuario->email = $request->email == '' ?  $request->nit : $request->email;
-            $usuario->password = bcrypt($request->nit);
+            $usuario->password = $request->password == '' ?  bcrypt($request->nit) : bcrypt($request->password);
             $usuario->estado_id = 1;
             $usuario->rol_id = 53;
             $usuario->tipo_usuario_id = 2;
@@ -39,13 +39,13 @@ class UsuariodebidaDiligenciaController extends Controller
 
             $usuario_cliente = new UsuarioDebidaDiligenciaModel;
             $usuario_cliente->usuario_id = $usuario->id;
+            $usuario_cliente->cliente_id = $request->cliente_id;
             $usuario_cliente->email = $request->email == '' ?  $request->nit : $request->email;
             $usuario_cliente->razon_social = $request->nombres;
             $usuario_cliente->nit = $request->nit;
             $usuario_cliente->nombre_contacto = $request->nombre_contacto;
             $usuario_cliente->telefono_contacto = $request->telefono_contacto;
             $usuario_cliente->cargo_contacto = $request->cargo_contacto;
-            // return  $usuario_cliente;
             $usuario_cliente->save();
             DB::commit();
             return response()->json(['status' => 'success', 'message' => 'Registro guardado de manera exitosa.']);
@@ -103,7 +103,9 @@ class UsuariodebidaDiligenciaController extends Controller
             DB::beginTransaction();
             $usuario = user::find($id);
             $usuario->email = $request->email == '' ?  $request->nit : $request->email;
-            $usuario->password = bcrypt($request->nit);
+            if ($request->password != '') {
+                $usuario->password = bcrypt($request->password);
+            }
             $usuario->estado_id = $request->estado_id;
             $usuario->rol_id = $request->rol_id;
             $usuario->save();

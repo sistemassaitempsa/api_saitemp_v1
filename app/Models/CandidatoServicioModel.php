@@ -6,12 +6,11 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
 
-
-class RolesUsuariosInternosModel extends Model
+class CandidatoServicioModel extends Model
 {
     use HasFactory;
 
-    protected $table = 'usr_app_roles_usuarios_internos';
+    protected $table = 'usr_app_candadato_servicio';
 
     public function fromDateTime($value)
     {
