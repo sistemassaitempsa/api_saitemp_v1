@@ -22,7 +22,6 @@ class UsuarioController extends Controller
     {
         $lista = $this->listaUsuarios($cantidad, $tipo);
         return $lista;
-
     }
 
     public function index2()
@@ -37,6 +36,7 @@ class UsuarioController extends Controller
 
     public function filtro($filtro, $cantidad)
     {
+
         $users = user::join("usr_app_roles", "usr_app_roles.id", "=", "usr_app_usuarios.rol_id")
             ->join("usr_app_estados_usuario ", "usr_app_estados_usuario .id", "=", "usr_app_usuarios.estado_id")
             ->where('usr_app_usuarios.nombres', 'like', '%' . $filtro . '%')
@@ -48,7 +48,7 @@ class UsuarioController extends Controller
                 "usr_app_usuarios.apellidos",
                 "usr_app_usuarios.usuario",
                 "usr_app_usuarios.email",
-                "usr_app_usuarios.id as id_user",
+                "usr_app_usuarios.id as usuario_id",
                 "usr_app_estados_usuario .nombre as estado",
             )
             ->paginate($cantidad);
@@ -213,6 +213,36 @@ class UsuarioController extends Controller
         } catch (\Exception $e) {
             return $e;
         }
+    }
+
+
+    public function asignacionUsuarios()
+    {
+        $result = User::all();
+        foreach ($result as $usuario) {
+            if ($usuario->id > 3) {
+                $nombres = explode(" ", $usuario->nombres);
+                $nombre1 = isset($nombres[0]) ? $nombres[0] : '';
+                $nombre2 = isset($nombres[1]) ? $nombres[1] : '';
+                $apellido1 = isset($nombres[2]) ? $nombres[2] : '';
+                $apellido2 = isset($nombres[3]) ? $nombres[3] : '';
+
+                $nuevoUsuario = new UsuariosInternosModel();
+                // $nuevoUsuario->rol_usuario_id = 1;
+                $nuevoUsuario->usuario_id = $usuario->id;
+                $nuevoUsuario->nombres = trim("$nombre1 $nombre2");
+                $nuevoUsuario->apellidos = trim("$apellido1 $apellido2");
+                $nuevoUsuario->documento_identidad = $usuario->documento_identidad ?? '';
+                $nuevoUsuario->correo = $usuario->usuario;
+                $nuevoUsuario->contrasena_correo = $usuario->contrasena_correo;
+                $nuevoUsuario->imagen_firma_1 = $usuario->imagen_firma_1;
+                $nuevoUsuario->imagen_firma_2 = $usuario->imagen_firma_2;
+                $nuevoUsuario->rol_usuario_interno_id = 1;
+                $nuevoUsuario->save();
+            }
+        }
+
+        return response()->json("Usuarios insertados con éxito");
     }
 
 

@@ -22,7 +22,6 @@ class formularioIngresoExportController extends Controller
         $arrays = explode('/', $cadenaUTF8);
         $arraysDecodificados = array_map('json_decode', $arrays);
 
-        // return $arraysDecodificados;
 
         $campo = $arraysDecodificados[0];
         $operador = $arraysDecodificados[1];

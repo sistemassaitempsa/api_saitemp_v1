@@ -832,11 +832,6 @@ class formularioDebidaDiligenciaController extends Controller
 
         $user = auth()->user();
         $year_actual = date('Y');
-        // $objeto = (object) [
-        //     'mensaje' => 'Filtrando empresas',
-        //     'componente' => 'navbar/debida-diligencia/clientes'
-        // ];
-        // event(new EventoPrueba2($objeto));
         try {
             $consulta = base64_decode($cadena);
             $valores = explode("/", $consulta);

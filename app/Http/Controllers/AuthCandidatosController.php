@@ -106,7 +106,7 @@ class AuthCandidatosController extends Controller
             return response()->json(['status' => 'success', 'message' => 'Registro guardado de manera exitosa']);
         } catch (\Exception $e) {
             DB::rollback();
-            return $e;
+            // return $e;
             return response()->json(['status' => 'error', 'message' => 'Error al guardar el formulario, por favor intenta nuevamente']);
         }
 
