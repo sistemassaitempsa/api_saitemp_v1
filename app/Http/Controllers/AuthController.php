@@ -14,7 +14,8 @@ use Tymon\JWTAuth\Facades\JWTAuth;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
-use Validator;
+use Illuminate\Support\Facades\Validator;
+
 
 class AuthController extends Controller
 {
@@ -63,7 +64,7 @@ class AuthController extends Controller
                             return response()->json([
                                 'access_token' => $token,
                                 'token_type' => 'bearer',
-                                'expires_in' => auth()->factory()->getTTL() * 60 * 60 * 8,
+                                'expires_in' => auth()->factory()->getTTL() / 60 / 60 / 8,
                                 'marca' => $uuid
                             ]);
                         }
@@ -83,7 +84,6 @@ class AuthController extends Controller
                     }
 
                     $token = auth()->attempt($validator->validated());
-
                     if (!$token) {
                         return response()->json(['status' => 'error', 'message' => 'Por favor verifique sus datos de inicio de sesión e intente nuevamente']);
                     }
@@ -129,8 +129,6 @@ class AuthController extends Controller
         } else {
             $user->rol_id = $request->rol_id == '' ? 3 : $request->rol_id;
         }
-
-
         $archivos = $request->files->all();
         $contador = 1;
         foreach ($archivos as $archivo) {

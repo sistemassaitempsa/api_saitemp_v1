@@ -6,15 +6,14 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
 
-class ArchivosFormularioIngreso extends Model
+class SectorEconomicoProfesionalModel extends Model
 {
     use HasFactory;
 
-    protected $table = 'usr_app_archivos_formulario_ingreso';
+    protected $table = 'usr_app_sector_economico_profesional';
 
     public function fromDateTime($value)
     {
-        // return Carbon::parse(parent::fromDateTime($value))->format('Y-d-m H:i:s');
         return Carbon::parse(parent::fromDateTime($value))->format('Y-d-m');
     }
 }

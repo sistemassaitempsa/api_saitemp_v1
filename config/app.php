@@ -58,6 +58,8 @@ return [
     'USUARIO_VALIDART' => env('USUARIO_VALIDART'),
     'VALIDART_URL' => env('VALIDART_URL'),
     'PASSWORD_VALIDART' => env('PASSWORD_VALIDART'),
+    'CONTRASENA_NO_REPLY' => env('CONTRASENA_NO_REPLY'),
+    'CORREO_NO_REPLY' => env('CORREO_NO_REPLY'),
 
     /*
     |--------------------------------------------------------------------------

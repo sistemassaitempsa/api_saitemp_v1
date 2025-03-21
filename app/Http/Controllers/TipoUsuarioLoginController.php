@@ -3,9 +3,9 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Models\ArchivosFormularioIngreso;
+use App\Models\TipoUsuarioLoginModel;
 
-class ArchivosFormularioIngresoController extends Controller
+class TipoUsuarioLoginController extends Controller
 {
     /**
      * Display a listing of the resource.
@@ -14,8 +14,10 @@ class ArchivosFormularioIngresoController extends Controller
      */
     public function index()
     {
-        $result = ArchivosFormularioIngreso::select()
-            ->get();
+        $result = TipoUsuarioLoginModel::select(
+            'id',
+            'nombre',
+        )->get();
         return response()->json($result);
     }
 
@@ -69,18 +71,9 @@ class ArchivosFormularioIngresoController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request)
+    public function update(Request $request, $id)
     {
-
-        $archivo = ArchivosFormularioIngreso::find($request->id);
-        $archivo->nombre = $request->nombre;
-        $archivo->tipo_archivo = $request->tipo_archivo;
-
-        if ($archivo->save()) {
-            return response()->json(['status' => 'success', 'message' => 'Archivo actualizado exitosamente']);
-        } else {
-            return response()->json(['status' => 'success', 'message' => 'Error al actualizar']);
-        }
+        //
     }
 
     /**
@@ -89,5 +82,8 @@ class ArchivosFormularioIngresoController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function destroy($id) {}
+    public function destroy($id)
+    {
+        //
+    }
 }

@@ -162,9 +162,18 @@ use App\Http\Controllers\RecepcionEmpleadoController;
 use App\Http\Controllers\GenerarZipController;
 use App\Http\Controllers\limitesCrmController;
 use App\Models\SeguimientoCrm;
+use App\Http\Controllers\AuthCandidatosController;
 use App\Http\Controllers\enviarCorreoDDController;
 use App\Http\Controllers\IndicadoresDDController;
 use App\Http\Controllers\MotivoServicioController;
+use App\Http\Controllers\TipoUsuarioLoginController;
+use App\Http\Controllers\UsuariodebidaDiligenciaController;
+use App\Http\Controllers\TiposUsuarioController;
+use App\Http\Controllers\SectorEconomicoController;
+use App\Http\Controllers\SectorEconomicoProfesionalController;
+use App\Http\Controllers\UsuarioDisponibleServicioController;
+use App\Http\Controllers\AsignacionServicioController;
+use App\Http\Controllers\RolesUsuariosInternosController;
 
 /*
 |--------------------------------------------------------------------------
@@ -177,23 +186,41 @@ use App\Http\Controllers\MotivoServicioController;
 |
 */
 
+
+
+
 // TODO: Colocar los name a las rutas 
+
 Route::group([
   'middleware' => ['api', \Fruitcake\Cors\HandleCors::class],
   'prefix' => 'v1'
-
 ], function ($router) {
+  //tipos de usuario
+  Route::get('/tiposUsuario', [TiposUsuarioController::class, 'index']);
+  Route::post('/tiposUsuario', [TiposUsuarioController::class, 'create']);
+  Route::put('/tiposUsuario', [TiposUsuarioController::class, 'update']);
 
+  Route::get('userloguedCandidatos', [AuthCandidatosController::class, 'userloguedCandidato']);
+  Route::post('/loginCandidatos', [AuthCandidatosController::class, 'login']);
+  Route::post('/registerCandidatos', [AuthCandidatosController::class, 'createUserCandidato']);
+  Route::get('/mostrarcandidatos', [AuthCandidatosController::class, 'mostrarUsuarios']);
+  /*  Route::get('userloguedCandidatos', [UsuarioController::class, 'userloguedCandidato']); */
+  /*  Route::get('/userloguedCandidatos/{userType}', [UsuarioController::class, 'userlogued']); */
   Route::post('/login', [AuthController::class, 'login']);
   Route::post('/register', [AuthController::class, 'register']);
+  Route::post('/enviartoken', [AuthCandidatosController::class, 'enviarTokenRecuperacion']);
+  Route::post('/recuperarcontrasena', [AuthCandidatosController::class, 'recuperarContraseña']);
+  Route::put('/actualizarcandidatousuario', [AuthCandidatosController::class, 'updateCandidatoUser']);
+
+  // Route::post('/register2', [AuthUsuarioController::class, 'register']);
   Route::post('/logout', [AuthController::class, 'logout']);
   Route::post('/refresh', [AuthController::class, 'refresh']);
   Route::get('/user-profile', [AuthController::class, 'userProfile']);
 
   // Usuarios
   Route::get('/allUsers', [UsuarioController::class, 'index2']);
-  Route::get('/users/{cantidad}', [UsuarioController::class, 'index']);
-  Route::get('/users/{filtro}/{cantidad}', [UsuarioController::class, 'filtro']);
+  Route::get('/users/{cantidad}/{tipo}', [UsuarioController::class, 'index']);
+  Route::get('/usersfiltro/{filtro}/{cantidad}', [UsuarioController::class, 'filtro']);
   Route::get('/userslist', [UsuarioController::class, 'userslist']);
   Route::get('/userlogued', [UsuarioController::class, 'userlogued']);
   Route::get('/userbyid/{id}', [UsuarioController::class, 'userById']);
@@ -422,7 +449,7 @@ Route::group([
   // Tipo de proveedor
   Route::get('/tipoproveedor', [TipoProveedorController::class, 'index']);
 
-  // Tipo de cliente
+  // Tipo de archivo
   Route::get('/tipoarchivo', [TipoDocumentoController::class, 'index']);
   Route::get('/tipoarchivo/{id}', [TipoDocumentoController::class, 'byid']);
 
@@ -478,6 +505,9 @@ Route::group([
 
   // Codigos ciiu
   Route::get('/codigociiu', [CodigoCiiuController::class, 'index']);
+  Route::get('/codigociiu/{cantidad}', [CodigoCiiuController::class, 'tabla']);
+  Route::post('/codigociiucodigosector', [CodigoCiiuController::class, 'codigo_sector']);
+  Route::get('/codigociiubyid/{id}', [CodigoCiiuController::class, 'byid']);
   Route::post('/codigociiu', [CodigoCiiuController::class, 'create']);
   Route::post('/codigociiu/{id}', [CodigoCiiuController::class, 'update']);
   Route::delete('/codigociiu/{id}', [CodigoCiiuController::class, 'destroy']);
@@ -619,6 +649,8 @@ Route::group([
   Route::get('/actualizaestadofirma/{item_id}/{estado_id}/{responsable_id}', [formularioDebidaDiligenciaController::class, 'actualizaestadofirma']);
   Route::get('/versiondebidadiligencia', [formularioDebidaDiligenciaController::class, 'versionformulario']);
 
+  Route::get('/formularioclientenit/{nit}', [formularioDebidaDiligenciaController::class, 'formularioclientenit']);
+
   Route::get('/formulariocliente/generarpdf/{id}', [formularioDebidaDiligenciaController::class, 'generarPdf']);
 
   Route::get('/consultaformulariocliente/{cantidad}', [formularioDebidaDiligenciaController::class, 'consultacliente']);
@@ -714,10 +746,14 @@ Route::group([
   Route::delete('/laboratorioos/{id}', [LaboratorioOrdenServicioController::class, 'destroy']);
 
   //   Orden Servicio 
-  Route::get('/ordenservicio', [OrdenServiciolienteController::class, 'index']);
+  Route::get('/ordenservicio/{cantidad}', [OrdenServiciolienteController::class, 'index']);
+  Route::get('/ordenserviciobyid/{id}', [OrdenServiciolienteController::class, 'byid']);
   Route::post('/ordenservicio', [OrdenServiciolienteController::class, 'create']);
+  Route::get('/ordenserviciofiltro/{cadena}', [OrdenServiciolienteController::class, 'filtro']);
   Route::post('/ordenservicio/{id}', [OrdenServiciolienteController::class, 'update']);
   Route::delete('/ordenservicio/{id}', [OrdenServiciolienteController::class, 'destroy']);
+  Route::get('/ordenservicioseiya/{id}', [OrdenServiciolienteController::class, 'ordenservicioseiya']);
+  Route::post('/cargamasivaservicio/{id}', [OrdenServiciolienteController::class, 'cargamasivaservicio']);
 
 
   //   Motivo servicio 
@@ -852,12 +888,14 @@ Route::group([
   Route::post('/interaccioncliente', [ClienteInteraccionController::class, 'create']);
 
   Route::get('/archivosingreso', [ArchivosFormularioIngresoController::class, 'index']);
+  Route::put('/archivosingreso', [ArchivosFormularioIngresoController::class, 'update']);
   Route::get('/afp', [AfpFormularioIngresoController::class, 'index']);
 
   Route::get('/formularioingreso/{cantidad}', [formularioGestionIngresoController::class, 'index']);
   Route::post('/formularioIngreso/filtrofechaingreso/{cantidad}', [formularioGestionIngresoController::class, 'filtroFechaIngreso']);
   Route::get('/formularioingresobyid/{id}', [formularioGestionIngresoController::class, 'byid']);
   Route::post('/formularioingreso', [formularioGestionIngresoController::class, 'create']);
+  Route::post('/formularioingresoservicio', [formularioGestionIngresoController::class, 'formularioingresoservicio']);
   Route::post('/formularioingresopendientes', [formularioGestionIngresoController::class, 'pendientes']);
   Route::get('/formularioingresopendientes/{cantidad}', [formularioGestionIngresoController::class, 'pendientes2']);
   Route::post('/formularioingreso/{id}', [formularioGestionIngresoController::class, 'update']);
@@ -1009,6 +1047,55 @@ Route::group([
   Route::get('/tablasandroid_usr_app_estado_compromiso_crm', [VersionTablasAndroidController::class, 'usr_app_estado_compromiso_crm']);
   Route::get('/tablasandroid_usr_app_pqrsf_crm', [VersionTablasAndroidController::class, 'usr_app_pqrsf_crm']);
   Route::get('/tablasandroid_usr_app_cliente_debida_diligencia', [VersionTablasAndroidController::class, 'usr_app_clientes']);
+
+  Route::get('/tipousuariologin', [TipoUsuarioLoginController::class, 'index']);
+
+  Route::post('/usuariocliente', [UsuariodebidaDiligenciaController::class, 'create']);
+  Route::post('/usuariocliente/{id}', [UsuariodebidaDiligenciaController::class, 'update']);
+
+  Route::get('/sectoreconomico/{cantidad}', [SectorEconomicoController::class, 'index']);
+  Route::get('/sectoreconomicolista', [SectorEconomicoController::class, 'lista']);
+  Route::get('/sectoreconomico/{id}', [SectorEconomicoController::class, 'byid']);
+  Route::post('/sectoreconomico', [SectorEconomicoController::class, 'create']);
+  Route::post('/sectoreconomicobyid/{id}', [SectorEconomicoController::class, 'update']);
+  Route::delete('/sectoreconomico/{id}', [SectorEconomicoController::class, 'destroy']);
+
+
+  Route::get('/usuariointernorol/{id}', [SectorEconomicoProfesionalController::class, 'usuariointernorol']);
+
+  Route::get('/asignacionUsuarios', [UsuarioController::class, 'asignacionUsuarios']);
+
+
+  Route::get('/profesionalSector/{cantidad}', [SectorEconomicoProfesionalController::class, 'index']);
+  Route::post('/profesionalsector', [SectorEconomicoProfesionalController::class, 'create']);
+  Route::get('/profesionalSectorbyid/{id}', [SectorEconomicoProfesionalController::class, 'byid']);
+  Route::delete('/profesionalSector/{id}', [SectorEconomicoProfesionalController::class, 'destroy']);
+  Route::post('/profesionalSectorborradomasivo', [SectorEconomicoProfesionalController::class, 'borradomasivo']);
+
+
+
+  Route::get('/usuariodisponibleservicio', [UsuarioDisponibleServicioController::class, 'index']);
+  Route::post('/usuariodisponibleservicio', [UsuarioDisponibleServicioController::class, 'create']);
+
+
+  Route::get('/asignacionServicio', [AsignacionServicioController::class, 'index']);
+  Route::post('/asignacionServicio', [AsignacionServicioController::class, 'ordenservicio']);
+  Route::get('/listaclienteservicio', [AsignacionServicioController::class, 'clienteservicio']);
+  Route::get('/clienteresponsableservicio/{id}', [AsignacionServicioController::class, 'responsableservicio']);
+
+
+  Route::get('/rolusuariointerno', [RolesUsuariosInternosController::class, 'index']);
+
+  Route::get('/validacandidato/{numero_documento}/{index}/{tipo_documento}', [RecepcionEmpleadoController::class, 'validacandidato']);
+
+
+  // Route::get('/codigociiutabla/{cantidad}', [SectorEconomicoProfesionalController::class, 'tabla']);
+  // Route::post('/codigociiucodigosector', [SectorEconomicoProfesionalController::class, 'codigo_sector']);
+  // Route::get('/codigociiubyid/{id}', [SectorEconomicoProfesionalController::class, 'byid']);
+
+
+
+
 
   Route::get('/clear-cache', function () {
     echo Artisan::call('config:clear');

@@ -87,7 +87,6 @@ class formularioDebidaDiligenciaController extends Controller
         $permisos = $this->validaPermiso();
 
         $user = auth()->user();
-        // $year_actual = date('Y');
 
         $result = cliente::join('gen_vendedor as ven', 'ven.cod_ven', '=', 'usr_app_clientes.vendedor_id')
             ->leftJoin('usr_app_estados_firma as estf', 'estf.id', '=', 'usr_app_clientes.estado_firma_id')
@@ -813,7 +812,6 @@ class formularioDebidaDiligenciaController extends Controller
         }
     }
 
-
     public function formularioclientenit($nit)
     {
         $result = Cliente::where('nit', '=', $nit)
@@ -834,11 +832,6 @@ class formularioDebidaDiligenciaController extends Controller
 
         $user = auth()->user();
         $year_actual = date('Y');
-        // $objeto = (object) [
-        //     'mensaje' => 'Filtrando empresas',
-        //     'componente' => 'navbar/debida-diligencia/clientes'
-        // ];
-        // event(new EventoPrueba2($objeto));
         try {
             $consulta = base64_decode($cadena);
             $valores = explode("/", $consulta);
