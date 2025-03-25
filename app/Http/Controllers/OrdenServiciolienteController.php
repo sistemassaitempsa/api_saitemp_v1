@@ -204,10 +204,15 @@ class OrdenServiciolienteController extends Controller
             $ordenServicio->save();
             $cantidad_errores = 0;
             $numeros_documento = '';
+            $correos_candidatos = '';
             $valida_candidato = new RecepcionEmpleadoController();
             foreach ($request['candidatos'] as $item) {
-                // $correo_candidato_validado = $valida_candidato->validaCorreoCandidato($item['correo_candidato']);
-                // $correo_candidato_validado = $correo_candidato_validado->getData(true);
+                $correo_candidato_validado = $valida_candidato->validaCorreoCandidato($item['correo_candidato']);
+                $correo_candidato_validado = $correo_candidato_validado->getData(true);
+                if (isset($correo_candidato_validado)) {
+                    $correos_candidatos .= ' ' . $correo_candidato_validado['correo'] . ',';
+                    continue;
+                }
                 if ($item['registrado'] == 1) {
                     $result = $this->candidatoRegistradoServicio($item['id'], $ordenServicio->id);
                 } else if ($item['registrado'] == 0) {
@@ -230,6 +235,9 @@ class OrdenServiciolienteController extends Controller
                 }
             }
             DB::commit();
+            if ($correos_candidatos != '') {
+                return response()->json(["status" => "success", "message" => "Formulario guardado exitosamente, sin embargo los candidatos con correo electrónico. $correos_candidatos. no pudieron ser registrados ya que el correo se encuentra en uso por otro usuario."]);
+            }
             if ($cantidad_errores > 0) {
                 return response()->json(["status" => "success", "message" => "El formulario fue guardado exitosamente, pero los candidatos con numero de documento $numeros_documento no pudieron ser registrados, para más información, por favor comuniquese con un asesor.", 'id' => $ordenServicio->id]);
             }
@@ -398,7 +406,6 @@ class OrdenServiciolienteController extends Controller
     public function filtro($cadena)
     {
         try {
-
             $cadenaJSON = base64_decode($cadena);
             $cadenaUTF8 = mb_convert_encoding($cadenaJSON, 'UTF-8', 'ISO-8859-1');
             $valores = explode("/", $cadenaUTF8);
@@ -562,13 +569,20 @@ class OrdenServiciolienteController extends Controller
 
             $cantidad_errores = 0;
             $numeros_documento = '';
+            $correos_candidatos = '';
+            $valida_candidato = new RecepcionEmpleadoController();
             foreach ($request['candidatos'] as $item) {
+                $correo_candidato_validado = $valida_candidato->validaCorreoCandidato($item['correo_candidato']);
+                $correo_candidato_validado = $correo_candidato_validado->getData(true);
+                if (isset($correo_candidato_validado)) {
+                    $correos_candidatos .= ' ' . $correo_candidato_validado['correo'] . ',';
+                    continue;
+                }
                 if ($item['registrado'] == 1) {
                     $this->candidatoRegistradoServicio($item['id'], $ordenServicio->id);
                 } else if ($item['registrado'] == 0) {
                     $this->candidatoNoRegistradoServicio($item, $ordenServicio->id);
                 } else if ($item['registrado'] == 2) {
-                    $valida_candidato = new RecepcionEmpleadoController();
                     $candidato_validado = $valida_candidato->validacandidato($item['numero_documento_candidato'], 0, $item['tipo_identificacion_id'], true);
                     $candidato_validado = $candidato_validado->getData(true);
                     if ($candidato_validado['status'] == 'success' && $candidato_validado['motivo'] == '1') {
@@ -580,17 +594,20 @@ class OrdenServiciolienteController extends Controller
                         $numeros_documento .= ' ' . $item['numero_documento_candidato'] . ',';
                         if ($cantidad_errores == count($request['candidatos'])) {
                             DB::rollback();
-                            return response()->json(['status' => 'error', 'message' => 'Los candidatos con numero de documento de identidad' . $numeros_documento . ' no pudieron ser registrados, para más innformación, por favor comuniquese con un asesor.']);
+                            return response()->json(["status" => "error", "message" => "Los candidatos con numero de documento de identidad $numeros_documento no pudieron ser registrados, para más innformación, por favor comuniquese con un asesor."]);
                         }
                     }
                 }
             }
 
             DB::commit();
+            if ($correos_candidatos != '') {
+                return response()->json(["status" => "success", "message" => "Formulario guardado exitosamente, sin embargo los candidatos con correo electrónico $correos_candidatos no pudieron ser registrados ya que el correo se encuentra en uso por otro usuario."]);
+            }
             return response()->json(["status" => "success", "message" => "Formulario guardado exitosamente"]);
         } catch (\Exception $e) {
             DB::rollback();
-            return $e;
+            // return $e;
             return response()->json(["status" => "error", "message" => "Error al guadar los datos del formulario"]);
         }
     }

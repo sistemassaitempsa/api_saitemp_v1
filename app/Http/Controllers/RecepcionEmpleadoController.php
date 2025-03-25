@@ -695,7 +695,7 @@ class RecepcionEmpleadoController extends Controller
     {
         $usuario = User::where('email', '=', $correo)->first();
         if ($usuario) {
-            return response()->json(['status' => 'error', 'correo' => $correo]);
+            return response()->json(['correo' => $correo]);
         }
     }
 }

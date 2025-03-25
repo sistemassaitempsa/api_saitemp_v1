@@ -159,10 +159,9 @@ class UsuarioController extends Controller
      */
     public function update(Request $request)
     {
-        $user = UsuariosInternosModel::find($request->id_user);
+        $user = UsuariosInternosModel::where('usuario_id','=',$request->id_user)->first();
         $login = user::find($request->id_user);
         $archivos = $request->files->all();
-
         if ($user->imagen_firma_1 != null && count($archivos) > 0) {
             $rutaArchivo1 = base_path('public') . $user->imagen_firma_1;
             if (file_exists($rutaArchivo1)) {
@@ -205,9 +204,9 @@ class UsuarioController extends Controller
                 $user->contrasena_correo = Crypt::encryptString($request->contrasena_correo);
             }
             if ($request->password != null || $request->password != "") {
-                $user->password = app('hash')->make($request->password);
+                $login->password = app('hash')->make($request->password);
             }
-            if ($user->save()) {
+            if ($user->save() && $login->save()) {
                 return response()->json(['status' => 'success', 'message' => 'Usuario actualizado exitosamente']);
             }
         } catch (\Exception $e) {
