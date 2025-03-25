@@ -14,7 +14,7 @@ class CodigoCiiuController extends Controller
      * @return \Illuminate\Http\Response
      */
 
-    /*  public function index()
+    //  public function index()
     // {
     //     $myarray =  [
     //         ['codigo_ciiu' => '1312', 'sector_economico' => '3'],
