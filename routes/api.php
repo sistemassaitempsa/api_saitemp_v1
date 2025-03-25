@@ -165,7 +165,6 @@ use App\Models\SeguimientoCrm;
 use App\Http\Controllers\AuthCandidatosController;
 use App\Http\Controllers\enviarCorreoDDController;
 use App\Http\Controllers\IndicadoresDDController;
-use App\Http\Controllers\RolesUsuariosInternosController;
 use App\Http\Controllers\HistoricoProfesionalesController;
 use App\Http\Controllers\MotivoServicioController;
 use App\Http\Controllers\TipoUsuarioLoginController;
