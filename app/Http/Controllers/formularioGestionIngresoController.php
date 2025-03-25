@@ -32,6 +32,8 @@ class formularioGestionIngresoController extends Controller
      */
     public function index($cantidad)
     {
+        $permisos = $this->validaPermiso();
+        $user = auth()->user();
 
         $permisos = $this->validaPermiso();
         $result = formularioGestionIngreso::leftJoin('usr_app_clientes as cli', 'cli.id', 'usr_app_formulario_ingreso.cliente_id')
@@ -40,8 +42,6 @@ class formularioGestionIngresoController extends Controller
             ->leftJoin('usr_app_formulario_ingreso_tipo_servicio as tiser', 'tiser.id', 'usr_app_formulario_ingreso.tipo_servicio_id')
             ->leftJoin('usr_app_registro_ingreso_laboraorio as ilab', 'ilab.registro_ingreso_id', 'usr_app_formulario_ingreso.id')
             ->leftJoin('usr_app_ciudad_laboraorio as ciulab', 'ciulab.id', 'ilab.laboratorio_medico_id')
-            ->leftJoin('usr_app_usuarios as us', 'us.id', 'usr_app_formulario_ingreso.candidato_id')
-            ->leftJoin('usr_app_candidatos_c as can', 'can.usuario_id', 'us.id')
             ->when(!in_array('42', $permisos), function ($query) {
                 return $query->where(function ($query) {
                     $query->whereNotIn('cli.nit', ['811025401', '900032514'])
@@ -1494,6 +1494,7 @@ class formularioGestionIngresoController extends Controller
 
     public function filtroFechaIngreso(Request $request, $cantidad = null)
     {
+        $permisos = $this->validaPermiso();
         $user = auth()->user();
         $result = formularioGestionIngreso::leftJoin('usr_app_clientes as cli', 'cli.id', 'usr_app_formulario_ingreso.cliente_id')
             ->leftJoin('usr_app_municipios as mun', 'mun.id', 'usr_app_formulario_ingreso.municipio_id')
@@ -1501,8 +1502,12 @@ class formularioGestionIngresoController extends Controller
             ->leftJoin('usr_app_formulario_ingreso_tipo_servicio as tiser', 'tiser.id', 'usr_app_formulario_ingreso.tipo_servicio_id')
             ->leftJoin('usr_app_registro_ingreso_laboraorio as ilab', 'ilab.registro_ingreso_id', 'usr_app_formulario_ingreso.id')
             ->leftJoin('usr_app_ciudad_laboraorio as ciulab', 'ciulab.id', 'ilab.laboratorio_medico_id')
-            ->leftJoin('usr_app_usuarios as us', 'us.id', 'usr_app_formulario_ingreso.candidato_id')
-            ->leftJoin('usr_app_candidatos_c as can', 'can.usuario_id', 'us.id')
+            ->when(!in_array('42', $permisos), function ($query) {
+                return $query->where(function ($query) {
+                    $query->whereNotIn('cli.nit', ['811025401', '900032514'])
+                        ->orWhereNull('cli.nit');
+                });
+            })
             ->select(
                 'usr_app_formulario_ingreso.id',
                 'usr_app_formulario_ingreso.numero_radicado',
@@ -1554,6 +1559,7 @@ class formularioGestionIngresoController extends Controller
 
     public function filtro($cadena, $cantidad = null)
     {
+        $permisos = $this->validaPermiso();
         if ($cantidad == null) {
             $cantidad = 15;
         }
@@ -1574,8 +1580,6 @@ class formularioGestionIngresoController extends Controller
             ->leftJoin('usr_app_formulario_ingreso_tipo_servicio as tiser', 'tiser.id', 'usr_app_formulario_ingreso.tipo_servicio_id')
             ->leftJoin('usr_app_registro_ingreso_laboraorio as ilab', 'ilab.registro_ingreso_id', 'usr_app_formulario_ingreso.id')
             ->leftJoin('usr_app_ciudad_laboraorio as ciulab', 'ciulab.id', 'ilab.laboratorio_medico_id')
-            ->leftJoin('usr_app_usuarios as us', 'us.id', 'usr_app_formulario_ingreso.candidato_id')
-            ->leftJoin('usr_app_candidatos_c as can', 'can.usuario_id', 'us.id')
             ->when(!in_array('42', $permisos), function ($query) {
                 return $query->where(function ($query) {
                     $query->whereNotIn('cli.nit', ['811025401', '900032514'])

@@ -109,6 +109,8 @@ trait AutenticacionGuard
                     'usr_app_roles.nombre as rol',
                     'usr_app_usuarios.estado_id',
                     'usr_app_usuarios.email',
+                    'usr_app_usuarios.confirma_correo',
+                    'usr_app_usuarios.confirma_terminos',
                     'usr_app_usuarios.tipo_usuario_id',
                     'usr_app_usuarios.id'
                 )->first();
@@ -120,7 +122,6 @@ trait AutenticacionGuard
     public function listaUsuarios($cantidad, $tipo_usaurio, $paginate = true)
     {
         if ($tipo_usaurio == "1") {
-
             $result = UsuariosInternosModel::join("usr_app_roles_usuarios_internos as rol_interno", "rol_interno.id", "=", "usr_app_usuarios_internos.rol_usuario_interno_id")
                 ->join("usr_app_usuarios", "usr_app_usuarios.id", "=", "usr_app_usuarios_internos.usuario_id")
                 ->join("usr_app_roles as rol_usuario", "rol_usuario.id", "=", "usr_app_usuarios.rol_id")
@@ -163,8 +164,10 @@ trait AutenticacionGuard
         } else if ($tipo_usaurio == "3") {
             $result = UsuariosCandidatosModel::join("gen_tipide", "gen_tipide.cod_tip", "=", "usr_app_candidatos_c.tip_doc_id")
                 ->join("usr_app_usuarios", "usr_app_usuarios.id", "=", "usr_app_candidatos_c.usuario_id")
-                ->join("usr_app_roles", "usr_app_roles.id", "=", "usr_app_login_usuarios.rol_id")
+                ->join("usr_app_roles", "usr_app_roles.id", "=", "usr_app_usuarios.rol_id")
+                ->join("usr_app_estados_usuario as estado", "estado.id", "=", "usr_app_usuarios.estado_id")
                 ->select(
+                    "usr_app_candidatos_c.usuario_id",
                     'usr_app_candidatos_c.primer_nombre',
                     'usr_app_candidatos_c.primer_apellido',
                     'usr_app_candidatos_c.num_doc',
@@ -173,10 +176,14 @@ trait AutenticacionGuard
                     'gen_tipide.cod_tip as tip_doc_id',
                     'usr_app_roles.id as rol_id',
                     'usr_app_roles.nombre as rol',
+                    "estado.nombre as estado",
+                    "estado.id as estado_id",
                     'usr_app_usuarios.estado_id',
                     'usr_app_usuarios.email',
                     'usr_app_usuarios.tipo_usuario_id',
-                    'usr_app_usuarios.id'
+                    'usr_app_usuarios.id',
+                    'usr_app_candidatos_c.primer_nombre as nombres',
+                    'usr_app_candidatos_c.primer_apellido as apellidos',
                 )->paginate($cantidad);
             return response()->json($result);
         }

@@ -13,7 +13,8 @@ class CodigoCiiuController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    // public function index()
+
+    /*  public function index()
     // {
     //     $myarray =  [
     //         ['codigo_ciiu' => '1312', 'sector_economico' => '3'],
@@ -627,6 +628,7 @@ class CodigoCiiuController extends Controller
             return response()->json(['status' => 'success', 'message' => 'Registro guardado de manera exitosa.']);
         }
     }
+
 
     /**
      * Show the form for creating a new resource.

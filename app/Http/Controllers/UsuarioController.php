@@ -26,7 +26,7 @@ class UsuarioController extends Controller
 
     public function index2()
     {
-        $users = user::select(
+        $users = UsuariosInternosModel::select(
             DB::raw("CONCAT(REPLACE(nombres, 'null', ''), ' ', REPLACE(apellidos, 'null', '')) AS nombre")
 
         )
@@ -216,6 +216,23 @@ class UsuarioController extends Controller
     }
 
 
+    public function update2(Request $request)
+    {
+        $user = user::find($request->id_user);
+
+        try {
+
+            $user->rol_usuario_interno_id = $request->rol_usuario_interno_id;
+
+            if ($user->save()) {
+                return response()->json(['status' => 'success', 'message' => 'Usuario actualizado exitosamente']);
+            }
+        } catch (\Exception $e) {
+            return $e;
+        }
+    }
+
+
     public function asignacionUsuarios()
     {
         $result = User::all();
@@ -248,6 +265,7 @@ class UsuarioController extends Controller
 
 
 
+
     /**
      * Remove the specified resource from storage.
      *
@@ -266,10 +284,23 @@ class UsuarioController extends Controller
             return response()->json(['status' => 'error', 'message' => 'Error al eliminar el usuario']);
         }
     }
+
     public function updateVendedorId(Request $request, $id)
     {
         $result = user::find($id);
         $result->vendedor_id = $request->vendedor_id;
         $result->save();
+    }
+
+    public function byRolInterno($rol)
+    {
+        $result = user::select(
+            'id',
+            DB::raw("CONCAT(nombres,' ',apellidos)  AS nombre"),
+            'usuario AS email',
+            'lider',
+        )->where('rol_usuario_interno_id', $rol)
+            ->get();
+        return response()->json($result);
     }
 }

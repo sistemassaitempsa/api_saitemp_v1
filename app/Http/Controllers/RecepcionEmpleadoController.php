@@ -255,17 +255,31 @@ class RecepcionEmpleadoController extends Controller
             $novasoft->num_ide = $request->cod_emp;
             $novasoft->save();
             foreach ($request->referencias as $referencia) {
-                if (isset($referencia['cod_emp']) && isset($referencia['num_ref'])) {
-                    $novasoftReferencia = ReferenciasFormularioEmpleado::where('cod_emp', $referencia['cod_emp'])
-                        ->where('num_ref', $referencia['num_ref'])
-                        ->first();
+                if ($referencia['nom_ref'] == '' || $referencia['nom_ref'] == null) {
+                } else {
+                    if (isset($referencia['cod_emp']) && isset($referencia['num_ref'])) {
+                        $novasoftReferencia = ReferenciasFormularioEmpleado::where('cod_emp', $referencia['cod_emp'])
+                            ->where('num_ref', $referencia['num_ref'])
+                            ->first();
 
-                    if ($novasoftReferencia) {
-                        $novasoftReferencia->parent = $referencia['parent'];
-                        $novasoftReferencia->cel_ref = $referencia['cel_ref'];
-                        $novasoftReferencia->nom_ref = $referencia['nom_ref'];
-                        $novasoftReferencia->ocu_ref = 0; // Si necesitas cambiar este valor, asegúrate de que sea correcto
-                        $novasoftReferencia->save();
+                        if ($novasoftReferencia) {
+                            $novasoftReferencia->parent = $referencia['parent'];
+                            $novasoftReferencia->cel_ref = $referencia['cel_ref'];
+                            $novasoftReferencia->nom_ref = $referencia['nom_ref'];
+                            $novasoftReferencia->ocu_ref = 0; // Si necesitas cambiar este valor, asegúrate de que sea correcto
+                            $novasoftReferencia->save();
+                        } else {
+                            $novasoftReferencia = new ReferenciasFormularioEmpleado;
+                            $novasoftReferencia->cod_emp = $novasoft->cod_emp;
+                            $novasoftReferencia->num_ref = $referencia['num_ref'];
+                            $novasoftReferencia->parent = $referencia['parent'];
+                            $novasoftReferencia->cel_ref = $referencia['cel_ref'];
+                            $novasoftReferencia->nom_ref = $referencia['nom_ref'];
+                            $novasoftReferencia->tip_ref = $referencia['tip_ref'];
+                            $novasoftReferencia->ocu_ref = 0;
+                            $novasoftReferencia->save();
+                        }
+
                     } else {
                         $novasoftReferencia = new ReferenciasFormularioEmpleado;
                         $novasoftReferencia->cod_emp = $novasoft->cod_emp;
@@ -277,59 +291,10 @@ class RecepcionEmpleadoController extends Controller
                         $novasoftReferencia->ocu_ref = 0;
                         $novasoftReferencia->save();
                     }
-                } else {
-                    $novasoftReferencia = new ReferenciasFormularioEmpleado;
-                    $novasoftReferencia->cod_emp = $novasoft->cod_emp;
-                    $novasoftReferencia->num_ref = $referencia['num_ref'];
-                    $novasoftReferencia->parent = $referencia['parent'];
-                    $novasoftReferencia->cel_ref = $referencia['cel_ref'];
-                    $novasoftReferencia->nom_ref = $referencia['nom_ref'];
-                    $novasoftReferencia->tip_ref = $referencia['tip_ref'];
-                    $novasoftReferencia->ocu_ref = 0;
-                    $novasoftReferencia->save();
                 }
             }
-            foreach ($request->familiaresConsulta as $index => $referencia) {
-                $requestFamiliares = $request->familiares;
-                if (isset($referencia['cod_emp']) && isset($referencia['ap1_fam'])) {
-                    $novasoftReferencia = ReferenciasModel::where('cod_emp', $referencia['cod_emp'])
-                        ->where('ap1_fam', $referencia['ap1_fam'])
-                        ->where('nom_fam', $referencia['nom_fam'])
-                        ->first();
-                    $fechaNacimientoFormated = Carbon::parse($requestFamiliares[$index]['fec_nac'])->format('d-m-Y H:i:s');
-                    $novasoftReferencia->ap1_fam = $requestFamiliares[$index]['ap1_fam'];
-                    $novasoftReferencia->ap2_fam = $requestFamiliares[$index]['ap2_fam'];
-                    $novasoftReferencia->nom_fam = $requestFamiliares[$index]['nom_fam'];
-                    $novasoftReferencia->tip_fam = $requestFamiliares[$index]['tip_fam'];
-                    $novasoftReferencia->fec_nac = $fechaNacimientoFormated;
-                    $novasoftReferencia->ocu_fam = $requestFamiliares[$index]['ocu_fam'];
-                    $novasoftReferencia->save();
-                }
-            }
-            if (count($request->familiaresConsulta) < count($request->familiares)) {
-                $tamanoInicial = count($request->familiaresConsulta);
-                for ($i = $tamanoInicial; $i < count($request->familiares); $i++) {
-                    $referencia = $request->familiares[$i];
-                    $novasoftReferencia = new ReferenciasModel;
-                    if ($referencia['ap1_fam'] != "") {
-                        $fechaNacimientoFormated = Carbon::parse($referencia['fec_nac'])->format('d-m-Y H:i:s');
-                        $novasoftReferencia->cod_emp = $novasoft->cod_emp;
-                        $novasoftReferencia->ap1_fam = $referencia['ap1_fam'];
-                        $novasoftReferencia->ap2_fam = $referencia['ap2_fam'];
-                        $novasoftReferencia->nom_fam = $referencia['nom_fam'];
-                        $novasoftReferencia->tip_fam = $referencia['tip_fam'];
-                        $novasoftReferencia->fec_nac = $fechaNacimientoFormated;
-                        $novasoftReferencia->ocu_fam = $referencia['ocu_fam'];
-                        $novasoftReferencia->save();
-                    }
-                }
-            }
-
-            return response()->json(['status' => 'success', 'message' => 'Registro actualizado de manera exitosa', 'id' => $novasoft->cod_emp]);
+               return response()->json(['status' => 'success', 'message' => 'Registro actualizado de manera exitosa', 'id' => $novasoft->cod_emp]);
         } catch (\Exception $e) {
-
-            throw $e;
-
             return response()->json(['status' => 'error', 'message' => 'Error al guardar el formulario, por favor intenta nuevamente']);
         }
     }
@@ -338,9 +303,6 @@ class RecepcionEmpleadoController extends Controller
     {
         try {
             DB::beginTransaction();
-
-
-            /*  $novasoft->est_civ = $request->est_civ; */
 
             $ciu_exp_formated = trim($request->ciu_exp, '0');
             $ciu_nac_formated = trim($request->cod_ciu, '0');
@@ -398,19 +360,9 @@ class RecepcionEmpleadoController extends Controller
             $user->genero_id = $request->sex_emp;
             $user->grupo_etnico_id = $request->cod_grupo;
             $user->concepto = $request->concepto;
-            $user->save();
+            $user->otro_transporte = $request->otro_transporte;
 
-            /*      foreach ($request->referencias as $item) {
-                if ($item['nom_ref'] != "") {
-                    $referencia = new ReferenciasPersonalesCandidatosModel;
-                    $referencia->usuario_id =  $usuario_id;
-                    $referencia->nombre = $item['nom_ref'];
-                    $referencia->telefono = $item['cel_ref'];
-                    $referencia->relacion = $item['parent'];
-                    $referencia->fecha_nacimiento = $item['fecha_nacimiento']; 
-                    $referencia->save();
-                }
-            } */
+            $user->save();
 
             if (count($request->experiencias_laborales) > 0) {
                 foreach ($request->experiencias_laborales as $item) {
@@ -546,11 +498,7 @@ class RecepcionEmpleadoController extends Controller
         $user_candidato["novasoft"] = $novasoft;
         return response()->json($user_candidato);
     }
-    /*  public function searchByIdOnUsuariosCandidato(Request $request, usuario_id){
 
-        $user = UsuariosCandidatosModel::where('usuario_id', $usuario_id)->first();
-
-    } */
 
     public function deleteExperienciaLaboral($id)
     {
@@ -658,11 +606,11 @@ class RecepcionEmpleadoController extends Controller
                     }
                     break;
                 case 'Igual a fecha':
-                    $query->whereDate('usr_app_matriz_riesgo.' . $campo, '=', $valor);
+                    $query->whereDate('usr_app_candidatos_c.' . $campo, '=', $valor);
                     break;
                 case 'Entre':
-                    $query->whereDate('usr_app_matriz_riesgo.' . $campo, '>=', $valor)
-                        ->whereDate('usr_app_matriz_riesgo.' . $campo, '<=', $valor2);
+                    $query->whereDate('usr_app_candidatos_c.' . $campo, '>=', $valor)
+                        ->whereDate('usr_app_candidatos_c.' . $campo, '<=', $valor2);
                     break;
             }
 
@@ -672,6 +620,7 @@ class RecepcionEmpleadoController extends Controller
             return $e;
         }
     }
+
 
     public function validacandidato($numero_identificacion, $index, $tipo_documento, $validacion_interna = false)
     {

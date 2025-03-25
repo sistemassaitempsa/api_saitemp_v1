@@ -49,8 +49,9 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\enviarCorreoDDController;
 use App\Models\NovedadesDD;
-
+use App\Models\HistoricoProfesionalesModel;
 use App\Models\VersionTablasAndroid;
+use App\Http\Controllers\HistoricoProfesionalesController;
 
 // use App\Events\EventoPrueba2;
 
@@ -340,6 +341,9 @@ class formularioDebidaDiligenciaController extends Controller
                 ->where('usr_app_clientes.id', '=', $id)
                 ->first();
 
+            $historico_profesionales_controller = new HistoricoProfesionalesController;
+            $historico = $historico_profesionales_controller->byClienteId($id, false);
+            $result['historico_profesionales'] = $historico;
 
             $seguimiento = RegistroCambio::join('usr_app_clientes as cli', 'cli.id', 'usr_app_registro_cambios.cliente_id')
                 ->select(
@@ -1029,7 +1033,6 @@ class formularioDebidaDiligenciaController extends Controller
             $cliente->contratacion_observacion = $request['contratacion_observacion'];
             $cliente->save();
 
-
             $seguimiento_estado = new ClientesSeguimientoEstado;
             $seguimiento_estado->responsable_inicial =  $user->nombres . ' ' . $user->apellidos;
             $seguimiento_estado->responsable_final = $cliente->responsable = $request->responsable;
@@ -1500,6 +1503,37 @@ class formularioDebidaDiligenciaController extends Controller
                 $novedad->usuario_corrige = $request['usuario_corregir_id'];
                 $novedad->save();
             }
+
+            $historico_profesionales_controller = new HistoricoProfesionalesController;
+            $historico = $historico_profesionales_controller->byClienteId($id, false);
+
+            if (!$historico || ($historico->usuario_nomina_id !== $request['profesional_nomina_id'] ||  $historico->usuario_cartera_id !== $request['profesional_cartera_id'] || $historico->usuario_sst_id !== $request['profesional_sst'])) {
+                $historico_profesionales = new HistoricoProfesionalesModel;
+                $historico_profesionales->cliente_id = $id;
+                if ($request['profesional_sst_id']) {
+                    $historico_profesionales->profesional_sst = $request['profesional_sst'];
+                    $historico_profesionales->usuario_sst_id = $request['profesional_sst_id'];
+                    $historico_profesionales->anotacion_sst = $request['anotacion_sst'];
+                }
+                if ($request['profesional_cartera_id']) {
+                    $historico_profesionales->profesional_cartera = $request['profesional_cartera'];
+                    $historico_profesionales->usuario_cartera_id = $request['profesional_cartera_id'];
+                    $historico_profesionales->anotacion_cartera = $request['anotacion_cartera'];
+                }
+                if ($request['profesional_nomina_id']) {
+                    $historico_profesionales->profesional_nomina = $request['profesional_nomina'];
+                    $historico_profesionales->usuario_nomina_id  = $request['profesional_nomina_id'];
+                    $historico_profesionales->anotacion_nomina = $request['anotacion_nomina'];
+                }
+                $historico_profesionales->save();
+            } else {
+
+                $historico->anotacion_nomina = $request['anotacion_nomina'];
+                $historico->anotacion_cartera = $request['anotacion_cartera'];
+                $historico->anotacion_sst = $request['anotacion_sst'];
+                $historico->save();
+            }
+
 
 
 

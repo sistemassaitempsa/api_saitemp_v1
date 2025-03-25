@@ -656,82 +656,14 @@ class SeguimientoCrmController extends Controller
             }
 
             $result->save();
-            /*    $manager = new ImageManager(new Driver());
-            $zipNombre = $result->numero_radicado . '.zip';
-            $zipGeneral = public_path('./upload/evidenciasCrm/' . $zipNombre);
-            $zipCoincidencia = glob($zipGeneral); */
             foreach ($request->imagen as $item) {
                 for ($i = 0; $i < count($item); $i++) {
                     if ($i > 0) {
                         $evidencia = new Evidencia;
                         $evidencia->descripcion = $item[0] ? $item[0] : "";
                         $evidencia->registro_id = $result->id;
-                        /*  $nombreArchivoOriginal = $item[$i]->getClientOriginalName();
-                        $nombreSinExtension = pathinfo($nombreArchivoOriginal, PATHINFO_FILENAME);
-                        $extension = pathinfo($nombreArchivoOriginal, PATHINFO_EXTENSION);
-                        $nombreLimpio = preg_replace('/[.\s]+/', '_', $nombreSinExtension) . '.' . $extension;
-                        $nuevoNombre = Carbon::now()->timestamp . "_" . $nombreLimpio;
-                        $carpetaDestino = './upload/evidenciasCrm/';
-                        $zipPath = $carpetaDestino . $zipNombre;
-                        if (in_array($extension, ['jpg', 'jpeg', 'png', 'pdf'])) {
-                            if (in_array($extension, ['jpg', 'jpeg', 'png'])) {
-                                $image = $manager->read($item[$i]->getPathname());
-                                $image->resizeDown(800, 600, function ($constraint) {
-                                    $constraint->aspectRatio();
-                                })->save($carpetaDestino . $nuevoNombre, 70);
-                            } elseif ($extension === 'pdf') {
-                                $pdf = new Fpdi();
-                                $pageCount = $pdf->setSourceFile($item[$i]->getPathname());
-                                for ($pageNo = 1; $pageNo <= $pageCount; $pageNo++) {
-                                    $pdf->AddPage();
-                                    $templateId = $pdf->importPage($pageNo);
-                                    $pdf->useTemplate($templateId);
-                                }
-                                $pdf->Output($carpetaDestino . $nuevoNombre, 'F');
-                            }
-                            if (count($zipCoincidencia) > 0) {
-                                $zip = new ZipArchive;
-                                $res = $zip->open($zipGeneral);
-                                if ($res === true) {
-                                    $zip->addFile($carpetaDestino . $nuevoNombre, $nuevoNombre);
-                                    $zip->close();
-                                } else {
-                                    throw new \Exception('No se pudo acceder al ZIP');
-                                }
-                                $nuevoNombre = $zipNombre . $nuevoNombre;
-                            } else {
-                                $zip = new ZipArchive();
-                                if ($zip->open($zipPath, ZipArchive::CREATE) === true) {
-                                    $zip->addFile($carpetaDestino . $nuevoNombre, $nuevoNombre);
-                                    $zip->close();
-                                }
-                            }
-                            if (file_exists($carpetaDestino . $nuevoNombre)) {
-                                unlink($carpetaDestino . $nuevoNombre);
-                            }
-                        } else {
-                            if (count($zipCoincidencia) > 0) {
-                                $zip = new ZipArchive;
-                                $res = $zip->open($zipGeneral);
-                                if ($res === true) {
-                                    $zip->addFile($item[$i]->getPathname(), $nuevoNombre);
-                                    $zip->close();
-                                } else {
-                                    throw new \Exception('No se pudo acceder al ZIP');
-                                }
-                                $nuevoNombre = $zipNombre . $nuevoNombre;
-                            } else {
-                                $zip = new ZipArchive();
-                                if ($zip->open($zipPath, ZipArchive::CREATE) === true) {
-                                    $zip->addFile($item[$i]->getPathname(), $nuevoNombre);
-                                    $zip->close();
-                                }
-                            }
-                        } */
                         $ruta = './upload/evidenciasCrm/';
-
                         $evidencia->archivo = $this->comprimirArchivos($result->numero_radicado, $item[$i], $ruta);
-                        /*     $evidencia->archivo = ltrim($carpetaDestino, '.') . $nuevoNombre; */
                         $evidencia->save();
                     }
                 }
@@ -1442,28 +1374,30 @@ class SeguimientoCrmController extends Controller
         $numeroRadicado = $formulario->numero_radicado;
         $tipo_atencion_id = $formulario->tipo_atencion_id;
         if ($tipo_atencion_id == 5 || $tipo_atencion_id == 6) {
+            $subject = 'Confirmación acta de reunión';
             if ((($formulario->nit_documento == "900032514" || $formulario->nit_documento == "811025401") && $formulario->correo == $destinatario) || (($formulario->nit_documento == "900032514" || $formulario->nit_documento == "811025401") && $booleanCompromiso == false)) {
                 $body = "Coordial saludo, Informamos que el acta de la reunion interna ha sido creado satisfactoriamente con radicado:  <b><i>$numeroRadicado</i></b>";
             } else {
                 $body = "Cordial saludo, esperamos se encuentren muy bien.\n\n Informamos que el registro de visita ha sido creado satisfactoriamente con número de radicado: <b><i>$numeroRadicado</i></b>, Cualquier información adicional puede comunicarse con:
                     Katerin Andrea Nuno: (+57) 311-437-0207
-                    William Hernán Hernandez: (+57) 311-586-4835
                     o a nuestra línea de atención general (604) 4485744, con gusto uno de nuestros facilitadores atenderá su llamada.\n\n simplificando conexiones, facilitando experiencias.
                     \n\n Atentamente:";
             }
         } else {
-            $body = "Cordial saludo, esperamos se encuentren muy bien.\n\n Informamos que el registro de servicio ha sido creado satisfactoriamente con número de radicado: <b><i>$numeroRadicado</i></b>, Cualquier información adicional podrá ser atendida en la línea Servisai de Saitemp S.A. marcando  al (604) 4485744, con gusto uno de nuestros facilitadores atenderá su llamada.\n\n simplificando conexiones, facilitando experiencias.";
+            $subject = 'Confirmación acta de pqrsf';
+            $body = "Cordial saludo, esperamos se encuentren muy bien.\n\n Informamos que el registro de pqrsf ha sido creado satisfactoriamente con número de radicado: <b><i>$numeroRadicado</i></b>, Cualquier información adicional podrá ser atendida en la línea Servisai de Saitemp S.A. marcando  al (604) 4485744, con gusto uno de nuestros facilitadores atenderá su llamada.\n\n simplificando conexiones, facilitando experiencias.";
         }
 
         $body = nl2br($body);
 
         if ($booleanCompromiso == true) {
+
             $body = "Cordial saludo, tiene nuevos compromisos asignados en el radicado CRM número: <b><i>$numeroRadicado</i></b> adjunto con las siguientes observaciones: $observacion.
         \n\n Atentamente:";
         }
 
 
-        $subject = 'Confirmación registro de servicio.';
+
         $nomb_membrete = 'Informe de servicio';
 
         // Datos del correo
