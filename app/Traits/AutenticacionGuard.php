@@ -142,7 +142,6 @@ trait AutenticacionGuard
                     "estado.id as estado_id",
                     "usr_app_usuarios_internos.vendedor_id",
                     'usr_app_usuarios.email',
-                    'usr_app_usuarios.id'
                 )
                 ->paginate($cantidad);
             return response()->json($result);
@@ -178,7 +177,6 @@ trait AutenticacionGuard
                     'usr_app_roles.nombre as rol',
                     "estado.nombre as estado",
                     "estado.id as estado_id",
-                    'usr_app_usuarios.estado_id',
                     'usr_app_usuarios.email',
                     'usr_app_usuarios.tipo_usuario_id',
                     'usr_app_usuarios.id',
