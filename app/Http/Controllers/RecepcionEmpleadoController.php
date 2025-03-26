@@ -279,7 +279,6 @@ class RecepcionEmpleadoController extends Controller
                             $novasoftReferencia->ocu_ref = 0;
                             $novasoftReferencia->save();
                         }
-
                     } else {
                         $novasoftReferencia = new ReferenciasFormularioEmpleado;
                         $novasoftReferencia->cod_emp = $novasoft->cod_emp;
@@ -293,7 +292,7 @@ class RecepcionEmpleadoController extends Controller
                     }
                 }
             }
-               return response()->json(['status' => 'success', 'message' => 'Registro actualizado de manera exitosa', 'id' => $novasoft->cod_emp]);
+            return response()->json(['status' => 'success', 'message' => 'Registro actualizado de manera exitosa', 'id' => $novasoft->cod_emp]);
         } catch (\Exception $e) {
             return response()->json(['status' => 'error', 'message' => 'Error al guardar el formulario, por favor intenta nuevamente']);
         }
@@ -316,6 +315,9 @@ class RecepcionEmpleadoController extends Controller
             $fechaNacimientoFormated = Carbon::parse($request->fec_nac)->format('d-m-Y H:i:s');
             $fechaExpedicionFormated = Carbon::parse($request->fec_expdoc)->format('d-m-Y H:i:s');
             $user = UsuariosCandidatosModel::where('usuario_id', $usuario_id)->first();
+            $user->manipulacion_alimentos = $request->manipulacion_alimentos;
+            $user->curso_alturas = $request->curso_alturas;
+            $user->curso_confinados = $request->curso_confinados;
             $user->primer_nombre = $request->nom1_emp;
             $user->primer_apellido = $request->ap1_emp;
             $user->segundo_nombre = $request->nom2_emp ?? '';
