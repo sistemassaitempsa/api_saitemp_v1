@@ -244,7 +244,6 @@ class UsuarioController extends Controller
                 $apellido2 = isset($nombres[3]) ? $nombres[3] : '';
 
                 $nuevoUsuario = new UsuariosInternosModel();
-                // $nuevoUsuario->rol_usuario_id = 1;
                 $nuevoUsuario->usuario_id = $usuario->id;
                 $nuevoUsuario->nombres = trim("$nombre1 $nombre2");
                 $nuevoUsuario->apellidos = trim("$apellido1 $apellido2");

@@ -236,7 +236,7 @@ class OrdenServiciolienteController extends Controller
             }
             DB::commit();
             if ($correos_candidatos != '') {
-                return response()->json(["status" => "success", "message" => "Formulario guardado exitosamente, sin embargo los candidatos con correo electrónico. $correos_candidatos. no pudieron ser registrados ya que el correo se encuentra en uso por otro usuario."]);
+                return response()->json(["status" => "success", "message" => "Formulario guardado exitosamente, sin embargo los candidatos con correo electrónico. $correos_candidatos. no pudieron ser registrados ya que el correo se encuentra en uso por otro usuario.", 'id' => $ordenServicio->id]);
             }
             if ($cantidad_errores > 0) {
                 return response()->json(["status" => "success", "message" => "El formulario fue guardado exitosamente, pero los candidatos con numero de documento $numeros_documento no pudieron ser registrados, para más información, por favor comuniquese con un asesor.", 'id' => $ordenServicio->id]);
