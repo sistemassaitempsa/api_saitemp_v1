@@ -449,7 +449,6 @@ class RecepcionEmpleadoController extends Controller
 
     public function searchByIdOnUsuariosCandidato($usuario_id)
     {
-        $user = auth()->user();
         $user_candidato = UsuariosCandidatosModel::leftjoin('usr_app_eps_c as eps', 'eps.id', 'usr_app_candidatos_c.eps_id')
             ->leftjoin('usr_app_afp as afp', 'afp.id', 'usr_app_candidatos_c.afp_id')
             ->leftjoin('usr_app_sector_academico_c as sector_academico', 'sector_academico.id', 'usr_app_candidatos_c.sector_academico_id')
@@ -519,7 +518,7 @@ class RecepcionEmpleadoController extends Controller
             $result->delete();
             return response()->json(['status' => 'success', 'message' => 'Idioma eliminado de manera exitosa']);
         } catch (\Exception $e) {
-            return response()->json(['status' => 'error', 'message' => 'Error al eliminar exeriencia, por favor intenta nuevamente']);
+            return response()->json(['status' => 'error', 'message' => 'Error al eliminar experiencia, por favor intenta nuevamente']);
         }
     }
     public function indexFormularioCandidatos($cantidad)
