@@ -18,6 +18,7 @@ use App\Models\ListaTrump;
 use App\Models\formularioGestionIngreso;
 use App\Models\User;
 use Illuminate\Support\Str;
+use App\Models\CandidatosRequisitosModel;
 
 class RecepcionEmpleadoController extends Controller
 {
@@ -365,7 +366,16 @@ class RecepcionEmpleadoController extends Controller
             $user->otro_transporte = $request->otro_transporte;
 
             $user->save();
-
+            if (count($request->requisitos_asignados) > 0) {
+                foreach ($request->requisitos_asignados as $item) {
+                    if (!isset($item['id'])) {
+                        $requisito = new CandidatosRequisitosModel;
+                        $requisito->candidato_id = $user->id;
+                        $requisito->requisito_id = $item['requisito_id'];
+                        $requisito->save();
+                    }
+                }
+            }
             if (count($request->experiencias_laborales) > 0) {
                 foreach ($request->experiencias_laborales as $item) {
                     if (isset($item['id'])) {
