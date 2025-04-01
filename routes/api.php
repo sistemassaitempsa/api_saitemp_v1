@@ -611,6 +611,7 @@ Route::group([
 
   // Requisitos del cargo
   Route::get('/requisito', [RequisitoController::class, 'index']);
+  Route::get('/requisitosCandidatos', [RequisitoController::class, 'index2']);
   Route::post('/requisito', [RequisitoController::class, 'create']);
   Route::post('/requisito/{id}', [RequisitoController::class, 'update']);
   Route::delete('/requisito/{id}', [RequisitoController::class, 'destroy']);
