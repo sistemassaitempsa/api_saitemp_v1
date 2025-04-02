@@ -181,6 +181,7 @@ use App\Http\Controllers\SectorEconomicoProfesionalController;
 use App\Http\Controllers\UsuarioDisponibleServicioController;
 use App\Http\Controllers\AsignacionServicioController;
 use App\Http\Controllers\RolesUsuariosInternosController;
+use App\Http\Controllers\CumpleRequisitosController;
 
 /*
 |--------------------------------------------------------------------------
@@ -1026,8 +1027,8 @@ Route::group([
   Route::delete('/idiomacandidato/{id}', [RecepcionEmpleadoController::class, 'deleteIdiomaCandidato']);
   Route::get('/consultaFormularioCandidato/{cantidad}', [RecepcionEmpleadoController::class, 'indexFormularioCandidatos']);
   Route::get('/consultaFormularioCandidatofiltro/{cadena}', [RecepcionEmpleadoController::class, 'candidatosFiltro']);
-
-
+  Route::delete('/cumplerequisitocandidato/{id}', [CumpleRequisitosController::class, 'destroy']);
+  Route::get('/buscardocumentolistacandidatos/{documento}', [RecepcionEmpleadoController::class, 'buscardocumentolistacandidato']);
   //ruta para generar el archivo zip de seiya
   Route::get('/descargarZip/{idRadicado}/{idCliente}', [GenerarZipController::class, 'descargarArchivosById']);
 
