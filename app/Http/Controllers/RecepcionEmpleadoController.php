@@ -737,5 +737,22 @@ class RecepcionEmpleadoController extends Controller
 
         return response()->json($result);
     }
-    public function addCandidatoServicio() {}
+
+    public function addCandidatoServicio($id_candidato, $id_servicio)
+    {
+
+        $candidato = UsuariosCandidatosModel::find($id_candidato)->first();
+        if (isset($candidato)) {
+            $validarCandidato = $this->validacandidato($candidato->num_doc, 0, $candidato->tip_doc_id, false);
+            if ($validarCandidato['success']) {
+                //guardar orden de servicio
+                $ordenServiciolienteController = new OrdenServiciolienteController;
+                $ordenServicioCandidato = $ordenServiciolienteController->candidatoRegistradoServicio($id_candidato, $id_servicio);
+                return response()->json(["status" => "success", "message" => "Candidato registrado exitosamente en el servicio"]);
+            } else {
+                $messageError = $validarCandidato['message'];
+                return response()->json(["status" => "error", "message" => $messageError]);
+            }
+        }
+    }
 }
