@@ -3,9 +3,9 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Models\estadosIngreso;
+use App\Models\MotivoCancelaServicioModel;
 
-class estadosIngresoController extends Controller
+class MotivoCancelaServicioController extends Controller
 {
     /**
      * Display a listing of the resource.
@@ -14,13 +14,10 @@ class estadosIngresoController extends Controller
      */
     public function index()
     {
-        $result = estadosIngreso::where('id','!=',14)->select(
+        $result = MotivoCancelaServicioModel::select(
             'id',
             'nombre',
-            'color'
-        )
-            ->orderby('posicion')
-            ->get();
+        )->get();
         return response()->json($result);
     }
 

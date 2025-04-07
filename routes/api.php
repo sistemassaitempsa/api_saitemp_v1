@@ -181,6 +181,9 @@ use App\Http\Controllers\SectorEconomicoProfesionalController;
 use App\Http\Controllers\UsuarioDisponibleServicioController;
 use App\Http\Controllers\AsignacionServicioController;
 use App\Http\Controllers\RolesUsuariosInternosController;
+use App\Http\Controllers\EstadoServicioController;
+use App\Http\Controllers\EstadoCandidatoServicioController;
+use App\Http\Controllers\MotivoCancelaServicioController;
 
 /*
 |--------------------------------------------------------------------------
@@ -426,6 +429,7 @@ Route::group([
 
   // Lista trump
   Route::get('/listatrump/{codigo}', [ListaTrumpController::class, 'index']);
+  Route::post('/listatrump', [ListaTrumpController::class, 'create']);
 
   // Procesos especiales
   Route::get('/procesosespeciales', [ProcesosEspecialesController::class, 'index']);
@@ -1139,13 +1143,23 @@ Route::group([
 
   Route::get('/asignacionServicio', [AsignacionServicioController::class, 'index']);
   Route::post('/asignacionServicio', [AsignacionServicioController::class, 'ordenservicio']);
+  Route::post('/cancelaservicio/{id}', [AsignacionServicioController::class, 'cancelaservicio']);
   Route::get('/listaclienteservicio', [AsignacionServicioController::class, 'clienteservicio']);
+  Route::post('/cancelacandidatoservicio/{servicio_id}/{candidato_id}', [AsignacionServicioController::class, 'cancelacandidatoservicio']);
   Route::get('/clienteresponsableservicio/{id}', [AsignacionServicioController::class, 'responsableservicio']);
 
 
   Route::get('/rolusuariointerno', [RolesUsuariosInternosController::class, 'index']);
 
   Route::get('/validacandidato/{numero_documento}/{index}/{tipo_documento}', [RecepcionEmpleadoController::class, 'validacandidato']);
+  
+  Route::get('/estadoservicio', [EstadoServicioController::class, 'index']);
+  Route::get('/estadocandidatoservicio', [EstadoCandidatoServicioController::class, 'index']);
+  
+  Route::get('/motivocancelaservicio', [MotivoCancelaServicioController::class, 'index']);
+
+//   EstadoServicioController
+// EstadoCandidatoServicioController
 
 
   // Route::get('/codigociiutabla/{cantidad}', [SectorEconomicoProfesionalController::class, 'tabla']);

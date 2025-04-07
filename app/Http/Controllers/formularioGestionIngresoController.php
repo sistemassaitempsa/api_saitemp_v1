@@ -1584,6 +1584,8 @@ class formularioGestionIngresoController extends Controller
             ->leftJoin('usr_app_formulario_ingreso_tipo_servicio as tiser', 'tiser.id', 'usr_app_formulario_ingreso.tipo_servicio_id')
             ->leftJoin('usr_app_registro_ingreso_laboraorio as ilab', 'ilab.registro_ingreso_id', 'usr_app_formulario_ingreso.id')
             ->leftJoin('usr_app_ciudad_laboraorio as ciulab', 'ciulab.id', 'ilab.laboratorio_medico_id')
+            ->leftJoin('usr_app_usuarios as us', 'us.id', 'usr_app_formulario_ingreso.candidato_id')
+            ->leftJoin('usr_app_candidatos_c as can', 'can.usuario_id', 'us.id')
             ->when(!in_array('42', $permisos), function ($query) {
                 return $query->where(function ($query) {
                     $query->whereNotIn('cli.nit', ['811025401', '900032514'])
@@ -1989,15 +1991,16 @@ class formularioGestionIngresoController extends Controller
                 'usr_app_candadato_servicio.usuario_id',
                 'usr_app_candadato_servicio.en_proceso',
             )->get();
-        $tipo_servicio = $request->tipo_servicio_id;
-        if ($tipo_servicio == 2) {
-            $replica = $candidatos->count();
-        } else if ($tipo_servicio == 3 ||  $tipo_servicio == 4) {
-            $replica = $request->replica;
-            if ($replica == "") {
-                $replica = 1;
-            }
-        }
+        // $tipo_servicio = $request->tipo_servicio_id;
+        // if ($tipo_servicio == 2) {
+        $replica = $candidatos->count();
+        // }
+        //  else if ($tipo_servicio == 3 ||  $tipo_servicio == 4) {
+        //     $replica = $request->replica;
+        //     if ($replica == "") {
+        //         $replica = 1;
+        //     }
+        // }
 
         DB::beginTransaction();
         $user = auth()->user();
@@ -2057,7 +2060,7 @@ class formularioGestionIngresoController extends Controller
                     $result->n_servicio = $request->n_servicio;
                 }
 
-                if ($tipo_servicio == 2) {
+                // if ($tipo_servicio == 2) {
                     if ($candidatos[$i]['en_proceso'] != 1) {
                         // $result->nombre_completo = $candidatos[$i]['nombre_candidato'] . ' ' . $candidatos[$i]['apellido_candidato'];
                         // $result->numero_contacto = $candidatos[$i]['celular_candidato'];
@@ -2073,13 +2076,14 @@ class formularioGestionIngresoController extends Controller
                     } else {
                         continue;
                     }
-                } else if ($tipo_servicio == 3 ||  $tipo_servicio == 4) {
-                    $result->nombre_completo = $request->nombre_completo;
-                    $result->numero_contacto = $request->numero_contacto;
-                    $result->correo_notificacion_usuario = $request->correo_candidato;
-                    $result->tipo_documento_id = $request->tipo_identificacion;
-                    $result->numero_identificacion = $request->numero_identificacion;
-                }
+                // } 
+                // else if ($tipo_servicio == 3 ||  $tipo_servicio == 4) {
+                //     $result->nombre_completo = $request->nombre_completo;
+                //     $result->numero_contacto = $request->numero_contacto;
+                //     $result->correo_notificacion_usuario = $request->correo_candidato;
+                //     $result->tipo_documento_id = $request->tipo_identificacion;
+                //     $result->numero_identificacion = $request->numero_identificacion;
+                // }
                 $result->save();
 
                 $laboratorio = new RegistroIngresoLaboratorio;
