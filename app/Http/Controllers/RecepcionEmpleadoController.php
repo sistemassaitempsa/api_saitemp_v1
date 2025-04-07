@@ -737,4 +737,5 @@ class RecepcionEmpleadoController extends Controller
 
         return response()->json($result);
     }
+    public function addCandidatoServicio() {}
 }
