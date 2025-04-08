@@ -740,14 +740,15 @@ class RecepcionEmpleadoController extends Controller
 
     public function addCandidatoServicio($id_candidato, $id_servicio)
     {
-
-        $candidato = UsuariosCandidatosModel::find($id_candidato)->first();
+        $candidato = UsuariosCandidatosModel::find($id_candidato);
         if (isset($candidato)) {
-            $validarCandidato = $this->validacandidato($candidato->num_doc, 0, $candidato->tip_doc_id, false);
-            if ($validarCandidato['success']) {
+            $validarCandidato = $this->validacandidato($candidato->num_doc, 0, $candidato->tip_doc_id, true);
+            $validarCandidato = $validarCandidato->getData(true);
+            if ($validarCandidato['status'] == 'success') {
                 //guardar orden de servicio
                 $ordenServiciolienteController = new OrdenServiciolienteController;
-                $ordenServicioCandidato = $ordenServiciolienteController->candidatoRegistradoServicio($id_candidato, $id_servicio);
+                $ordenServicioCandidato = $ordenServiciolienteController->candidatoRegistradoServicio($candidato->usuario_id, $id_servicio, true);
+
                 return response()->json(["status" => "success", "message" => "Candidato registrado exitosamente en el servicio"]);
             } else {
                 $messageError = $validarCandidato['message'];

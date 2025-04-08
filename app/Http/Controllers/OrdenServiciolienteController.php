@@ -124,6 +124,7 @@ class OrdenServiciolienteController extends Controller
                 'usr_app_orden_servicio.nombre_contacto',
                 'usr_app_orden_servicio.telefono_contacto',
                 'usr_app_orden_servicio.cargo_contacto',
+                'usr_app_orden_servicio.responsable'
             )->first();
         $candidatos = CandidatoServicioModel::join('usr_app_usuarios as us', 'us.id', 'usr_app_candadato_servicio.usuario_id')
             ->join('usr_app_candidatos_c as can', 'can.usuario_id', 'usr_app_candadato_servicio.usuario_id')
@@ -284,7 +285,7 @@ class OrdenServiciolienteController extends Controller
             DB::rollBack();
         }
     }
-    public function candidatoRegistradoServicio(string $candidato_id, string $ordenServicio_id)
+    public function candidatoRegistradoServicio(string $candidato_id, string $ordenServicio_id, $retorna_respuesta = false)
     {
         try {
             DB::beginTransaction();
@@ -294,8 +295,12 @@ class OrdenServiciolienteController extends Controller
             $candidato->en_proceso = 0;
             $candidato->save();
             DB::commit();
+            if ($retorna_respuesta) {
+                return $candidato->id;
+            }
         } catch (\Exception $e) {
             DB::rollBack();
+            return $e;
         }
     }
 

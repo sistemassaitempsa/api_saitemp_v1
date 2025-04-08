@@ -1031,6 +1031,7 @@ Route::group([
   Route::get('/buscardocumentolistacandidatos/{documento}', [RecepcionEmpleadoController::class, 'buscardocumentolistacandidato']);
   //ruta para generar el archivo zip de seiya
   Route::get('/descargarZip/{idRadicado}/{idCliente}', [GenerarZipController::class, 'descargarArchivosById']);
+  Route::post('/addcandidatoservicio/{id_candidato}/{id_servicio}', [RecepcionEmpleadoController::class, 'addCandidatoServicio']);
 
 
 
