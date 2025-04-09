@@ -470,6 +470,7 @@ class RecepcionEmpleadoController extends Controller
             ->leftjoin('rhh_tbclaest as nivel_academico', 'nivel_academico.tip_est', 'usr_app_candidatos_c.nivel_academico_id')
             ->leftjoin('usr_app_genero as genero', 'genero.id', 'usr_app_candidatos_c.genero_id')
             ->leftjoin('gen_grupoetnico as grupo_etnico', 'grupo_etnico.cod_grupo', 'usr_app_candidatos_c.grupo_etnico_id')
+            ->leftjoin('usr_app_usuarios as login', 'login.id', 'usr_app_candidatos_c.usuario_id')
             ->select(
                 'usr_app_candidatos_c.*',
                 'eps.nombre as eps_nombre',
@@ -479,7 +480,8 @@ class RecepcionEmpleadoController extends Controller
                 'banco.nom_ban as nom_ban',
                 'nivel_academico.des_est as des_est',
                 'genero.nombre as genero_nombre',
-                'grupo_etnico.descripcion as descripcion'
+                'grupo_etnico.descripcion as descripcion',
+                'login.email as email'
             )
             ->where('usuario_id', $usuario_id)->first();
 
@@ -738,7 +740,7 @@ class RecepcionEmpleadoController extends Controller
         return response()->json($result);
     }
 
-    public function addCandidatoServicio($id_candidato, $id_servicio)
+    public function addCandidatoServicio(Request $request, $id_candidato, $id_servicio)
     {
         $candidato = UsuariosCandidatosModel::find($id_candidato);
         if (isset($candidato)) {
@@ -748,11 +750,16 @@ class RecepcionEmpleadoController extends Controller
                 //guardar orden de servicio
                 $ordenServiciolienteController = new OrdenServiciolienteController;
                 $ordenServicioCandidato = $ordenServiciolienteController->candidatoRegistradoServicio($candidato->usuario_id, $id_servicio, true);
-
-                return response()->json(["status" => "success", "message" => "Candidato registrado exitosamente en el servicio"]);
+                $formularioGestionIngresoController = new formularioGestionIngresoController;
+                $radicadoSeiya = $formularioGestionIngresoController->formularioingresoservicioCandidatoUnico($request, $ordenServicioCandidato)->getData();
+                if ($radicadoSeiya->status == '200') {
+                    return response()->json(["status" => "success", "message" => "Candidato registrado exitosamente en el servicio"]);
+                } else {
+                    return response()->json(["status" => "error", "message" => "Problema al intentar regitrar usuario"]);
+                }
             } else {
-                $messageError = $validarCandidato['message'];
-                return response()->json(["status" => "error", "message" => $messageError]);
+                /*    $messageError = $validarCandidato->message; */
+                return response()->json(["status" => "error", "message" => "error"]);
             }
         }
     }

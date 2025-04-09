@@ -96,6 +96,7 @@ class OrdenServiciolienteController extends Controller
             ->where('usr_app_orden_servicio.id', '=', $id)
             ->select(
                 'usr_app_orden_servicio.id',
+                'usr_app_orden_servicio.cliente_id',
                 'usr_app_orden_servicio.numero_radicado as radicado',
                 'usr_app_orden_servicio.nit',
                 'usr_app_orden_servicio.razon_social',

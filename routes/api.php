@@ -1046,7 +1046,7 @@ Route::group([
   Route::get('/vacantesocupadas/{anio}', [IndicadoresSeyaController::class, 'vacantesocupadas']);
   Route::get('/ingresoempledosmes/{anio}', [IndicadoresSeyaController::class, 'ingresoempledosmes']);
 
-
+  Route::post('/ingresoserviciocandidato/{orden_servicio_candidato_id}', [formularioGestionIngresoController::class, 'formularioingresoservicioCandidatoUnico']);
   Route::post('/borrar_nc/{id}', [formularioGestionIngresoController::class, 'borrar_nc']);
   Route::get('/hora', [formularioGestionIngresoController::class, 'hora']);
 
