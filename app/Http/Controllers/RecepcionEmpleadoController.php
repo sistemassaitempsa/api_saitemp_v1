@@ -740,16 +740,17 @@ class RecepcionEmpleadoController extends Controller
         return response()->json($result);
     }
 
-    public function addCandidatoServicio(Request $request, $id_candidato, $id_servicio)
+    public function addCandidatoServicio(Request $request)
     {
-        $candidato = UsuariosCandidatosModel::find($id_candidato);
+
+        $candidato = UsuariosCandidatosModel::find($request->id_candidato);
         if (isset($candidato)) {
             $validarCandidato = $this->validacandidato($candidato->num_doc, 0, $candidato->tip_doc_id, true);
             $validarCandidato = $validarCandidato->getData(true);
             if ($validarCandidato['status'] == 'success') {
                 //guardar orden de servicio
                 $ordenServiciolienteController = new OrdenServiciolienteController;
-                $ordenServicioCandidato = $ordenServiciolienteController->candidatoRegistradoServicio($candidato->usuario_id, $id_servicio, true);
+                $ordenServicioCandidato = $ordenServiciolienteController->candidatoRegistradoServicio($candidato->usuario_id, $request->id_servicio, true);
                 $formularioGestionIngresoController = new formularioGestionIngresoController;
                 $radicadoSeiya = $formularioGestionIngresoController->formularioingresoservicioCandidatoUnico($request, $ordenServicioCandidato)->getData();
                 if ($radicadoSeiya->status == '200') {
@@ -759,7 +760,7 @@ class RecepcionEmpleadoController extends Controller
                 }
             } else {
                 /*    $messageError = $validarCandidato->message; */
-                return response()->json(["status" => "error", "message" => "error"]);
+                return response()->json(["status" => "error", "message" => "Problema de validacion del candidato"]);
             }
         }
     }

@@ -821,6 +821,7 @@ Route::group([
   Route::post('/ordenserviciocliente', [OrdenServiciolienteController::class, 'create']);
   Route::post('/ordenserviciocliente/{id}', [OrdenServiciolienteController::class, 'update']);
   Route::delete('/ordenserviciocliente/{id}', [OrdenServiciolienteController::class, 'destroy']);
+  Route::get('/ordenservicioclientebyprofesional', [OrdenServiciolienteController::class, 'getServiciosByProfesional']);
 
   // OrdenServicioServicioSolicitadoController
   Route::get('/ordenserviciosolicitado', [OrdenServicioServicioSolicitadoController::class, 'index']);
@@ -1031,7 +1032,7 @@ Route::group([
   Route::get('/buscardocumentolistacandidatos/{documento}', [RecepcionEmpleadoController::class, 'buscardocumentolistacandidato']);
   //ruta para generar el archivo zip de seiya
   Route::get('/descargarZip/{idRadicado}/{idCliente}', [GenerarZipController::class, 'descargarArchivosById']);
-  Route::post('/addcandidatoservicio/{id_candidato}/{id_servicio}', [RecepcionEmpleadoController::class, 'addCandidatoServicio']);
+  Route::post('/addcandidatoservicio', [RecepcionEmpleadoController::class, 'addCandidatoServicio']);
 
 
 
@@ -1144,6 +1145,7 @@ Route::group([
   Route::post('/asignacionServicio', [AsignacionServicioController::class, 'ordenservicio']);
   Route::get('/listaclienteservicio', [AsignacionServicioController::class, 'clienteservicio']);
   Route::get('/clienteresponsableservicio/{id}', [AsignacionServicioController::class, 'responsableservicio']);
+
 
 
   Route::get('/rolusuariointerno', [RolesUsuariosInternosController::class, 'index']);

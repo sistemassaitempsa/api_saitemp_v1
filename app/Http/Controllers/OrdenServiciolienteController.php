@@ -27,6 +27,37 @@ class OrdenServiciolienteController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
+    public function getServiciosByProfesional()
+    {
+        $user = $this->getUserRelaciones();
+        $data = $user->getData(true);
+        $tipo_usuario = $data['tipo_usuario_id'];
+        $nit = null;
+        $usuario_id = null;
+        if (isset($data['id'])) {
+            $usuario_id = $data['id'];
+        }
+        if (isset($data['nit'])) {
+            $nit = $data['nit'];
+        }
+
+        $permisos = $this->validaPermiso();
+
+        $result = OrdenServcio::join('usr_app_formulario_ingreso_tipo_servicio as ts', 'ts.id', '=', 'usr_app_orden_servicio.linea_servicio_id')
+            ->join('usr_app_motivos_servicio as ms', 'ms.id', '=', 'usr_app_orden_servicio.motivo_servicio_id')
+            ->join('usr_app_municipios as ciu', 'ciu.id', '=', 'usr_app_orden_servicio.ciudad_prestacion_servicio_id')
+            ->when($tipo_usuario == '1' && !in_array('43', $permisos), function ($query) use ($usuario_id) {
+                return $query->where('usr_app_orden_servicio.responsable_id', $usuario_id);
+            })->whereIn('usr_app_orden_servicio.linea_servicio_id', [3, 4])
+            ->select(
+                'usr_app_orden_servicio.id',
+                'usr_app_orden_servicio.numero_radicado',
+                'usr_app_orden_servicio.razon_social',
+            )
+            ->orderby('usr_app_orden_servicio.id', 'DESC')
+            ->get();
+        return response()->json($result);
+    }
     public function index($cantidad)
     {
         $user = $this->getUserRelaciones();
