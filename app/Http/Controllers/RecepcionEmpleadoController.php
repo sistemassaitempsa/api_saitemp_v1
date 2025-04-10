@@ -745,7 +745,7 @@ class RecepcionEmpleadoController extends Controller
 
         $candidato = UsuariosCandidatosModel::find($request->id_candidato);
         if (isset($candidato)) {
-            $validarCandidato = $this->validacandidato($candidato->num_doc, 0, $candidato->tip_doc_id, true);
+            $validarCandidato = $this->validacandidato($candidato->num_doc, 0, $candidato->tip_doc_id, false);
             $validarCandidato = $validarCandidato->getData(true);
             if ($validarCandidato['status'] == 'success') {
                 //guardar orden de servicio
@@ -760,7 +760,7 @@ class RecepcionEmpleadoController extends Controller
                 }
             } else {
                 /*    $messageError = $validarCandidato->message; */
-                return response()->json(["status" => "error", "message" => "Problema de validacion del candidato"]);
+                return $validarCandidato;
             }
         }
     }
