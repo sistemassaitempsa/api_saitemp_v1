@@ -658,14 +658,15 @@ Route::group([
 
   // lista examenes
   Route::get('/listaexamenes/{id}', [ListaExamenController::class, 'index']);
+  Route::get('/listaexamenes', [ListaExamenController::class, 'index2']);
   Route::post('/listaexamenes', [ListaExamenController::class, 'create']);
   Route::post('/listaexamenes/{id}', [ListaExamenController::class, 'update']);
   Route::delete('/listaexamenes/{id}', [ListaExamenController::class, 'destroy']);
 
   // Cargos cliente
-  Route::get('/cargoscliente', [CargoClienteController::class, 'index']);
-  Route::post('/cargoscliente', [CargoClienteController::class, 'create']);
-  Route::post('/cargoscliente/{id}', [CargoClienteController::class, 'update']);
+  Route::get('/cargoscliente/{id}', [CargoClienteController::class, 'index']);
+  Route::post('/cargoscliente/{id}', [CargoClienteController::class, 'create']);
+  Route::put('/cargoscliente/{id}', [CargoClienteController::class, 'update']);
   Route::delete('/cargoscliente/{id}', [CargoClienteController::class, 'destroy']);
 
   // Tipos de operaciones internacionales

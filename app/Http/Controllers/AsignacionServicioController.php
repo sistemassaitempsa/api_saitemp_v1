@@ -153,9 +153,12 @@ class AsignacionServicioController extends Controller
 
     public function clienteservicio()
     {
-        $result = cliente::select(
-            'id',
-            'razon_social'
+        $result = cliente::join('usr_app_actividades_ciiu as acu','acu.id','usr_app_clientes.actividad_ciiu_id')
+        // ->join('usr_app_codigos_ciiu as ccu','ccu.id','usr_app_actividades_ciiu.codigo_ciiu_id')
+        ->select(
+            'usr_app_clientes.id',
+            'usr_app_clientes.razon_social',
+            'acu.codigo_ciiu_id'
         )
             ->get();
         return response()->json($result);
