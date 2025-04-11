@@ -156,7 +156,8 @@ class OrdenServiciolienteController extends Controller
                 'usr_app_orden_servicio.nombre_contacto',
                 'usr_app_orden_servicio.telefono_contacto',
                 'usr_app_orden_servicio.cargo_contacto',
-                'usr_app_orden_servicio.responsable'
+                'usr_app_orden_servicio.responsable',
+                'usr_app_orden_servicio.numero_radicado'
             )->first();
         $candidatos = CandidatoServicioModel::join('usr_app_usuarios as us', 'us.id', 'usr_app_candadato_servicio.usuario_id')
             ->join('usr_app_candidatos_c as can', 'can.usuario_id', 'usr_app_candadato_servicio.usuario_id')

@@ -19,6 +19,7 @@ use App\Models\formularioGestionIngreso;
 use App\Models\User;
 use Illuminate\Support\Str;
 use App\Models\CandidatosRequisitosModel;
+use App\Models\HistoricoConceptosCandidatosModel;
 
 class RecepcionEmpleadoController extends Controller
 {
@@ -502,13 +503,20 @@ class RecepcionEmpleadoController extends Controller
             )
             ->where('usuario_id', $usuario_id)->get();
 
+        $historico_conceptos_servicios = HistoricoConceptosCandidatosModel::join('usr_app_formulario_ingreso as formulario_ingreso', 'formulario_ingreso.id', 'usr_app_historico_concepto_candidatos.id')
+            ->select(
+                'usr_app_historico_concepto_candidatos.*',
+                'formulario_ingreso.id as formulario_ingreso_id',
+                'formulario_ingreso.cargo as cargo',
+                'formulario_ingreso.cliente_id as cliente.id',
+            )->where('usr_app_historico_concepto_candidatos.candidato_id', '=', $user_candidato->id)->get();
         $idiomas = IdiomasCandidatosModel::join('usr_app_idiomas_c as idioma', 'idioma.id', 'usr_app_candidatos_idiomas_c.idioma_id')
             ->select(
                 'usr_app_candidatos_idiomas_c.*',
                 'idioma.nombre as nombre',
             )
             ->where('usuario_id', $usuario_id)->get();
-
+        $user_candidato['historico_conceptos_servicios'] = $historico_conceptos_servicios;
         $user_candidato['experiencias_laborales'] = $experiencias_laborales;
         $user_candidato['idiomas'] = $idiomas;
         $user_candidato['cumple_requisitos'] = $cumple_requisitos;

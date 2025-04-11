@@ -2741,7 +2741,7 @@ class formularioGestionIngresoController extends Controller
             $result->salario = $ordenServicio->salario;
             $result->municipio_id = $ordenServicio->ciudad_prestacion_servicio_id;
             $result->estado_ingreso_id = $request->estado_id;
-            $result->responsable = $user->nombres . ' ' . $user->apellidos;
+            $result->responsable = $request->nombre_responsable;
             $result->tipo_servicio_id = $ordenServicio->linea_servicio_id;
             $result->informe_seleccion = $candidato->concepto;
             $result->profesional = $ordenServicio->responsable;
@@ -2749,6 +2749,8 @@ class formularioGestionIngresoController extends Controller
             $result->responsable_id = $request->responsable_id;
             $result->nombre_completo = $nombre_completo;
             $result->numero_identificacion = $candidato->num_doc;
+            $result->candidato_id = $candidato->usuario_id;
+            $result->n_servicio = $ordenServicio->numero_radicado;
             $result->save();
 
 
@@ -2770,7 +2772,6 @@ class formularioGestionIngresoController extends Controller
             DB::commit();
         } catch (\Exception $e) {
             DB::rollback();
-            return $e;
             return response()->json(['status' => 'error', 'message' => 'Error al guardar formulario, por favor intente nuevamente']);
         }
 
