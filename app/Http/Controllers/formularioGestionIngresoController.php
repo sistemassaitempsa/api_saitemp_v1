@@ -17,6 +17,7 @@ use App\Models\CandidatoServicioModel;
 use App\Models\OrdenServcio;
 use Carbon\Carbon;
 use App\Events\NotificacionSeiya;
+use App\Models\HistoricoConceptosCandidatosModel;
 use App\Models\UsuariosCandidatosModel;
 use TCPDF;
 use Illuminate\Support\Facades\DB;
@@ -2378,6 +2379,25 @@ class formularioGestionIngresoController extends Controller
             $result->contacto_empresa = $request->contacto_empresa;
             $result->responsable_id = $request->encargado_id;
 
+            if ($result->historico_concepto_candidatos_id) {
+                $candidato = UsuariosCandidatosModel::find($request->numero_identificacion);
+                $historico_concepto = HistoricoConceptosCandidatosModel::find($request->historico_concepto_candidatos_id);
+                if ($candidato && $historico_concepto) {
+                    $historico_concepto->formulario_ingreso_id = $result->id;
+                    $historico_concepto->concepto = $request->informe_seleccion;
+                    $historico_concepto->candidato_id = $candidato->id;
+                    $historico_concepto->tipo = 1;
+                    $historico_concepto->save();
+                }
+            } else {
+                $candidato = UsuariosCandidatosModel::find($request->numero_identificacion);
+                $historico_concepto = new HistoricoConceptosCandidatosModel;
+                $historico_concepto->formulario_ingreso_id = $result->id;
+                $historico_concepto->concepto = $request->informe_seleccion;
+                $historico_concepto->candidato_id = $candidato->id;
+                $historico_concepto->tipo = 1;
+                $historico_concepto->save();
+            }
             if ($result->observacion_estado == 'Servicio no conforme') {
                 $result->afectacion_servicio = $request->afectacion_servicio;
             } else {
@@ -2752,6 +2772,8 @@ class formularioGestionIngresoController extends Controller
             $result->candidato_id = $candidato->usuario_id;
             $result->n_servicio = $ordenServicio->numero_radicado;
             $result->save();
+
+
 
 
             $seguimiento = new FormularioIngresoSeguimiento;

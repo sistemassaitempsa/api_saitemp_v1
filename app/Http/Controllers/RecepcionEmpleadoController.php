@@ -317,9 +317,6 @@ class RecepcionEmpleadoController extends Controller
             $fechaNacimientoFormated = Carbon::parse($request->fec_nac)->format('d-m-Y H:i:s');
             $fechaExpedicionFormated = Carbon::parse($request->fec_expdoc)->format('d-m-Y H:i:s');
             $user = UsuariosCandidatosModel::where('usuario_id', $usuario_id)->first();
-            $user->manipulacion_alimentos = $request->manipulacion_alimentos;
-            $user->curso_alturas = $request->curso_alturas;
-            $user->curso_confinados = $request->curso_confinados;
             $user->primer_nombre = $request->nom1_emp;
             $user->primer_apellido = $request->ap1_emp;
             $user->segundo_nombre = $request->nom2_emp ?? '';
@@ -363,8 +360,8 @@ class RecepcionEmpleadoController extends Controller
             $user->nivel_academico_id = $request->Niv_aca;
             $user->genero_id = $request->sex_emp;
             $user->grupo_etnico_id = $request->cod_grupo;
-            $user->concepto = $request->concepto;
-            $user->otro_transporte = $request->otro_transporte;
+            $request->otro_transporte ? $user->otro_transporte = $request->otro_transporte : null;
+
 
             $user->save();
             if (count($request->requisitos_asignados) > 0) {

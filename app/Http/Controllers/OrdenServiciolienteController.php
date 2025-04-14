@@ -46,7 +46,7 @@ class OrdenServiciolienteController extends Controller
         $result = OrdenServcio::join('usr_app_formulario_ingreso_tipo_servicio as ts', 'ts.id', '=', 'usr_app_orden_servicio.linea_servicio_id')
             ->join('usr_app_motivos_servicio as ms', 'ms.id', '=', 'usr_app_orden_servicio.motivo_servicio_id')
             ->join('usr_app_municipios as ciu', 'ciu.id', '=', 'usr_app_orden_servicio.ciudad_prestacion_servicio_id')
-            ->when($tipo_usuario == '1' && !in_array('43', $permisos), function ($query) use ($usuario_id) {
+            ->when($tipo_usuario == '1' && !in_array('44', $permisos), function ($query) use ($usuario_id) {
                 return $query->where('usr_app_orden_servicio.responsable_id', $usuario_id);
             })->whereIn('usr_app_orden_servicio.linea_servicio_id', [3, 4])
             ->select(
@@ -80,7 +80,7 @@ class OrdenServiciolienteController extends Controller
             ->when($tipo_usuario == '2' && $nit != null, function ($query) use ($nit) {
                 return $query->where('usr_app_orden_servicio.nit', $nit);
             })
-            ->when($tipo_usuario == '1' && !in_array('43', $permisos), function ($query) use ($usuario_id) {
+            ->when($tipo_usuario == '1' && !in_array('44', $permisos), function ($query) use ($usuario_id) {
                 return $query->where('usr_app_orden_servicio.responsable_id', $usuario_id);
             })
             ->select(
