@@ -182,6 +182,7 @@ use App\Http\Controllers\UsuarioDisponibleServicioController;
 use App\Http\Controllers\AsignacionServicioController;
 use App\Http\Controllers\RolesUsuariosInternosController;
 use App\Http\Controllers\CumpleRequisitosController;
+use App\Http\Controllers\CargosCandidatoController;
 
 /*
 |--------------------------------------------------------------------------
@@ -292,6 +293,9 @@ Route::group([
   //sectores economicos candidatos
   Route::get('/sectoreconomicocandidato', [SectorEconomicoCandidatosController::class, 'index']);
   Route::post('/sectoreconomicocandidato', [SectorEconomicoCandidatosController::class, 'create']);
+
+  //cargos candidato
+  Route::get('/cargosCandidato', [CargosCandidatoController::class, 'index']);
 
   // Opciones de menú
   Route::get('/menuslista', [MenuController::class, 'index']);

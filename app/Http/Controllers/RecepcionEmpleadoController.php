@@ -20,10 +20,11 @@ use App\Models\User;
 use Illuminate\Support\Str;
 use App\Models\CandidatosRequisitosModel;
 use App\Models\HistoricoConceptosCandidatosModel;
+use App\Traits\AutenticacionGuard;
 
 class RecepcionEmpleadoController extends Controller
 {
-
+    use AutenticacionGuard;
     public function index()
     {
         $novasoft = RecepcionEmpleado::where('cod_emp', "11")->first();
@@ -303,6 +304,10 @@ class RecepcionEmpleadoController extends Controller
     public function createSeiya(Request $request, $usuario_id)
     {
         try {
+
+            $user = $this->getUserRelaciones();
+            $data = $user->getData(true);
+
             DB::beginTransaction();
 
             $ciu_exp_formated = trim($request->ciu_exp, '0');
@@ -362,8 +367,17 @@ class RecepcionEmpleadoController extends Controller
             $user->grupo_etnico_id = $request->cod_grupo;
             $request->otro_transporte ? $user->otro_transporte = $request->otro_transporte : null;
 
-
             $user->save();
+            if ($request->concepto != "") {
+                $historico_conceptos_servicios_generales = new HistoricoConceptosCandidatosModel;
+                $historico_conceptos_servicios_generales->formulario_ingreso_id = null;
+                $historico_conceptos_servicios_generales->concepto = $request->concepto;
+                $historico_conceptos_servicios_generales->candidato_id = $user->id;
+                $historico_conceptos_servicios_generales->tipo = 0;
+                $historico_conceptos_servicios_generales->usuario_guarda = $data['nombres'] . $data['apellidos'];
+                $historico_conceptos_servicios_generales->usuario_guarda_id = $data['id'];
+                $historico_conceptos_servicios_generales->save();
+            }
             if (count($request->requisitos_asignados) > 0) {
                 foreach ($request->requisitos_asignados as $item) {
                     if (!isset($item['id'])) {
@@ -500,19 +514,45 @@ class RecepcionEmpleadoController extends Controller
             )
             ->where('usuario_id', $usuario_id)->get();
 
-        $historico_conceptos_servicios = HistoricoConceptosCandidatosModel::join('usr_app_formulario_ingreso as formulario_ingreso', 'formulario_ingreso.id', 'usr_app_historico_concepto_candidatos.id')
+        $historico_conceptos_servicios = HistoricoConceptosCandidatosModel::join(
+            'usr_app_formulario_ingreso as formulario_ingreso',
+            'formulario_ingreso.id',
+            '=',
+            'usr_app_historico_concepto_candidatos.formulario_ingreso_id'
+        )
+            ->join(
+                'usr_app_clientes as cliente',
+                'formulario_ingreso.cliente_id',
+                '=',
+                'cliente.id'
+            )
             ->select(
                 'usr_app_historico_concepto_candidatos.*',
                 'formulario_ingreso.id as formulario_ingreso_id',
-                'formulario_ingreso.cargo as cargo',
-                'formulario_ingreso.cliente_id as cliente.id',
-            )->where('usr_app_historico_concepto_candidatos.candidato_id', '=', $user_candidato->id)->get();
+                'formulario_ingreso.cargo',
+                'cliente.razon_social',
+                'formulario_ingreso.numero_radicado'
+            )
+            ->where('usr_app_historico_concepto_candidatos.candidato_id', $user_candidato->id)
+            ->where('usr_app_historico_concepto_candidatos.tipo', 1)
+            ->get();
+
+        $historico_conceptos_servicios_generales = HistoricoConceptosCandidatosModel::select(
+            'usr_app_historico_concepto_candidatos.*',
+
+        )
+            ->where('usr_app_historico_concepto_candidatos.candidato_id', $user_candidato->id)
+            ->where('usr_app_historico_concepto_candidatos.tipo', 0)
+            ->get();
+
+
         $idiomas = IdiomasCandidatosModel::join('usr_app_idiomas_c as idioma', 'idioma.id', 'usr_app_candidatos_idiomas_c.idioma_id')
             ->select(
                 'usr_app_candidatos_idiomas_c.*',
                 'idioma.nombre as nombre',
             )
             ->where('usuario_id', $usuario_id)->get();
+        $user_candidato['historico_conceptos_servicios_generales'] = $historico_conceptos_servicios_generales;
         $user_candidato['historico_conceptos_servicios'] = $historico_conceptos_servicios;
         $user_candidato['experiencias_laborales'] = $experiencias_laborales;
         $user_candidato['idiomas'] = $idiomas;
@@ -761,7 +801,7 @@ class RecepcionEmpleadoController extends Controller
                 if ($radicadoSeiya->status == '200') {
                     return response()->json(["status" => "success", "message" => "Candidato registrado exitosamente en el servicio"]);
                 } else {
-                    return response()->json(["status" => "error", "message" => "Problema al intentar regitrar usuario"]);
+                    return response()->json(["status" => "error", "message" => "Problema al intentar registrar usuario"]);
                 }
             } else {
                 /*    $messageError = $validarCandidato->message; */
