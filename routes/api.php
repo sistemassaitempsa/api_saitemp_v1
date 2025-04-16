@@ -296,6 +296,7 @@ Route::group([
 
   //cargos candidato
   Route::get('/cargosCandidato', [CargosCandidatoController::class, 'index']);
+  Route::post('/cargos-candidatos/importar', [CargosCandidatoController::class, 'store']);
 
   // Opciones de menú
   Route::get('/menuslista', [MenuController::class, 'index']);
