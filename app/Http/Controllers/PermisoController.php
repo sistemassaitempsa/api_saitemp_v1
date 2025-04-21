@@ -42,7 +42,7 @@ class PermisoController extends Controller
 
             return response()->json($result);
         }else{
-            return [];
+            return [['alias' => 'P3']];
         }
     }
     public function permisoslista()

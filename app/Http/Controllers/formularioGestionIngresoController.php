@@ -19,12 +19,14 @@ use Carbon\Carbon;
 use App\Events\NotificacionSeiya;
 use TCPDF;
 use Illuminate\Support\Facades\DB;
+use App\Traits\Permisos;
 
 // use App\Events\EventoPrueba2;
 
 
 class formularioGestionIngresoController extends Controller
 {
+    use Permisos;
     /**
      * Display a listing of the resource.
      *
@@ -32,10 +34,9 @@ class formularioGestionIngresoController extends Controller
      */
     public function index($cantidad)
     {
-        $permisos = $this->validaPermiso();
+        $permisos = $this->permisos();
         $user = auth()->user();
 
-        $permisos = $this->validaPermiso();
         $result = formularioGestionIngreso::leftJoin('usr_app_clientes as cli', 'cli.id', 'usr_app_formulario_ingreso.cliente_id')
             ->leftJoin('usr_app_municipios as mun', 'mun.id', 'usr_app_formulario_ingreso.municipio_id')
             ->LeftJoin('usr_app_estados_ingreso as est', 'est.id', 'usr_app_formulario_ingreso.estado_ingreso_id')
@@ -147,7 +148,7 @@ class formularioGestionIngresoController extends Controller
         $registro_ingreso = formularioGestionIngreso::where('usr_app_formulario_ingreso.id', '=', $item_id)
             ->first();
 
-        $permisos = $this->validaPermiso();
+        $permisos = $this->permisos();
 
         if ($registro_ingreso->responsable_id != null && $registro_ingreso->responsable_id != $user->id && !in_array('31', $permisos)) {
             return response()->json(['status' => 'error', 'message' => 'Solo el responsable puede realizar esta acción.']);
@@ -229,7 +230,7 @@ class formularioGestionIngresoController extends Controller
             $registro_ingreso = formularioGestionIngreso::where('usr_app_formulario_ingreso.id', '=', $item_id)
                 ->first();
 
-            $permisos = $this->validaPermiso();
+            $permisos = $this->permisos();
 
 
             if ($registro_ingreso->responsable_id != null && $registro_ingreso->responsable_id != $user->id && !in_array('31', $permisos)) {
@@ -1496,7 +1497,7 @@ class formularioGestionIngresoController extends Controller
 
     public function filtroFechaIngreso(Request $request, $cantidad = null)
     {
-        $permisos = $this->validaPermiso();
+        $permisos = $this->permisos();
         $user = auth()->user();
         $result = formularioGestionIngreso::leftJoin('usr_app_clientes as cli', 'cli.id', 'usr_app_formulario_ingreso.cliente_id')
             ->leftJoin('usr_app_municipios as mun', 'mun.id', 'usr_app_formulario_ingreso.municipio_id')
@@ -1563,7 +1564,7 @@ class formularioGestionIngresoController extends Controller
 
     public function filtro($cadena, $cantidad = null)
     {
-        $permisos = $this->validaPermiso();
+        $permisos = $this->permisos();
         if ($cantidad == null) {
             $cantidad = 15;
         }
@@ -1577,7 +1578,7 @@ class formularioGestionIngresoController extends Controller
         $operador = $arraysDecodificados[1];
         $valor_comparar = $arraysDecodificados[2];
         $valor_comparar2 = $arraysDecodificados[3];
-        $permisos = $this->validaPermiso();
+        $permisos = $this->permisos();
         $query = FormularioGestionIngreso::leftJoin('usr_app_clientes as cli', 'cli.id', 'usr_app_formulario_ingreso.cliente_id')
             ->leftJoin('usr_app_municipios as mun', 'mun.id', 'usr_app_formulario_ingreso.municipio_id')
             ->LeftJoin('usr_app_estados_ingreso as est', 'est.id', 'usr_app_formulario_ingreso.estado_ingreso_id')
@@ -2257,7 +2258,7 @@ class formularioGestionIngresoController extends Controller
                     }
                 }
 
-                $permisos = $this->validaPermiso();
+                $permisos = $this->permisos();
                 $result = formularioGestionIngreso::where('id', '=', $ingreso_id)->first();
 
                 if (in_array($result->estado_ingreso_id, [11, 12, 17]) && in_array('33', $permisos)) {
@@ -2329,9 +2330,9 @@ class formularioGestionIngresoController extends Controller
             $responsable_inicial = str_replace("null", "", $result->responsable);
             $estado_inicial = $result->estado_ingreso_id;
 
-            $permisos = $this->validaPermiso();
+            $permisos = $this->permisos();
 
-            if ($result->responsable_id != null && $result->responsable_id != $user->id && !in_array('31', $permisos)) {
+            if ($result->responsable_id != null && $result->responsable_id != $user->id && !in_array('44', $permisos)) {
 
                 $seguimiento = new FormularioIngresoSeguimiento;
                 $seguimiento->estado_ingreso_id = $request->estado_id;
@@ -2465,7 +2466,7 @@ class formularioGestionIngresoController extends Controller
     }
     public function hora()
     {
-        $permisos = $this->validaPermiso();
+        $permisos = $this->permisos();
 
         $hora_actual = date("H:i:s");
         $hora_limite = strtotime('15:00:00');
@@ -2535,7 +2536,7 @@ class formularioGestionIngresoController extends Controller
     {
         $array = $request->all();
         $user = auth()->user();
-        $permisos = $this->validaPermiso();
+        $permisos = $this->permisos();
         $responsable = User::find($id_encargado);
         $cantidad = count($array);
         $bandera = true;

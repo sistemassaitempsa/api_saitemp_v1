@@ -116,7 +116,7 @@ class AsignacionServicioController extends Controller
     {
         $tipo_usuario = '';
         if ($id == 2) {
-            $tipo_usuario = 9;
+            $tipo_usuario = 5;
         } else if ($id == 3 || $id == 4) {
             $tipo_usuario = 4;
         }

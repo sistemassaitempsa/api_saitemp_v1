@@ -14,13 +14,14 @@ use App\Models\User;
 use App\Models\UsuariosCandidatosModel;
 use Illuminate\Support\Facades\DB;
 use App\Traits\AutenticacionGuard;
-use Maatwebsite\Excel\Facades\Excel;
 use  Illuminate\Support\Facades\Crypt;
+use App\Traits\Permisos;
 
 
 class OrdenServiciolienteController extends Controller
 {
 
+    use Permisos;
     use AutenticacionGuard;
     /**
      * Display a listing of the resource.
@@ -41,7 +42,7 @@ class OrdenServiciolienteController extends Controller
             $nit = $data['nit'];
         }
 
-        $permisos = $this->validaPermiso();
+        $permisos = $this->permisos();
 
         $result = OrdenServcio::join('usr_app_formulario_ingreso_tipo_servicio as ts', 'ts.id', '=', 'usr_app_orden_servicio.linea_servicio_id')
             ->join('usr_app_motivos_servicio as ms', 'ms.id', '=', 'usr_app_orden_servicio.motivo_servicio_id')
@@ -49,7 +50,7 @@ class OrdenServiciolienteController extends Controller
             ->when($tipo_usuario == '2' && $nit != null, function ($query) use ($nit) {
                 return $query->where('usr_app_orden_servicio.nit', $nit);
             })
-            ->when($tipo_usuario == '1' && !in_array('43', $permisos), function ($query) use ($usuario_id) {
+            ->when($tipo_usuario == '1' && !in_array('46', $permisos), function ($query) use ($usuario_id) {
                 return $query->where('usr_app_orden_servicio.responsable_id', $usuario_id);
             })
             ->select(
@@ -68,20 +69,6 @@ class OrdenServiciolienteController extends Controller
             ->orderby('usr_app_orden_servicio.id', 'DESC')
             ->paginate($cantidad);
         return response()->json($result);
-    }
-
-
-    public function validaPermiso()
-    {
-        $user = auth()->user();
-        $responsable = UsuarioPermiso::where('usr_app_permisos_usuarios.usuario_id', '=', $user->id)
-            ->select(
-                'permiso_id'
-            )
-            ->get();
-        $array = $responsable->toArray();
-        $permisos = array_column($array, 'permiso_id');
-        return $permisos;
     }
 
 
