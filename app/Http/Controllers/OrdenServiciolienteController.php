@@ -28,6 +28,37 @@ class OrdenServiciolienteController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
+    public function getServiciosByProfesional()
+    {
+        $user = $this->getUserRelaciones();
+        $data = $user->getData(true);
+        $tipo_usuario = $data['tipo_usuario_id'];
+        $nit = null;
+        $usuario_id = null;
+        if (isset($data['id'])) {
+            $usuario_id = $data['id'];
+        }
+        if (isset($data['nit'])) {
+            $nit = $data['nit'];
+        }
+
+        $permisos = $this->validaPermiso();
+
+        $result = OrdenServcio::join('usr_app_formulario_ingreso_tipo_servicio as ts', 'ts.id', '=', 'usr_app_orden_servicio.linea_servicio_id')
+            ->join('usr_app_motivos_servicio as ms', 'ms.id', '=', 'usr_app_orden_servicio.motivo_servicio_id')
+            ->join('usr_app_municipios as ciu', 'ciu.id', '=', 'usr_app_orden_servicio.ciudad_prestacion_servicio_id')
+            ->when($tipo_usuario == '1' && !in_array('44', $permisos), function ($query) use ($usuario_id) {
+                return $query->where('usr_app_orden_servicio.responsable_id', $usuario_id);
+            })->whereIn('usr_app_orden_servicio.linea_servicio_id', [3, 4])
+            ->select(
+                'usr_app_orden_servicio.id',
+                'usr_app_orden_servicio.numero_radicado',
+                'usr_app_orden_servicio.razon_social',
+            )
+            ->orderby('usr_app_orden_servicio.id', 'DESC')
+            ->get();
+        return response()->json($result);
+    }
     public function index($cantidad)
     {
         $user = $this->getUserRelaciones();
@@ -84,6 +115,7 @@ class OrdenServiciolienteController extends Controller
             ->where('usr_app_orden_servicio.id', '=', $id)
             ->select(
                 'usr_app_orden_servicio.id',
+                'usr_app_orden_servicio.cliente_id',
                 'usr_app_orden_servicio.numero_radicado as radicado',
                 'usr_app_orden_servicio.nit',
                 'usr_app_orden_servicio.razon_social',
@@ -112,6 +144,8 @@ class OrdenServiciolienteController extends Controller
                 'usr_app_orden_servicio.nombre_contacto',
                 'usr_app_orden_servicio.telefono_contacto',
                 'usr_app_orden_servicio.cargo_contacto',
+                'usr_app_orden_servicio.responsable',
+                'usr_app_orden_servicio.numero_radicado'
                 'est.id as estado_servicio_id',
                 'est.nombre as estado_servicio',
                 'usr_app_orden_servicio.estado_servicio_id',
@@ -284,7 +318,7 @@ class OrdenServiciolienteController extends Controller
             DB::rollBack();
         }
     }
-    public function candidatoRegistradoServicio(string $candidato_id, string $ordenServicio_id, int $estado_id)
+    public function candidatoRegistradoServicio(string $candidato_id, string $ordenServicio_id, int $estado_id, $retorna_respuesta = false)
     {
 
         $candidato_servicio = CandidatoServicioModel::where('servicio_id', $ordenServicio_id)->where('usuario_id', $candidato_id)->first();
@@ -313,6 +347,7 @@ class OrdenServiciolienteController extends Controller
             }
         } catch (\Exception $e) {
             DB::rollBack();
+            return $e;
         }
     }
 

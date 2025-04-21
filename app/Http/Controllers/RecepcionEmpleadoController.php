@@ -19,10 +19,13 @@ use App\Models\formularioGestionIngreso;
 use App\Models\User;
 use App\Models\CandidatoServicioModel;
 use Illuminate\Support\Str;
+use App\Models\CandidatosRequisitosModel;
+use App\Models\HistoricoConceptosCandidatosModel;
+use App\Traits\AutenticacionGuard;
 
 class RecepcionEmpleadoController extends Controller
 {
-
+    use AutenticacionGuard;
     public function index()
     {
         $novasoft = RecepcionEmpleado::where('cod_emp', "11")->first();
@@ -302,6 +305,10 @@ class RecepcionEmpleadoController extends Controller
     public function createSeiya(Request $request, $usuario_id)
     {
         try {
+
+            $user = $this->getUserRelaciones();
+            $data = $user->getData(true);
+
             DB::beginTransaction();
 
             $ciu_exp_formated = trim($request->ciu_exp, '0');
@@ -359,11 +366,29 @@ class RecepcionEmpleadoController extends Controller
             $user->nivel_academico_id = $request->Niv_aca;
             $user->genero_id = $request->sex_emp;
             $user->grupo_etnico_id = $request->cod_grupo;
-            $user->concepto = $request->concepto;
-            $user->otro_transporte = $request->otro_transporte;
+            $request->otro_transporte ? $user->otro_transporte = $request->otro_transporte : null;
 
             $user->save();
-
+            if ($request->concepto != "") {
+                $historico_conceptos_servicios_generales = new HistoricoConceptosCandidatosModel;
+                $historico_conceptos_servicios_generales->formulario_ingreso_id = null;
+                $historico_conceptos_servicios_generales->concepto = $request->concepto;
+                $historico_conceptos_servicios_generales->candidato_id = $user->id;
+                $historico_conceptos_servicios_generales->tipo = 0;
+                $historico_conceptos_servicios_generales->usuario_guarda = $data['nombres'] . $data['apellidos'];
+                $historico_conceptos_servicios_generales->usuario_guarda_id = $data['id'];
+                $historico_conceptos_servicios_generales->save();
+            }
+            if (count($request->requisitos_asignados) > 0) {
+                foreach ($request->requisitos_asignados as $item) {
+                    if (!isset($item['id'])) {
+                        $requisito = new CandidatosRequisitosModel;
+                        $requisito->candidato_id = $user->id;
+                        $requisito->requisito_id = $item['requisito_id'];
+                        $requisito->save();
+                    }
+                }
+            }
             if (count($request->experiencias_laborales) > 0) {
                 foreach ($request->experiencias_laborales as $item) {
                     if (isset($item['id'])) {
@@ -447,7 +472,6 @@ class RecepcionEmpleadoController extends Controller
 
     public function searchByIdOnUsuariosCandidato($usuario_id)
     {
-        $user = auth()->user();
         $user_candidato = UsuariosCandidatosModel::leftjoin('usr_app_eps_c as eps', 'eps.id', 'usr_app_candidatos_c.eps_id')
             ->leftjoin('usr_app_afp as afp', 'afp.id', 'usr_app_candidatos_c.afp_id')
             ->leftjoin('usr_app_sector_academico_c as sector_academico', 'sector_academico.id', 'usr_app_candidatos_c.sector_academico_id')
@@ -459,6 +483,7 @@ class RecepcionEmpleadoController extends Controller
             ->leftjoin('rhh_tbclaest as nivel_academico', 'nivel_academico.tip_est', 'usr_app_candidatos_c.nivel_academico_id')
             ->leftjoin('usr_app_genero as genero', 'genero.id', 'usr_app_candidatos_c.genero_id')
             ->leftjoin('gen_grupoetnico as grupo_etnico', 'grupo_etnico.cod_grupo', 'usr_app_candidatos_c.grupo_etnico_id')
+            ->leftjoin('usr_app_usuarios as login', 'login.id', 'usr_app_candidatos_c.usuario_id')
             ->select(
                 'usr_app_candidatos_c.*',
                 'eps.nombre as eps_nombre',
@@ -468,7 +493,8 @@ class RecepcionEmpleadoController extends Controller
                 'banco.nom_ban as nom_ban',
                 'nivel_academico.des_est as des_est',
                 'genero.nombre as genero_nombre',
-                'grupo_etnico.descripcion as descripcion'
+                'grupo_etnico.descripcion as descripcion',
+                'login.email as email'
             )
             ->where('usuario_id', $usuario_id)->first();
 
@@ -477,7 +503,11 @@ class RecepcionEmpleadoController extends Controller
             $user_candidato->eps_nombre = Str::ucfirst(Str::lower($user_candidato->eps_nombre));
             $user_candidato->nom_ban = Str::ucfirst(Str::lower($user_candidato->nom_ban));
         }
-
+        $cumple_requisitos = CandidatosRequisitosModel::join('usr_app_requisitos as requisitos', 'requisitos.id', 'usr_app_cumple_requisitos_candidatos.requisito_id')
+            ->select(
+                'usr_app_cumple_requisitos_candidatos.*',
+                'requisitos.nombre'
+            )->where('candidato_id', $user_candidato->id)->get();
         $experiencias_laborales = ExperienciasLaboralesCandidatosModel::join('usr_app_sector_econimico_c as sector_economico', 'sector_economico.id', 'usr_app_experiencias_laborales_c.sector_econimico_id')
             ->select(
                 'usr_app_experiencias_laborales_c.*',
@@ -485,15 +515,49 @@ class RecepcionEmpleadoController extends Controller
             )
             ->where('usuario_id', $usuario_id)->get();
 
+        $historico_conceptos_servicios = HistoricoConceptosCandidatosModel::join(
+            'usr_app_formulario_ingreso as formulario_ingreso',
+            'formulario_ingreso.id',
+            '=',
+            'usr_app_historico_concepto_candidatos.formulario_ingreso_id'
+        )
+            ->join(
+                'usr_app_clientes as cliente',
+                'formulario_ingreso.cliente_id',
+                '=',
+                'cliente.id'
+            )
+            ->select(
+                'usr_app_historico_concepto_candidatos.*',
+                'formulario_ingreso.id as formulario_ingreso_id',
+                'formulario_ingreso.cargo',
+                'cliente.razon_social',
+                'formulario_ingreso.numero_radicado'
+            )
+            ->where('usr_app_historico_concepto_candidatos.candidato_id', $user_candidato->id)
+            ->where('usr_app_historico_concepto_candidatos.tipo', 1)
+            ->get();
+
+        $historico_conceptos_servicios_generales = HistoricoConceptosCandidatosModel::select(
+            'usr_app_historico_concepto_candidatos.*',
+
+        )
+            ->where('usr_app_historico_concepto_candidatos.candidato_id', $user_candidato->id)
+            ->where('usr_app_historico_concepto_candidatos.tipo', 0)
+            ->get();
+
+
         $idiomas = IdiomasCandidatosModel::join('usr_app_idiomas_c as idioma', 'idioma.id', 'usr_app_candidatos_idiomas_c.idioma_id')
             ->select(
                 'usr_app_candidatos_idiomas_c.*',
                 'idioma.nombre as nombre',
             )
             ->where('usuario_id', $usuario_id)->get();
-
+        $user_candidato['historico_conceptos_servicios_generales'] = $historico_conceptos_servicios_generales;
+        $user_candidato['historico_conceptos_servicios'] = $historico_conceptos_servicios;
         $user_candidato['experiencias_laborales'] = $experiencias_laborales;
         $user_candidato['idiomas'] = $idiomas;
+        $user_candidato['cumple_requisitos'] = $cumple_requisitos;
         $novasoft = $this->searchByCodEmp($user_candidato->num_doc, true);
         $user_candidato["novasoft"] = $novasoft;
         return response()->json($user_candidato);
@@ -517,7 +581,7 @@ class RecepcionEmpleadoController extends Controller
             $result->delete();
             return response()->json(['status' => 'success', 'message' => 'Idioma eliminado de manera exitosa']);
         } catch (\Exception $e) {
-            return response()->json(['status' => 'error', 'message' => 'Error al eliminar exeriencia, por favor intenta nuevamente']);
+            return response()->json(['status' => 'error', 'message' => 'Error al eliminar experiencia, por favor intenta nuevamente']);
         }
     }
     public function indexFormularioCandidatos($cantidad)
@@ -538,7 +602,8 @@ class RecepcionEmpleadoController extends Controller
                 'genero.nombre as genero_nombre',
                 'usr_app_candidatos_c.created_at',
                 'usr_app_candidatos_c.usuario_id',
-            )->paginate($cantidad);
+            )
+            ->paginate($cantidad);
 
         return response()->json($result);
     }
@@ -709,6 +774,53 @@ class RecepcionEmpleadoController extends Controller
         $usuario = User::where('email', '=', $correo)->first();
         if ($usuario) {
             return response()->json(['correo' => $correo]);
+        }
+    }
+    public function buscardocumentolistacandidato($documento)
+    {
+        $result = UsuariosCandidatosModel::leftjoin('usr_app_municipios as ciudad_residencia', 'ciudad_residencia.id', 'usr_app_candidatos_c.ciudad_residencia_id')
+            ->leftjoin('usr_app_genero as genero', 'genero.id', 'usr_app_candidatos_c.genero_id')
+            ->leftjoin('gen_tipide as tipo_documento', 'tipo_documento.cod_tip', 'usr_app_candidatos_c.tip_doc_id')
+            ->select(
+                'usr_app_candidatos_c.id',
+                'usr_app_candidatos_c.num_doc',
+                'tipo_documento.des_tip as tipo_documento',
+                'usr_app_candidatos_c.primer_nombre',
+                'usr_app_candidatos_c.primer_apellido',
+                'usr_app_candidatos_c.fecha_nacimiento',
+                'ciudad_residencia.nombre as ciudad_residencia',
+                'usr_app_candidatos_c.celular',
+                'genero.nombre as genero_nombre',
+                'usr_app_candidatos_c.created_at',
+                'usr_app_candidatos_c.usuario_id',
+            )->where('usr_app_candidatos_c.num_doc', $documento)
+            ->paginate(10);
+
+        return response()->json($result);
+    }
+
+    public function addCandidatoServicio(Request $request)
+    {
+
+        $candidato = UsuariosCandidatosModel::find($request->id_candidato);
+        if (isset($candidato)) {
+            $validarCandidato = $this->validacandidato($candidato->num_doc, 0, $candidato->tip_doc_id, false);
+            $validarCandidato = $validarCandidato->getData(true);
+            if ($validarCandidato['status'] == 'success') {
+                //guardar orden de servicio
+                $ordenServiciolienteController = new OrdenServiciolienteController;
+                $ordenServicioCandidato = $ordenServiciolienteController->candidatoRegistradoServicio($candidato->usuario_id, $request->id_servicio, true);
+                $formularioGestionIngresoController = new formularioGestionIngresoController;
+                $radicadoSeiya = $formularioGestionIngresoController->formularioingresoservicioCandidatoUnico($request, $ordenServicioCandidato)->getData();
+                if ($radicadoSeiya->status == '200') {
+                    return response()->json(["status" => "success", "message" => "Candidato registrado exitosamente en el servicio"]);
+                } else {
+                    return response()->json(["status" => "error", "message" => "Problema al intentar registrar usuario"]);
+                }
+            } else {
+                /*    $messageError = $validarCandidato->message; */
+                return $validarCandidato;
+            }
         }
     }
 }

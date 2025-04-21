@@ -17,6 +17,8 @@ use App\Models\CandidatoServicioModel;
 use App\Models\OrdenServcio;
 use Carbon\Carbon;
 use App\Events\NotificacionSeiya;
+use App\Models\HistoricoConceptosCandidatosModel;
+use App\Models\UsuariosCandidatosModel;
 use TCPDF;
 use Illuminate\Support\Facades\DB;
 use App\Traits\Permisos;
@@ -306,8 +308,10 @@ class formularioGestionIngresoController extends Controller
             ->leftJoin('usr_app_usuarios as us', 'us.id', 'usr_app_formulario_ingreso.candidato_id')
             ->leftJoin('usr_app_candidatos_c as can', 'can.usuario_id', 'us.id')
             ->leftJoin('gen_tipide as ti2', 'ti2.cod_tip', '=', 'can.tip_doc_id')
+            ->leftjoin('usr_app_historico_concepto_candidatos as historico_candidatos', 'historico_candidatos.formulario_ingreso_id', '=', 'usr_app_formulario_ingreso.id')
             ->where('usr_app_formulario_ingreso.id', '=', $id)
             ->select(
+                'historico_candidatos.id as historico_candidatos_id',
                 'usr_app_formulario_ingreso.id',
                 'esti.nombre as estado_ingreso',
                 'esti.id as estado_ingreso_id',
@@ -2342,15 +2346,18 @@ class formularioGestionIngresoController extends Controller
 
                 return response()->json(['status' => '200', 'message' => 'ok', 'registro_ingreso_id' => $ids]);
             }
-
+            if (!$result->candidato_id) {
+                $result->correo_notificacion_usuario = $request->correo_candidato;
+                $result->numero_contacto = $request->numero_contacto;
+                $result->numero_identificacion = $request->numero_identificacion;
+                $result->tipo_documento_id = $request->tipo_identificacion;
+                $result->nombre_completo = $request->nombre_completo;
+            }
             $result->fecha_ingreso = $request->fecha_ingreo;
-            $result->numero_identificacion = $request->numero_identificacion;
-            $result->nombre_completo = $request->nombre_completo;
             $result->cliente_id = $request->empresa_cliente_id;
             $result->cargo = $request->cargo;
             $result->salario = $request->salario;
             $result->municipio_id = $request->municipio_id;
-            $result->numero_contacto = $request->numero_contacto;
             $result->eps = $request->eps;
             $result->afp_id = $request->afp_id;
             $result->estradata = $request->consulta_stradata;
@@ -2367,7 +2374,6 @@ class formularioGestionIngresoController extends Controller
             $result->responsable = str_replace("null", "", $request->consulta_encargado);
             $result->estado_ingreso_id = $request->estado_id;
             $result->novedad_stradata = $request->novedades_stradata;
-            $result->correo_notificacion_usuario = $request->correo_candidato;
             $result->correo_notificacion_empresa = $request->correo_empresa;
             $result->direccion_empresa = $request->direccion_empresa;
             $result->direccion_laboratorio = $request->direccion_laboratorio;
@@ -2375,11 +2381,29 @@ class formularioGestionIngresoController extends Controller
             $result->novedades_examenes = $request->novedades_examenes;
             $result->subsidio_transporte = $request->consulta_subsidio;
             $result->observacion_estado = $request->consulta_observacion_estado;
-            $result->tipo_documento_id = $request->tipo_identificacion;
             $result->correo_laboratorio = $request->correo_laboratorio;
             $result->contacto_empresa = $request->contacto_empresa;
             $result->responsable_id = $request->encargado_id;
 
+            if ($request->historico_concepto_candidatos_id) {
+                $historico_concepto = HistoricoConceptosCandidatosModel::find(
+                    $request->historico_concepto_candidatos_id
+                );
+                if ($historico_concepto) {
+                    $historico_concepto->concepto = $request->informe_seleccion;
+                    $historico_concepto->save();
+                }
+            } else {
+                $candidato = UsuariosCandidatosModel::where('num_doc', $request->numero_identificacion)->first();
+                if ($candidato) {
+                    $historico_concepto = new HistoricoConceptosCandidatosModel;
+                    $historico_concepto->formulario_ingreso_id = $result->id;
+                    $historico_concepto->concepto = $request->informe_seleccion;
+                    $historico_concepto->candidato_id = $candidato->id;
+                    $historico_concepto->tipo = 1;
+                    $historico_concepto->save();
+                }
+            }
             if ($result->observacion_estado == 'Servicio no conforme') {
                 $result->afectacion_servicio = $request->afectacion_servicio;
             } else {
@@ -2405,6 +2429,7 @@ class formularioGestionIngresoController extends Controller
             }
             $result->n_servicio = $request->n_servicio == null ? null : $request->n_servicio;
             $result->save();
+
 
             $seguimiento = new FormularioIngresoSeguimiento;
             $seguimiento->estado_ingreso_id = $request->estado_id;
@@ -2449,7 +2474,7 @@ class formularioGestionIngresoController extends Controller
         } catch (\Exception $e) {
             // Revertir la transacción si se produce alguna excepción
             DB::rollback();
-            // return $e;
+            return $e;
             return response()->json(['status' => 'error', 'message' => 'Error al guardar formulario, por favor verifique el llenado de todos los campos e intente nuevamente']);
         }
     }
@@ -2717,4 +2742,72 @@ class formularioGestionIngresoController extends Controller
         $result['seguimiento_estados'] = $filtered;
         return response()->json($result);
     }
+
+    public function formularioingresoservicioCandidatoUnico(Request $request, $orden_servicio_candidato_id)
+    {
+        set_time_limit(0);
+        $ordenServicioCandidato = CandidatoServicioModel::find($orden_servicio_candidato_id);
+        $OrdenServiciolienteController = new OrdenServiciolienteController;
+        $ordenServicio = $OrdenServiciolienteController->byid($ordenServicioCandidato->servicio_id)->getData();
+        $RecepcionEmpleadoController = new RecepcionEmpleadoController;
+        $candidato = $RecepcionEmpleadoController->searchByIdOnUsuariosCandidato($ordenServicioCandidato->usuario_id)->getData();
+        $nombre_completo = $candidato->primer_nombre . " " . $candidato->primer_apellido;
+        DB::beginTransaction();
+        $user = auth()->user();
+        $responsable_actual =  $user->nombres . ' ' . str_replace("null", "", $user->apellidos);
+        try {
+            $result = new formularioGestionIngreso;
+            $result->eps = $candidato->eps_nombre;
+            $result->afp_id = $candidato->afp_id;
+            /* $result->correo_notificacion_usuario = $candidato->email; */
+            /* $result->tipo_documento_id = $candidato->tip_doc_id; */
+            /* $result->numero_contacto = $candidato->celular; */
+            $result->cliente_id = $ordenServicio->cliente_id;
+            $result->cargo = $ordenServicio->cargo_solicitado;
+            $result->salario = $ordenServicio->salario;
+            $result->municipio_id = $ordenServicio->ciudad_prestacion_servicio_id;
+            $result->estado_ingreso_id = $request->estado_id;
+            $result->responsable = $request->nombre_responsable;
+            $result->tipo_servicio_id = $ordenServicio->linea_servicio_id;
+            $result->informe_seleccion = $candidato->concepto;
+            $result->profesional = $ordenServicio->responsable;
+            $result->contacto_empresa = $ordenServicio->telefono_contacto;
+            $result->responsable_id = $request->responsable_id;
+            /*  $result->nombre_completo = $nombre_completo;
+            $result->numero_identificacion = $candidato->num_doc; */
+            $result->candidato_id = $candidato->usuario_id;
+            $result->n_servicio = $ordenServicio->numero_radicado;
+            $result->save();
+
+
+
+
+            $seguimiento = new FormularioIngresoSeguimiento;
+            $seguimiento->estado_ingreso_id = $request->estado_id;
+            $seguimiento->usuario = $user->nombres . ' ' . $user->apellidos;
+            $seguimiento->formulario_ingreso_id = $result->id;
+            $seguimiento->save();
+
+
+
+            if ($result->responsable == null) {
+                $this->actualizaestadoingreso($result->id, $result->estado_ingreso_id, $result->responsable_id, $responsable_actual);
+            }
+            if ($request->consulta_encargado != null) {
+                $this->eventoSocket($request->encargado_id);
+            }
+
+            DB::commit();
+        } catch (\Exception $e) {
+            DB::rollback();
+            return response()->json(['status' => 'error', 'message' => 'Error al guardar formulario, por favor intente nuevamente']);
+        }
+
+        $orden_servicio = OrdenServcio::where('id', '=', $ordenServicio->id)->first();
+        $numero_radicados_seiya = $orden_servicio->numero_radicados_seiya;
+        $orden_servicio->numero_radicados_seiya = $numero_radicados_seiya + 1;
+        $orden_servicio->save();
+        return response()->json(['status' => '200', 'message' => 'ok']);
+    }
 }
+

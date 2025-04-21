@@ -64,9 +64,6 @@ class enviarCorreoDDController extends Controller
     </html>';
 
 
-
-
-
         if ($booleanCorregir == true) {
             $body = "Cordial saludo, tiene novedades en el radicado Debida Diligencia número: <b><i>$numeroRadicado</i></b> con las siguientes observaciones: $observacion.
             \n\npara acceder al radicado ingrese al siguiente link: <a href='http://srv-saitemp03:8181/aplicaciones/?#/navbar/debida-diligencia/formulario-clientes/$registro_id'>Click aquí</a> *Debe encontrarse logueado con su usuario y contraseña en SEIYA.

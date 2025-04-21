@@ -181,6 +181,8 @@ use App\Http\Controllers\SectorEconomicoProfesionalController;
 use App\Http\Controllers\UsuarioDisponibleServicioController;
 use App\Http\Controllers\AsignacionServicioController;
 use App\Http\Controllers\RolesUsuariosInternosController;
+use App\Http\Controllers\CumpleRequisitosController;
+use App\Http\Controllers\CargosCandidatoController;
 use App\Http\Controllers\EstadoServicioController;
 use App\Http\Controllers\EstadoCandidatoServicioController;
 use App\Http\Controllers\MotivoCancelaServicioController;
@@ -294,6 +296,10 @@ Route::group([
   //sectores economicos candidatos
   Route::get('/sectoreconomicocandidato', [SectorEconomicoCandidatosController::class, 'index']);
   Route::post('/sectoreconomicocandidato', [SectorEconomicoCandidatosController::class, 'create']);
+
+  //cargos candidato
+  Route::get('/cargosCandidato', [CargosCandidatoController::class, 'index']);
+  Route::post('/cargos-candidatos/importar', [CargosCandidatoController::class, 'store']);
 
   // Opciones de menú
   Route::get('/menuslista', [MenuController::class, 'index']);
@@ -615,6 +621,7 @@ Route::group([
 
   // Requisitos del cargo
   Route::get('/requisito', [RequisitoController::class, 'index']);
+  Route::get('/requisitosCandidatos', [RequisitoController::class, 'index2']);
   Route::post('/requisito', [RequisitoController::class, 'create']);
   Route::post('/requisito/{id}', [RequisitoController::class, 'update']);
   Route::delete('/requisito/{id}', [RequisitoController::class, 'destroy']);
@@ -824,6 +831,7 @@ Route::group([
   Route::post('/ordenserviciocliente', [OrdenServiciolienteController::class, 'create']);
   Route::post('/ordenserviciocliente/{id}', [OrdenServiciolienteController::class, 'update']);
   Route::delete('/ordenserviciocliente/{id}', [OrdenServiciolienteController::class, 'destroy']);
+  Route::get('/ordenservicioclientebyprofesional', [OrdenServiciolienteController::class, 'getServiciosByProfesional']);
 
   // OrdenServicioServicioSolicitadoController
   Route::get('/ordenserviciosolicitado', [OrdenServicioServicioSolicitadoController::class, 'index']);
@@ -1030,10 +1038,11 @@ Route::group([
   Route::delete('/idiomacandidato/{id}', [RecepcionEmpleadoController::class, 'deleteIdiomaCandidato']);
   Route::get('/consultaFormularioCandidato/{cantidad}', [RecepcionEmpleadoController::class, 'indexFormularioCandidatos']);
   Route::get('/consultaFormularioCandidatofiltro/{cadena}', [RecepcionEmpleadoController::class, 'candidatosFiltro']);
-
-
+  Route::delete('/cumplerequisitocandidato/{id}', [CumpleRequisitosController::class, 'destroy']);
+  Route::get('/buscardocumentolistacandidatos/{documento}', [RecepcionEmpleadoController::class, 'buscardocumentolistacandidato']);
   //ruta para generar el archivo zip de seiya
   Route::get('/descargarZip/{idRadicado}/{idCliente}', [GenerarZipController::class, 'descargarArchivosById']);
+  Route::post('/addcandidatoservicio', [RecepcionEmpleadoController::class, 'addCandidatoServicio']);
 
 
 
@@ -1048,7 +1057,7 @@ Route::group([
   Route::get('/vacantesocupadas/{anio}', [IndicadoresSeyaController::class, 'vacantesocupadas']);
   Route::get('/ingresoempledosmes/{anio}', [IndicadoresSeyaController::class, 'ingresoempledosmes']);
 
-
+  Route::post('/ingresoserviciocandidato/{orden_servicio_candidato_id}', [formularioGestionIngresoController::class, 'formularioingresoservicioCandidatoUnico']);
   Route::post('/borrar_nc/{id}', [formularioGestionIngresoController::class, 'borrar_nc']);
   Route::get('/hora', [formularioGestionIngresoController::class, 'hora']);
 
@@ -1148,6 +1157,7 @@ Route::group([
   Route::get('/listaclienteservicio', [AsignacionServicioController::class, 'clienteservicio']);
   Route::post('/cancelacandidatoservicio/{servicio_id}/{candidato_id}', [AsignacionServicioController::class, 'cancelacandidatoservicio']);
   Route::get('/clienteresponsableservicio/{id}', [AsignacionServicioController::class, 'responsableservicio']);
+
 
 
   Route::get('/rolusuariointerno', [RolesUsuariosInternosController::class, 'index']);
