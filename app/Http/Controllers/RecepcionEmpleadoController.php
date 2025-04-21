@@ -17,6 +17,7 @@ use App\Models\Municipios;
 use App\Models\ListaTrump;
 use App\Models\formularioGestionIngreso;
 use App\Models\User;
+use App\Models\CandidatoServicioModel;
 use Illuminate\Support\Str;
 
 class RecepcionEmpleadoController extends Controller
@@ -279,7 +280,6 @@ class RecepcionEmpleadoController extends Controller
                             $novasoftReferencia->ocu_ref = 0;
                             $novasoftReferencia->save();
                         }
-
                     } else {
                         $novasoftReferencia = new ReferenciasFormularioEmpleado;
                         $novasoftReferencia->cod_emp = $novasoft->cod_emp;
@@ -293,7 +293,7 @@ class RecepcionEmpleadoController extends Controller
                     }
                 }
             }
-               return response()->json(['status' => 'success', 'message' => 'Registro actualizado de manera exitosa', 'id' => $novasoft->cod_emp]);
+            return response()->json(['status' => 'success', 'message' => 'Registro actualizado de manera exitosa', 'id' => $novasoft->cod_emp]);
         } catch (\Exception $e) {
             return response()->json(['status' => 'error', 'message' => 'Error al guardar el formulario, por favor intenta nuevamente']);
         }
@@ -663,6 +663,19 @@ class RecepcionEmpleadoController extends Controller
                     return  response()->json(['status' => 'error', 'motivo' => '1', 'documento' => $numero_identificacion]);
                 }
                 return response()->json(['status' => 'error', 'titulo' => 'Candidato en proceso', 'message' => 'El candidato con número de documento ' . $numero_identificacion . ' se encuentra en proceso de seleción o contratación actualmente, comuniquese con un asesor para más información.', 'documento' => $numero_identificacion]);
+            }
+        }
+
+        $candidato_servicio = CandidatoServicioModel::join('usr_app_usuarios as us', 'us.id', 'usr_app_candadato_servicio.usuario_id')
+            ->join('usr_app_candidatos_c as can', 'can.usuario_id', 'us.id')
+            ->where('can.num_doc', $numero_identificacion)
+            ->select(
+                'can.usuario_id',
+                'usr_app_candadato_servicio.estado_id'
+            )->get();
+        foreach ($candidato_servicio as $candidato) {
+            if (in_array($candidato->estado_id, [1, 2])) {
+                return response()->json(['status' => 'error', 'titulo' => 'Candidato en proceso', 'message' => 'El candidato con número de documento ' . $numero_identificacion . ' se encuentra actualmente registrado en un servicio, comuniquese con un asesor para más información.', 'documento' => $numero_identificacion]);
             }
         }
 

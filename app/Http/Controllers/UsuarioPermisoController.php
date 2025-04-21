@@ -23,6 +23,7 @@ class UsuarioPermisoController extends Controller
                 'user.apellidos',
                 'per.nombre as permiso',
             )
+            ->orderby('usr_app_permisos_usuarios.id','desc')
             ->paginate($cantidad);
         return response()->json($result);
     }
@@ -42,6 +43,7 @@ class UsuarioPermisoController extends Controller
                 'user.apellidos',
                 'per.nombre as permiso',
             )
+            ->orderby('usr_app_permisos_usuarios.id','desc')
             ->paginate($cantidad);
         return response()->json($result);
     }

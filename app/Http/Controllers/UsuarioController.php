@@ -159,7 +159,7 @@ class UsuarioController extends Controller
      */
     public function update(Request $request)
     {
-        $user = UsuariosInternosModel::where('usuario_id','=',$request->id_user)->first();
+        $user = UsuariosInternosModel::where('usuario_id', '=', $request->id_user)->first();
         $login = user::find($request->id_user);
         $archivos = $request->files->all();
         if ($user->imagen_firma_1 != null && count($archivos) > 0) {
@@ -200,6 +200,9 @@ class UsuarioController extends Controller
             $user->apellidos = $request->apellidos !== "null" ? $request->apellidos : null;
             $user->documento_identidad = $request->documento_identidad !== "null" ? $request->documento_identidad : null;
             $user->correo = $request->usuario !== "null" ? $request->usuario : null;
+            if ($request->rol_interno_id != '') {
+                $user->rol_usuario_interno_id = $request->rol_interno_id;
+            }
             if ($request->contrasena_correo != '') {
                 $user->contrasena_correo = Crypt::encryptString($request->contrasena_correo);
             }
@@ -236,25 +239,25 @@ class UsuarioController extends Controller
     {
         $result = User::all();
         foreach ($result as $usuario) {
-            if ($usuario->id > 3) {
-                $nombres = explode(" ", $usuario->nombres);
-                $nombre1 = isset($nombres[0]) ? $nombres[0] : '';
-                $nombre2 = isset($nombres[1]) ? $nombres[1] : '';
-                $apellido1 = isset($nombres[2]) ? $nombres[2] : '';
-                $apellido2 = isset($nombres[3]) ? $nombres[3] : '';
+            // if ($usuario->id > 3) {
+            $nombres = explode(" ", $usuario->nombres);
+            $nombre1 = isset($nombres[0]) ? $nombres[0] : '';
+            $nombre2 = isset($nombres[1]) ? $nombres[1] : '';
+            $apellido1 = isset($nombres[2]) ? $nombres[2] : '';
+            $apellido2 = isset($nombres[3]) ? $nombres[3] : '';
 
-                $nuevoUsuario = new UsuariosInternosModel();
-                $nuevoUsuario->usuario_id = $usuario->id;
-                $nuevoUsuario->nombres = trim("$nombre1 $nombre2");
-                $nuevoUsuario->apellidos = trim("$apellido1 $apellido2");
-                $nuevoUsuario->documento_identidad = $usuario->documento_identidad ?? '';
-                $nuevoUsuario->correo = $usuario->usuario;
-                $nuevoUsuario->contrasena_correo = $usuario->contrasena_correo;
-                $nuevoUsuario->imagen_firma_1 = $usuario->imagen_firma_1;
-                $nuevoUsuario->imagen_firma_2 = $usuario->imagen_firma_2;
-                $nuevoUsuario->rol_usuario_interno_id = 1;
-                $nuevoUsuario->save();
-            }
+            $nuevoUsuario = new UsuariosInternosModel();
+            $nuevoUsuario->usuario_id = $usuario->id;
+            $nuevoUsuario->nombres = trim("$nombre1 $nombre2");
+            $nuevoUsuario->apellidos = trim("$apellido1 $apellido2");
+            $nuevoUsuario->documento_identidad = $usuario->documento_identidad ?? '';
+            $nuevoUsuario->correo = $usuario->usuario;
+            $nuevoUsuario->contrasena_correo = $usuario->contrasena_correo;
+            $nuevoUsuario->imagen_firma_1 = $usuario->imagen_firma_1;
+            $nuevoUsuario->imagen_firma_2 = $usuario->imagen_firma_2;
+            $nuevoUsuario->rol_usuario_interno_id = 1;
+            $nuevoUsuario->save();
+            // }
         }
 
         return response()->json("Usuarios insertados con éxito");

@@ -3,9 +3,9 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Models\estadosIngreso;
+use App\Models\EstadoCandidatoServicioModel;
 
-class estadosIngresoController extends Controller
+class EstadoCandidatoServicioController extends Controller
 {
     /**
      * Display a listing of the resource.
@@ -14,13 +14,7 @@ class estadosIngresoController extends Controller
      */
     public function index()
     {
-        $result = estadosIngreso::where('id','!=',14)->select(
-            'id',
-            'nombre',
-            'color'
-        )
-            ->orderby('posicion')
-            ->get();
+        $result = EstadoCandidatoServicioModel::select('id','nombre')->get();
         return response()->json($result);
     }
 

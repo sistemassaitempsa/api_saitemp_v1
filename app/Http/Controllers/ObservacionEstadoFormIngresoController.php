@@ -4,9 +4,12 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\ObservacionEstadoFormIngreso;
+use App\Models\UsuarioPermiso;
+use App\Traits\Permisos;
 
 class ObservacionEstadoFormIngresoController extends Controller
 {
+    use Permisos;
     /**
      * Display a listing of the resource.
      *
@@ -14,12 +17,29 @@ class ObservacionEstadoFormIngresoController extends Controller
      */
     public function index()
     {
-        $result = ObservacionEstadoFormIngreso::select(
+        $permisos = $this->permisos();
+        $result = ObservacionEstadoFormIngreso::when(!in_array('45', $permisos), function ($query) {
+            return $query->where('id','17');
+        })
+        ->select(
             'id',
             'nombre'
         )
         ->get();
         return response()->json($result);
+    }
+    
+    public function validaPermiso()
+    {
+        $user = auth()->user();
+        $responsable = UsuarioPermiso::where('usr_app_permisos_usuarios.usuario_id', '=', $user->id)
+            ->select(
+                'permiso_id'
+            )
+            ->get();
+        $array = $responsable->toArray();
+        $permisos = array_column($array, 'permiso_id');
+        return $permisos;
     }
 
     /**

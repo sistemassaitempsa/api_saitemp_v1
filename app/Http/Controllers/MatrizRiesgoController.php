@@ -9,9 +9,11 @@ use App\Models\UsuarioPermiso;
 use App\Models\FormularioRiesgoSeguimiento;
 use Illuminate\Support\Facades\DB;
 use App\Exports\FormularioRiesgosExport;
+use App\Traits\Permisos;
 
 class MatrizRiesgoController extends Controller
 {
+    use Permisos;
     /**
      * Display a listing of the resource.
      *
@@ -19,7 +21,7 @@ class MatrizRiesgoController extends Controller
      */
     public function index($cantidad)
     {
-        $permisos = $this->validaPermiso();
+        $permisos = $this->permisos();
         $user = auth()->user();
 
         $result = MatrizRiesgo::join('usr_app_riesgos_tipos_proceso as tp', 'tp.id', 'usr_app_matriz_riesgo.tipo_proceso_id')
@@ -362,7 +364,7 @@ class MatrizRiesgoController extends Controller
 
         try {
 
-            $permisos = $this->validaPermiso();
+            $permisos = $this->permisos();
             $user = auth()->user();
 
             $cadenaJSON = base64_decode($cadena);
@@ -510,7 +512,7 @@ class MatrizRiesgoController extends Controller
 
     public function buscarradicado($radicado)
     {
-        $permisos = $this->validaPermiso();
+        $permisos = $this->permisos();
         $user = auth()->user();
 
         $result = MatrizRiesgo::join('usr_app_riesgos_tipos_proceso as tp', 'tp.id', 'usr_app_matriz_riesgo.tipo_proceso_id')
@@ -554,7 +556,7 @@ class MatrizRiesgoController extends Controller
     {
         try {
 
-            // $permisos = $this->validaPermiso();
+            // $permisos = $this->permisos();
             // $user = auth()->user();
 
             // return 'prueba';
