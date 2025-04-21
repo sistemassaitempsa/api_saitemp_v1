@@ -17,6 +17,7 @@ use App\Models\Municipios;
 use App\Models\ListaTrump;
 use App\Models\formularioGestionIngreso;
 use App\Models\User;
+use App\Models\CandidatoServicioModel;
 use Illuminate\Support\Str;
 use App\Models\CandidatosRequisitosModel;
 use App\Models\HistoricoConceptosCandidatosModel;
@@ -727,6 +728,19 @@ class RecepcionEmpleadoController extends Controller
                     return  response()->json(['status' => 'error', 'motivo' => '1', 'documento' => $numero_identificacion]);
                 }
                 return response()->json(['status' => 'error', 'titulo' => 'Candidato en proceso', 'message' => 'El candidato con número de documento ' . $numero_identificacion . ' se encuentra en proceso de seleción o contratación actualmente, comuniquese con un asesor para más información.', 'documento' => $numero_identificacion]);
+            }
+        }
+
+        $candidato_servicio = CandidatoServicioModel::join('usr_app_usuarios as us', 'us.id', 'usr_app_candadato_servicio.usuario_id')
+            ->join('usr_app_candidatos_c as can', 'can.usuario_id', 'us.id')
+            ->where('can.num_doc', $numero_identificacion)
+            ->select(
+                'can.usuario_id',
+                'usr_app_candadato_servicio.estado_id'
+            )->get();
+        foreach ($candidato_servicio as $candidato) {
+            if (in_array($candidato->estado_id, [1, 2])) {
+                return response()->json(['status' => 'error', 'titulo' => 'Candidato en proceso', 'message' => 'El candidato con número de documento ' . $numero_identificacion . ' se encuentra actualmente registrado en un servicio, comuniquese con un asesor para más información.', 'documento' => $numero_identificacion]);
             }
         }
 

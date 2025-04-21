@@ -52,6 +52,7 @@ use App\Models\NovedadesDD;
 use App\Models\HistoricoProfesionalesModel;
 use App\Models\VersionTablasAndroid;
 use App\Http\Controllers\HistoricoProfesionalesController;
+use App\Traits\Permisos;
 
 // use App\Events\EventoPrueba2;
 
@@ -61,6 +62,7 @@ use App\Http\Controllers\HistoricoProfesionalesController;
 
 class formularioDebidaDiligenciaController extends Controller
 {
+    use Permisos;
     /**
      * Display a listing of the resource.
      *
@@ -85,7 +87,7 @@ class formularioDebidaDiligenciaController extends Controller
     }
     public function consultacliente($cantidad)
     {
-        $permisos = $this->validaPermiso();
+        $permisos = $this->permisos();
 
         $user = auth()->user();
 
@@ -832,7 +834,7 @@ class formularioDebidaDiligenciaController extends Controller
 
     public function filtro($cadena)
     {
-        $permisos = $this->validaPermiso();
+        $permisos = $this->permisos();
 
         $user = auth()->user();
         $year_actual = date('Y');
@@ -1387,7 +1389,7 @@ class formularioDebidaDiligenciaController extends Controller
     {
         $estado__nuevo_id = $request->estado_firma_id;
         $user = auth()->user();
-        $permisos = $this->validaPermiso();
+        $permisos = $this->permisos();
         $cliente = Cliente::where('usr_app_clientes.id', '=', $id)
             ->select()
             ->first();
@@ -2217,7 +2219,7 @@ class formularioDebidaDiligenciaController extends Controller
         /* $numeroResponsables = $usuarios->count(); */
 
         // Obtener el registro de ingreso
-        $permisos = $this->validaPermiso();
+        $permisos = $this->permisos();
 
 
         if ($registro_ingreso->responsable_id != null && $registro_ingreso->responsable_id != $user->id && !in_array('34', $permisos)) {
@@ -2261,7 +2263,7 @@ class formularioDebidaDiligenciaController extends Controller
             $registro_ingreso = cliente::where('usr_app_clientes.id', '=', $item_id)
                 ->first();
 
-            $permisos = $this->validaPermiso();
+            $permisos = $this->permisos();
 
             $last_registro = ClientesSeguimientoEstado::where('usr_app_clientes_seguimiento_estado.cliente_id', $item_id)
                 ->select()->orderBy('id', 'desc')->first();

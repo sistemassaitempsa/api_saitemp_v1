@@ -7,8 +7,12 @@ use App\Models\AsignacionServicioModel;
 use App\Models\UsuarioDisponibleServicioModel;
 use App\Models\UsuarioDebidaDiligencia;
 use App\Models\cliente;
+use App\Models\OrdenServcio;
+use App\Models\CandidatoServicioModel;
+use App\Models\formularioGestionIngreso;
 use Illuminate\Support\Facades\DB;
 use App\Traits\AutenticacionGuard;
+use Illuminate\Support\Carbon;
 
 class AsignacionServicioController extends Controller
 {
@@ -53,11 +57,66 @@ class AsignacionServicioController extends Controller
         return $campo_lista;
     }
 
+    public function cancelaservicio(Request $request, $id)
+    {
+
+        try {
+            DB::beginTransaction();
+            $result = $this->getUserRelaciones();
+            $usuario = $result->getdata(true);
+            $orden_servicio = OrdenServcio::where('id', '=', $id)->first();
+            $orden_servicio->fecha_cancelacion =  Carbon::now();
+            $orden_servicio->usuario_cancela =  $usuario['usuario_id'];
+            $orden_servicio->motivo_cancelacion =  $request->motivo_cancelacion_id;
+            $orden_servicio->descripcion_cancelacion =  $request->descripcion_cancelacion;
+            $orden_servicio->estado_servicio_id = 2; // se coloca el registro en estado cancelado
+
+            $candidatos_servicio = CandidatoServicioModel::where('servicio_id', '=', $id)->select()->get();
+            foreach ($candidatos_servicio as $candidato) {
+                $candidato->estado_id = 3;
+                $candidato->save();
+
+                $candidatos_seiya = formularioGestionIngreso::where('n_servicio', '=', $orden_servicio->numero_radicado)->where('candidato_id', '=', $candidato->usuario_id)->select()->get();
+                foreach ($candidatos_seiya as $candidato) {
+                    $candidato->estado_ingreso_id = 19;
+                    $candidato->save();
+                }
+            }
+
+            if ($orden_servicio->save()) {
+                DB::commit();
+                return response()->json(["status" => "success", "message" => "Servicio cancelado de manera exitosa"]);
+            }
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(["status" => "error", "message" => "Hubo un error al caneclar el servicio, por favor intente nuevamente"]);
+        }
+    }
+
+    public function cancelacandidatoservicio(Request $request, $servicio_id, $candidato_id)
+    {
+        try {
+            $result = $this->getUserRelaciones();
+            $usuario = $result->getdata(true);
+            $candidato = CandidatoServicioModel::where('servicio_id', $servicio_id)->where('usuario_id', $candidato_id)->first();
+            $candidato->fecha_cancelacion =  Carbon::now();
+            $candidato->usuario_cancela =  $usuario['usuario_id'];
+            $candidato->motivo_cancelacion =  $request->motivo_cancelacion_id;
+            $candidato->descripcion_cancelacion =  $request->descripcion_cancelacion;
+            $candidato->estado_id = 3; // se coloca el registro en estado cancelado
+            if ($candidato->save()) {
+                return response()->json(["status" => "success", "message" => "Candidato cancelado de manera exitosa"]);
+            }
+        } catch (\Exception $e) {
+            return response()->json(["status" => "error", "message" => "Hubo un error al caneclar el candidato, por favor intente nuevamente"]);
+        }
+    }
+
     public function responsables($id)
     {
         $tipo_usuario = '';
         if ($id == 2) {
-            $tipo_usuario = 9;
+            $tipo_usuario = 5;
         } else if ($id == 3 || $id == 4) {
             $tipo_usuario = 4;
         }
@@ -94,9 +153,12 @@ class AsignacionServicioController extends Controller
 
     public function clienteservicio()
     {
-        $result = cliente::select(
-            'id',
-            'razon_social'
+        $result = cliente::join('usr_app_actividades_ciiu as acu','acu.id','usr_app_clientes.actividad_ciiu_id')
+        // ->join('usr_app_codigos_ciiu as ccu','ccu.id','usr_app_actividades_ciiu.codigo_ciiu_id')
+        ->select(
+            'usr_app_clientes.id',
+            'usr_app_clientes.razon_social',
+            'acu.codigo_ciiu_id'
         )
             ->get();
         return response()->json($result);
