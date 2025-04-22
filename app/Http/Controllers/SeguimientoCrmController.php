@@ -1393,7 +1393,8 @@ class SeguimientoCrmController extends Controller
         if ($booleanCompromiso == true) {
 
             $body = "Cordial saludo, tiene nuevos compromisos asignados en el radicado CRM número: <b><i>$numeroRadicado</i></b> adjunto con las siguientes observaciones: $observacion.
-        \n\n Atentamente:";
+            \n\n<br> Para acceder al radicado ingrese al siguiente link: <a href='http://srv-saitemp03:8181/aplicaciones/?#/navbar/crm-intreraccion/$formulario->id'>Click aquí</a> *Debe encontrarse logueado con su usuario y contraseña en SEIYA.
+            \n\n<br> Atentamente:";
         }
 
 
