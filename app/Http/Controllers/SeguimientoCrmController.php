@@ -1376,7 +1376,8 @@ class SeguimientoCrmController extends Controller
         if ($tipo_atencion_id == 5 || $tipo_atencion_id == 6) {
             $subject = 'Confirmación acta de reunión';
             if ((($formulario->nit_documento == "900032514" || $formulario->nit_documento == "811025401") && $formulario->correo == $destinatario) || (($formulario->nit_documento == "900032514" || $formulario->nit_documento == "811025401") && $booleanCompromiso == false)) {
-                $body = "Coordial saludo, Informamos que el acta de la reunion interna ha sido creada satisfactoriamente con radicado:  <b><i>$numeroRadicado</i></b>";
+                $body = "Coordial saludo, Informamos que el acta de la reunion interna ha sido creada satisfactoriamente con radicado:  <b><i>$numeroRadicado</i></b>
+                  \n\n<br> Para acceder al radicado ingrese al siguiente link: <a href='http://srv-saitemp03:8181/aplicaciones/?#/navbar/crm-intreraccion/$formulario->id'>Click aquí</a> *Debe encontrarse logueado con su usuario y contraseña en SEIYA.";
             } else {
                 $body = "Cordial saludo, esperamos se encuentren muy bien.\n\n Informamos que el registro de visita ha sido creado satisfactoriamente con número de radicado: <b><i>$numeroRadicado</i></b>, Cualquier información adicional puede comunicarse con:
                     Katerin Andrea Nuno: (+57) 311-437-0207
