@@ -354,8 +354,21 @@ class RecepcionEmpleadoController extends Controller
             $user->eps_id = $request->eps_id;
             $user->afp_id = $request->afp_id;
             $user->descripcion_salud = $request->descripcion_salud;
-            $user->vehiculo_propio = $request->vehiculo_propio;
-            $user->transporte_publico = $request->transporte_publico;
+            if ($request->tipo_transporte == 1) {
+                $user->vehiculo_propio = 1;
+                $user->transporte_publico = null;
+                $user->otro_transporte = null;
+            } else if ($request->tipo_transporte == 2) {
+                $user->vehiculo_propio = null;
+                $user->transporte_publico = 2;
+                $user->otro_transporte = null;
+            } else {
+                $user->vehiculo_propio = null;
+                $user->transporte_publico = null;
+                $request->otro_transporte ? $user->otro_transporte = $request->otro_transporte : null;
+            }
+            $user->vehiculo_propio = $request->tipo_transporte == 1 ? 1 : null;
+            $user->transporte_publico = $request->tipo_transporte == 2 ? 1 : null;
             $user->licencia_conduccion = $request->licencia_conduccion;
             $user->categoria_licencia = $request->categoria_licencia;
             $user->tip_doc_id = $request->tip_ide;
@@ -465,7 +478,6 @@ class RecepcionEmpleadoController extends Controller
             }
         } catch (\Exception $e) {
             DB::rollback();
-            return $e;
             return response()->json(['status' => 'error', 'message' => 'Error al guardar el formulario, por favor intenta nuevamente']);
         }
     }
