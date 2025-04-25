@@ -2066,21 +2066,21 @@ class formularioGestionIngresoController extends Controller
                 }
 
                 // if ($tipo_servicio == 2) {
-                    if ($candidatos[$i]['en_proceso'] != 1) {
-                        // $result->nombre_completo = $candidatos[$i]['nombre_candidato'] . ' ' . $candidatos[$i]['apellido_candidato'];
-                        // $result->numero_contacto = $candidatos[$i]['celular_candidato'];
-                        // $result->correo_notificacion_usuario = $candidatos[$i]['correo_candidato'];
-                        // $result->tipo_documento_id = $candidatos[$i]['tipo_identificacion_id'];
-                        // $result->numero_identificacion = $candidatos[$iF]['numero_documento_candidato'];
-                        $result->candidato_id = $candidatos[$i]['usuario_id'];
-                        $candidato = CandidatoServicioModel::where('usuario_id', '=', $candidatos[$i]['usuario_id'])->first();
-                        if ($candidato) {
-                            $candidato->en_proceso = 1;
-                            $candidato->save();
-                        }
-                    } else {
-                        continue;
+                if ($candidatos[$i]['en_proceso'] != 1) {
+                    // $result->nombre_completo = $candidatos[$i]['nombre_candidato'] . ' ' . $candidatos[$i]['apellido_candidato'];
+                    // $result->numero_contacto = $candidatos[$i]['celular_candidato'];
+                    // $result->correo_notificacion_usuario = $candidatos[$i]['correo_candidato'];
+                    // $result->tipo_documento_id = $candidatos[$i]['tipo_identificacion_id'];
+                    // $result->numero_identificacion = $candidatos[$iF]['numero_documento_candidato'];
+                    $result->candidato_id = $candidatos[$i]['usuario_id'];
+                    $candidato = CandidatoServicioModel::where('usuario_id', '=', $candidatos[$i]['usuario_id'])->first();
+                    if ($candidato) {
+                        $candidato->en_proceso = 1;
+                        $candidato->save();
                     }
+                } else {
+                    continue;
+                }
                 // } 
                 // else if ($tipo_servicio == 3 ||  $tipo_servicio == 4) {
                 //     $result->nombre_completo = $request->nombre_completo;
@@ -2748,7 +2748,7 @@ class formularioGestionIngresoController extends Controller
         set_time_limit(0);
         $ordenServicioCandidato = CandidatoServicioModel::find($orden_servicio_candidato_id);
         $OrdenServiciolienteController = new OrdenServiciolienteController;
-        $ordenServicio = $OrdenServiciolienteController->byid($ordenServicioCandidato->servicio_id)->getData();
+        $ordenServicio = $OrdenServiciolienteController->byid($request->id_servicio)->getData();
         $RecepcionEmpleadoController = new RecepcionEmpleadoController;
         $candidato = $RecepcionEmpleadoController->searchByIdOnUsuariosCandidato($ordenServicioCandidato->usuario_id)->getData();
         $nombre_completo = $candidato->primer_nombre . " " . $candidato->primer_apellido;
@@ -2810,4 +2810,3 @@ class formularioGestionIngresoController extends Controller
         return response()->json(['status' => '200', 'message' => 'ok']);
     }
 }
-

@@ -47,12 +47,14 @@ class OrdenServiciolienteController extends Controller
         $result = OrdenServcio::join('usr_app_formulario_ingreso_tipo_servicio as ts', 'ts.id', '=', 'usr_app_orden_servicio.linea_servicio_id')
             ->join('usr_app_motivos_servicio as ms', 'ms.id', '=', 'usr_app_orden_servicio.motivo_servicio_id')
             ->join('usr_app_municipios as ciu', 'ciu.id', '=', 'usr_app_orden_servicio.ciudad_prestacion_servicio_id')
+            ->join('usr_app_lista_cargos as car', 'car.id', '=', 'usr_app_orden_servicio.cargo_solicitado_id')
             ->when($tipo_usuario == '1' && !in_array('44', $permisos), function ($query) use ($usuario_id) {
                 return $query->where('usr_app_orden_servicio.responsable_id', $usuario_id);
             })->whereIn('usr_app_orden_servicio.linea_servicio_id', [3, 4])
             ->select(
                 'usr_app_orden_servicio.id',
                 'usr_app_orden_servicio.numero_radicado',
+                DB::raw("CONCAT(usr_app_orden_servicio.numero_radicado,' ',car.nombre)  AS numero_radicado"),
                 'usr_app_orden_servicio.razon_social',
             )
             ->orderby('usr_app_orden_servicio.id', 'DESC')
@@ -342,7 +344,12 @@ class OrdenServiciolienteController extends Controller
                 $candidato->estado_id = $estado_id;
                 $candidato->save();
                 DB::commit();
-                return false;
+
+                if ($retorna_respuesta) {
+                    return $candidato->id;
+                } else {
+                    return false;
+                }
             }
         } catch (\Exception $e) {
             DB::rollBack();
