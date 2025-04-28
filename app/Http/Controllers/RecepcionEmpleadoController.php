@@ -528,27 +528,39 @@ class RecepcionEmpleadoController extends Controller
             )
             ->where('usuario_id', $usuario_id)->get();
 
-        $historico_conceptos_servicios = HistoricoConceptosCandidatosModel::join(
-            'usr_app_formulario_ingreso as formulario_ingreso',
-            'formulario_ingreso.id',
+        $historico_conceptos_servicios = CandidatoServicioModel::leftjoin(
+            'usr_app_orden_servicio as orden_servicio',
+            'orden_servicio.id',
             '=',
-            'usr_app_historico_concepto_candidatos.formulario_ingreso_id'
+            'usr_app_candadato_servicio.servicio_id'
         )
-            ->join(
+            ->leftjoin(
                 'usr_app_clientes as cliente',
-                'formulario_ingreso.cliente_id',
+                'orden_servicio.cliente_id',
                 '=',
                 'cliente.id'
             )
-            ->select(
-                'usr_app_historico_concepto_candidatos.*',
-                'formulario_ingreso.id as formulario_ingreso_id',
-                'formulario_ingreso.cargo',
-                'cliente.razon_social',
-                'formulario_ingreso.numero_radicado'
+            ->leftjoin(
+                'usr_app_motivo_cancela_servicio as motivo',
+                'motivo.id',
+                '=',
+                'usr_app_candadato_servicio.motivo_cancelacion'
             )
-            ->where('usr_app_historico_concepto_candidatos.candidato_id', $user_candidato->id)
-            ->where('usr_app_historico_concepto_candidatos.tipo', 1)
+            ->leftjoin(
+                'usr_app_lista_cargos as cargo',
+                'orden_servicio.cargo_solicitado_id',
+                '=',
+                'cargo.id'
+            )
+            ->select(
+                'usr_app_candadato_servicio.*',
+                'cargo.nombre as cargo',
+                'cliente.razon_social as razon_social',
+                'orden_servicio.numero_radicado',
+                'motivo.nombre as motivo'
+            )
+            ->where('usr_app_candadato_servicio.usuario_id', $usuario_id)
+            ->where('usr_app_candadato_servicio.estado_id', 3)
             ->get();
 
         $historico_conceptos_servicios_generales = HistoricoConceptosCandidatosModel::select(
