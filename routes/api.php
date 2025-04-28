@@ -1039,6 +1039,7 @@ Route::group([
   Route::get('/consultaFormularioCandidato/{cantidad}', [RecepcionEmpleadoController::class, 'indexFormularioCandidatos']);
   Route::get('/consultaFormularioCandidatofiltro/{cadena}', [RecepcionEmpleadoController::class, 'candidatosFiltro']);
   Route::delete('/cumplerequisitocandidato/{id}', [CumpleRequisitosController::class, 'destroy']);
+  Route::delete('/eliminarrefenciapersonal/{cod_emp}/{num_ref}', [RecepcionEmpleadoController::class, 'deleteReferencia']);
   Route::get('/buscardocumentolistacandidatos/{documento}', [RecepcionEmpleadoController::class, 'buscardocumentolistacandidato']);
   //ruta para generar el archivo zip de seiya
   Route::get('/descargarZip/{idRadicado}/{idCliente}', [GenerarZipController::class, 'descargarArchivosById']);
@@ -1163,14 +1164,14 @@ Route::group([
   Route::get('/rolusuariointerno', [RolesUsuariosInternosController::class, 'index']);
 
   Route::get('/validacandidato/{numero_documento}/{index}/{tipo_documento}', [RecepcionEmpleadoController::class, 'validacandidato']);
-  
+
   Route::get('/estadoservicio', [EstadoServicioController::class, 'index']);
   Route::get('/estadocandidatoservicio', [EstadoCandidatoServicioController::class, 'index']);
-  
+
   Route::get('/motivocancelaservicio', [MotivoCancelaServicioController::class, 'index']);
 
-//   EstadoServicioController
-// EstadoCandidatoServicioController
+  //   EstadoServicioController
+  // EstadoCandidatoServicioController
 
 
   // Route::get('/codigociiutabla/{cantidad}', [SectorEconomicoProfesionalController::class, 'tabla']);

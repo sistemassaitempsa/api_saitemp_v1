@@ -835,4 +835,17 @@ class RecepcionEmpleadoController extends Controller
             }
         }
     }
+    public function deleteReferencia($cod_emp, $num_ref)
+    {
+        try {
+
+            $novasoftReferencia = ReferenciasFormularioEmpleado::where('cod_emp', $cod_emp)
+                ->where('num_ref', $num_ref)
+                ->first();
+            $novasoftReferencia->delete();
+            return response()->json(['status' => 'success', 'message' => 'Referencia eliminada de manera exitosa']);
+        } catch (\Exception $e) {
+            return response()->json(['status' => 'error', 'message' => 'Error al eliminar referencia, por favor intenta nuevamente']);
+        }
+    }
 }
