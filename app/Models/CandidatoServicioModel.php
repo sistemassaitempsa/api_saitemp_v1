@@ -12,6 +12,7 @@ class CandidatoServicioModel extends Model
 
     protected $table = 'usr_app_candadato_servicio';
 
+
     public function fromDateTime($value)
     {
         return Carbon::parse(parent::fromDateTime($value))->format('Y-d-m');

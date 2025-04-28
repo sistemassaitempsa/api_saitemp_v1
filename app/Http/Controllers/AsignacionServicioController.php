@@ -96,10 +96,11 @@ class AsignacionServicioController extends Controller
     public function cancelacandidatoservicio(Request $request, $servicio_id, $candidato_id)
     {
         try {
+            $fecha_actual =  Carbon::now();
             $result = $this->getUserRelaciones();
             $usuario = $result->getdata(true);
             $candidato = CandidatoServicioModel::where('servicio_id', $servicio_id)->where('usuario_id', $candidato_id)->first();
-            $candidato->fecha_cancelacion =  Carbon::now();
+            $candidato->fecha_cancelacion =  $fecha_actual->format('d-m-Y H:i:s');
             $candidato->usuario_cancela =  $usuario['usuario_id'];
             $candidato->motivo_cancelacion =  $request->motivo_cancelacion_id;
             $candidato->descripcion_cancelacion =  $request->descripcion_cancelacion;
@@ -153,13 +154,13 @@ class AsignacionServicioController extends Controller
 
     public function clienteservicio()
     {
-        $result = cliente::join('usr_app_actividades_ciiu as acu','acu.id','usr_app_clientes.actividad_ciiu_id')
-        // ->join('usr_app_codigos_ciiu as ccu','ccu.id','usr_app_actividades_ciiu.codigo_ciiu_id')
-        ->select(
-            'usr_app_clientes.id',
-            'usr_app_clientes.razon_social',
-            'acu.codigo_ciiu_id'
-        )
+        $result = cliente::join('usr_app_actividades_ciiu as acu', 'acu.id', 'usr_app_clientes.actividad_ciiu_id')
+            // ->join('usr_app_codigos_ciiu as ccu','ccu.id','usr_app_actividades_ciiu.codigo_ciiu_id')
+            ->select(
+                'usr_app_clientes.id',
+                'usr_app_clientes.razon_social',
+                'acu.codigo_ciiu_id'
+            )
             ->get();
         return response()->json($result);
     }

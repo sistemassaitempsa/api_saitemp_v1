@@ -477,6 +477,7 @@ class RecepcionEmpleadoController extends Controller
                 return response()->json(['status' => 'error', 'message' => 'Error al guardar el formulario, por favor intenta nuevamente']);
             }
         } catch (\Exception $e) {
+
             DB::rollback();
             return response()->json(['status' => 'error', 'message' => 'Error al guardar el formulario, por favor intenta nuevamente']);
         }
