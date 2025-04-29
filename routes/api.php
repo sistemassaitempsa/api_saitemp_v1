@@ -186,6 +186,7 @@ use App\Http\Controllers\CargosCandidatoController;
 use App\Http\Controllers\EstadoServicioController;
 use App\Http\Controllers\EstadoCandidatoServicioController;
 use App\Http\Controllers\MotivoCancelaServicioController;
+use App\Http\Controllers\PdfEditController;
 
 /*
 |--------------------------------------------------------------------------
@@ -1199,4 +1200,5 @@ Route::group([
   // estos endpoint se usan para asignar a un empleado el lider correspondiente
   // Route::get('/examen/{cedula}', [ExamenPruebaController::class, 'examen']);
   // Route::get('/examenprueba', [ExamenPruebaController::class, 'create']);
+  Route::post('/lovepdf', [PdfEditController::class, 'reorderPdf']);
 });
