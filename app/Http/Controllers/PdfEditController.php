@@ -101,35 +101,29 @@ class PdfEditController extends Controller
      */
     protected function splitPdfByRanges(string $sourcePath, array $pagesOrRanges): array
     {
-        // Contenedor de rutas de salida
+
         $outputPaths = [];
-        // Obtenemos total de páginas del PDF
         $fpdiCount = new Fpdi();
         $totalPages = $fpdiCount->setSourceFile($sourcePath);
 
         foreach ($pagesOrRanges as $spec) {
-            // Creamos nueva instancia para cada fragmento
+
             $pdf = new Fpdi();
             $pdf->SetAutoPageBreak(false);
-
-            // Determinar páginas a extraer
             if (strpos($spec, '-') !== false) {
-                // Rango "m-n"
+
                 list($start, $end) = array_map('intval', explode('-', $spec, 2));
                 if ($start < 1 || $end > $totalPages || $start > $end) {
                     throw new \Exception("Rango inválido: {$spec}");
                 }
                 $pages = range($start, $end);
             } else {
-                // Página suelta "k"
                 $k = intval($spec);
                 if ($k < 1 || $k > $totalPages) {
                     throw new \Exception("Página inválida: {$spec}");
                 }
                 $pages = [$k];
             }
-
-            // Importar cada página al PDF nuevo
             foreach ($pages as $pageNo) {
                 $tplId = $pdf->setSourceFile($sourcePath);
                 $tpl = $pdf->importPage($pageNo);
@@ -137,8 +131,6 @@ class PdfEditController extends Controller
                 $pdf->AddPage($size['orientation'], [$size['width'], $size['height']]);
                 $pdf->useTemplate($tpl);
             }
-
-            // Guardar en archivo temporal
             $outPath = tempnam(sys_get_temp_dir(), 'split_') . '.pdf';
             $pdf->Output($outPath, 'F');
             $outputPaths[] = $outPath;
@@ -147,9 +139,6 @@ class PdfEditController extends Controller
         return $outputPaths;
     }
 
-    /**
-     * Endpoint de ejemplo para uso vía Request.
-     */
     public function splitPdf(Request $request)
     {
         $request->validate([
@@ -157,14 +146,11 @@ class PdfEditController extends Controller
             'parts'  => 'required|array|min:1',
             'parts.*' => ['required', 'regex:/^\d+(-\d+)?$/']
         ]);
-
         $pdfPath = $request->file('pdf')->getRealPath();
-        $ranges  = $request->input('parts'); // ej: ['1-2','5','7-9']
+        $ranges  = $request->input('parts');
 
         try {
             $outputs = $this->splitPdfByRanges($pdfPath, $ranges);
-
-            // Por ejemplo, devolver JSON con rutas temporales:
             return response()->json([
                 'status' => 'success',
                 'files'  => $outputs
@@ -178,7 +164,7 @@ class PdfEditController extends Controller
     }
 
     /**
-     * Une varios PDFs en un solo archivo.
+     * 
      *
      * @param  string[]  $pdfPaths  Array de rutas a los PDFs de entrada.
      * @return string               Ruta al PDF combinado.
@@ -190,7 +176,6 @@ class PdfEditController extends Controller
             throw new \InvalidArgumentException('Debes pasar al menos un PDF.');
         }
 
-        // Dimensiones A4 en mm
         $a4Width  = 210;
         $a4Height = 297;
 
@@ -202,47 +187,29 @@ class PdfEditController extends Controller
                 throw new \RuntimeException("Archivo no existe: {$file}");
             }
 
-            // Abre el PDF y cuenta páginas
             $pageCount = $pdf->setSourceFile($file);
 
             for ($pageNo = 1; $pageNo <= $pageCount; $pageNo++) {
-                // Importa la página
+
                 $tplId = $pdf->importPage($pageNo);
                 $size  = $pdf->getTemplateSize($tplId);
-
-                // Tamaño original del template en mm
                 $origW = $size['width'];
                 $origH = $size['height'];
-
-                // Calcular factor de escala para caber en A4 sin deformar
                 $scale = min($a4Width / $origW, $a4Height / $origH);
-
-                // Dimensiones escaladas
                 $w = $origW * $scale;
                 $h = $origH * $scale;
-
-                // Posición centrada
                 $x = ($a4Width  - $w) / 2;
                 $y = ($a4Height - $h) / 2;
-
-                // Nueva página A4
                 $pdf->AddPage('P', 'A4');
-
-                // Dibuja el template escalado y centrado
                 $pdf->useTemplate($tplId, $x, $y, $w, $h);
             }
         }
-
-        // Guardar el resultado
         $output = tempnam(sys_get_temp_dir(), 'mergedA4_') . '.pdf';
         $pdf->Output($output, 'F');
 
         return $output;
     }
 
-    /**
-     * Endpoint de ejemplo para unir y escalar a A4.
-     */
     public function mergeToA4(Request $request)
     {
         $request->validate([
@@ -278,45 +245,27 @@ class PdfEditController extends Controller
         if (!file_exists($sourcePath)) {
             throw new \InvalidArgumentException("No existe el PDF: {$sourcePath}");
         }
-
-        // Crea nueva instancia FPDI
         $pdf = new Fpdi();
-
-
-        // 2) Activar compresión de streams
         $pdf->SetCompression(true);
-
-        // 3) Quitar metadatos innecesarios
         $pdf->SetTitle('');
         $pdf->SetSubject('');
         $pdf->SetAuthor('');
         $pdf->SetCreator('');
         $pdf->SetKeywords('');
-
-        // 4) No saltos de página automáticos
         $pdf->SetAutoPageBreak(false);
-
-        // 5) Importar cada página tal cual
         $pageCount = $pdf->setSourceFile($sourcePath);
         for ($p = 1; $p <= $pageCount; $p++) {
             $tplId = $pdf->importPage($p);
             $size  = $pdf->getTemplateSize($tplId);
-
-            // Añade página con las mismas dimensiones
             $pdf->AddPage($size['orientation'], [$size['width'], $size['height']]);
             $pdf->useTemplate($tplId);
         }
-
-        // 6) Guardar en temp
         $outPath = tempnam(sys_get_temp_dir(), 'compressedFpdi_') . '.pdf';
         $pdf->Output($outPath, 'F');
-
         return $outPath;
     }
 
-    /**
-     * Endpoint de ejemplo para comprimir vía HTTP.
-     */
+
     public function compress(Request $request)
     {
         $request->validate(['pdf' => 'required|mimes:pdf']);
@@ -353,13 +302,11 @@ class PdfEditController extends Controller
         $pdfPath = $request->file('pdf')->getRealPath();
         $newOrder = $request->input('order');
 
-        // Solo un objeto de Fpdi
         $pdf = new Fpdi();
         $pdf->SetAutoPageBreak(false);
 
         $pageCount = $pdf->setSourceFile($pdfPath);
 
-        // Validar que las páginas solicitadas existen
         foreach ($newOrder as $p) {
             if ($p < 1 || $p > $pageCount) {
                 return response()->json([
@@ -369,7 +316,6 @@ class PdfEditController extends Controller
             }
         }
 
-        // Importar en el orden especificado
         foreach ($newOrder as $pageNo) {
             $tplId = $pdf->importPage($pageNo);
             $size  = $pdf->getTemplateSize($tplId);
