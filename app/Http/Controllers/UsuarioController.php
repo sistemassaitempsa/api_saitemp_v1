@@ -57,14 +57,12 @@ class UsuarioController extends Controller
 
     public function userslist()
     {
-        $result = user::select(
-            'id',
-            DB::raw("CONCAT(nombres,' ',apellidos)  AS nombre"),
-            'usuario AS email',
-            'lider',
+        $users = UsuariosInternosModel::select(
+            DB::raw("CONCAT(REPLACE(nombres, 'null', ''), ' ', REPLACE(apellidos, 'null', '')) AS nombre")
+
         )
-            ->get();
-        return response()->json($result);
+            ->orderby('nombre')->get();
+        return response()->json($users);
     }
     public function userlogued()
     {

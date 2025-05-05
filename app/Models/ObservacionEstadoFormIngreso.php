@@ -9,5 +9,6 @@ class ObservacionEstadoFormIngreso extends Model
 {
     use HasFactory;
 
-    protected $table = 'usr_app_observacion_estado';
+    protected $table = 'usr_app_categorias_snc_seiya';
+    // protected $table = 'usr_app_observacion_estado';
 }

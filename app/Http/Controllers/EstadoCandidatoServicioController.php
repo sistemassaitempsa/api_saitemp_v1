@@ -14,7 +14,13 @@ class EstadoCandidatoServicioController extends Controller
      */
     public function index()
     {
-        $result = EstadoCandidatoServicioModel::select('id','nombre')->get();
+        $result = EstadoCandidatoServicioModel::select('id', 'nombre')->get();
+        return response()->json($result);
+    }
+
+    public function tabla()
+    {
+        $result = EstadoCandidatoServicioModel::select('id', 'nombre', 'descripcion')->orderby('id')->paginate(10);
         return response()->json($result);
     }
 
@@ -23,9 +29,17 @@ class EstadoCandidatoServicioController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function create()
+    public function create(Request $request)
     {
-        //
+        try {
+            $result = new EstadoCandidatoServicioModel;
+            $result->nombre = $request->nombre;
+            $result->descripcion = $request->descripcion;
+            $result->save();
+            return response()->json(['status' => 'success', 'message' => 'Registro actualizado exitosamente.']);
+        } catch (\Exception $e) {
+            return response()->json(['status' => 'error', 'message' => 'Error al actualizar el registro.']);
+        }
     }
 
     /**
@@ -70,7 +84,16 @@ class EstadoCandidatoServicioController extends Controller
      */
     public function update(Request $request, $id)
     {
-        //
+        try {
+            $result = EstadoCandidatoServicioModel::find($id);
+            $result->nombre = $request->nombre;
+            $result->descripcion = $request->descripcion;
+            $result->save();
+            return response()->json(['status' => 'success', 'message' => 'Registro actualizado exitosamente.']);
+        } catch (\Exception $e) {
+            return $e;
+            return response()->json(['status' => 'error', 'message' => 'Error al actualizar el registro.']);
+        }
     }
 
     /**
@@ -81,6 +104,13 @@ class EstadoCandidatoServicioController extends Controller
      */
     public function destroy($id)
     {
-        //
+        try {
+            $result = EstadoCandidatoServicioModel::find($id)->delete();
+            $result->delete();
+            return response()->json(['status' => 'success', 'message' => 'Registro actualizado exitosamente.']);
+        } catch (\Exception $e) {
+            return $e;
+            return response()->json(['status' => 'error', 'message' => 'Error al actualizar el registro.']);
+        }
     }
 }

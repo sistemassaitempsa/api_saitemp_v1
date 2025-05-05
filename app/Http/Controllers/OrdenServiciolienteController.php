@@ -145,8 +145,7 @@ class OrdenServiciolienteController extends Controller
                 'usr_app_orden_servicio.telefono_contacto',
                 'usr_app_orden_servicio.cargo_contacto',
                 'usr_app_orden_servicio.responsable',
-                'usr_app_orden_servicio.numero_radicado'
-                'est.id as estado_servicio_id',
+                'usr_app_orden_servicio.numero_radicado',
                 'est.nombre as estado_servicio',
                 'usr_app_orden_servicio.estado_servicio_id',
                 'usr_app_orden_servicio.motivo_cancelacion',
