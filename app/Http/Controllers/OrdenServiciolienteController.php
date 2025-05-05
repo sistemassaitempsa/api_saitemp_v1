@@ -42,7 +42,7 @@ class OrdenServiciolienteController extends Controller
             $nit = $data['nit'];
         }
 
-        $permisos = $this->validaPermiso();
+        $permisos = $this->Permisos();
 
         $result = OrdenServcio::join('usr_app_formulario_ingreso_tipo_servicio as ts', 'ts.id', '=', 'usr_app_orden_servicio.linea_servicio_id')
             ->join('usr_app_motivos_servicio as ms', 'ms.id', '=', 'usr_app_orden_servicio.motivo_servicio_id')
