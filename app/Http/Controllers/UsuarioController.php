@@ -58,6 +58,7 @@ class UsuarioController extends Controller
     public function userslist()
     {
         $users = UsuariosInternosModel::select(
+            'usuario_id as id',
             DB::raw("CONCAT(REPLACE(nombres, 'null', ''), ' ', REPLACE(apellidos, 'null', '')) AS nombre")
 
         )
