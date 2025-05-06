@@ -187,8 +187,10 @@ use App\Http\Controllers\CargosCandidatoController;
 use App\Http\Controllers\EstadoServicioController;
 use App\Http\Controllers\EstadoCandidatoServicioController;
 use App\Http\Controllers\MotivoCancelaServicioController;
+use App\Http\Controllers\PdfEditController;
 use App\Http\Controllers\EstadoResponsableOrdenServicioController;
 use App\Http\Controllers\EstadoCandidatoServioOrdenServicioController;
+
 
 /*
 |--------------------------------------------------------------------------
@@ -1051,6 +1053,7 @@ Route::group([
   Route::get('/consultaFormularioCandidato/{cantidad}', [RecepcionEmpleadoController::class, 'indexFormularioCandidatos']);
   Route::get('/consultaFormularioCandidatofiltro/{cadena}', [RecepcionEmpleadoController::class, 'candidatosFiltro']);
   Route::delete('/cumplerequisitocandidato/{id}', [CumpleRequisitosController::class, 'destroy']);
+  Route::delete('/eliminarrefenciapersonal/{cod_emp}/{num_ref}', [RecepcionEmpleadoController::class, 'deleteReferencia']);
   Route::get('/buscardocumentolistacandidatos/{documento}', [RecepcionEmpleadoController::class, 'buscardocumentolistacandidato']);
   //ruta para generar el archivo zip de seiya
   Route::get('/descargarZip/{idRadicado}/{idCliente}', [GenerarZipController::class, 'descargarArchivosById']);
@@ -1175,12 +1178,13 @@ Route::group([
   Route::get('/rolusuariointerno', [RolesUsuariosInternosController::class, 'index']);
 
   Route::get('/validacandidato/{numero_documento}/{index}/{tipo_documento}', [RecepcionEmpleadoController::class, 'validacandidato']);
-  
+
   Route::get('/estadoservicio', [EstadoServicioController::class, 'index']);
   Route::get('/estadocandidatoservicio', [EstadoCandidatoServicioController::class, 'index']);
+
   Route::post('/estadocandidatoservicio/{id}', [EstadoCandidatoServicioController::class, 'update']);
   Route::get('/estadocandidatoserviciotabla', [EstadoCandidatoServicioController::class, 'tabla']);
-  
+
   Route::get('/motivocancelaservicio', [MotivoCancelaServicioController::class, 'index']);
   
   Route::get('/estadoresponsable/{cantidad}', [EstadoResponsableOrdenServicioController::class, 'index']);
@@ -1197,8 +1201,8 @@ Route::group([
   Route::delete('/estadocandidatoordenservicio/{id}', [EstadoCandidatoServioOrdenServicioController::class, 'destroy']);
   Route::get('/estadocandidatoordenserviciofiltro/{cadena}/{cantidad}', [EstadoCandidatoServioOrdenServicioController::class, 'filtro']);
 
-//   EstadoServicioController
-// EstadoCandidatoServicioController
+  //   EstadoServicioController
+  // EstadoCandidatoServicioController
 
 
   // Route::get('/codigociiutabla/{cantidad}', [SectorEconomicoProfesionalController::class, 'tabla']);
@@ -1226,4 +1230,5 @@ Route::group([
   // estos endpoint se usan para asignar a un empleado el lider correspondiente
   // Route::get('/examen/{cedula}', [ExamenPruebaController::class, 'examen']);
   // Route::get('/examenprueba', [ExamenPruebaController::class, 'create']);
+  Route::post('/lovepdf', [PdfEditController::class, 'compress']);
 });

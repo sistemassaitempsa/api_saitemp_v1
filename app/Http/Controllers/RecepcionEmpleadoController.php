@@ -354,8 +354,21 @@ class RecepcionEmpleadoController extends Controller
             $user->eps_id = $request->eps_id;
             $user->afp_id = $request->afp_id;
             $user->descripcion_salud = $request->descripcion_salud;
-            $user->vehiculo_propio = $request->vehiculo_propio;
-            $user->transporte_publico = $request->transporte_publico;
+            if ($request->tipo_transporte == 1) {
+                $user->vehiculo_propio = 1;
+                $user->transporte_publico = null;
+                $user->otro_transporte = null;
+            } else if ($request->tipo_transporte == 2) {
+                $user->vehiculo_propio = null;
+                $user->transporte_publico = 2;
+                $user->otro_transporte = null;
+            } else {
+                $user->vehiculo_propio = null;
+                $user->transporte_publico = null;
+                $request->otro_transporte ? $user->otro_transporte = $request->otro_transporte : null;
+            }
+            $user->vehiculo_propio = $request->tipo_transporte == 1 ? 1 : null;
+            $user->transporte_publico = $request->tipo_transporte == 2 ? 1 : null;
             $user->licencia_conduccion = $request->licencia_conduccion;
             $user->categoria_licencia = $request->categoria_licencia;
             $user->tip_doc_id = $request->tip_ide;
@@ -464,8 +477,8 @@ class RecepcionEmpleadoController extends Controller
                 return response()->json(['status' => 'error', 'message' => 'Error al guardar el formulario, por favor intenta nuevamente']);
             }
         } catch (\Exception $e) {
+
             DB::rollback();
-            return $e;
             return response()->json(['status' => 'error', 'message' => 'Error al guardar el formulario, por favor intenta nuevamente']);
         }
     }
@@ -515,27 +528,39 @@ class RecepcionEmpleadoController extends Controller
             )
             ->where('usuario_id', $usuario_id)->get();
 
-        $historico_conceptos_servicios = HistoricoConceptosCandidatosModel::join(
-            'usr_app_formulario_ingreso as formulario_ingreso',
-            'formulario_ingreso.id',
+        $historico_conceptos_servicios = CandidatoServicioModel::leftjoin(
+            'usr_app_orden_servicio as orden_servicio',
+            'orden_servicio.id',
             '=',
-            'usr_app_historico_concepto_candidatos.formulario_ingreso_id'
+            'usr_app_candadato_servicio.servicio_id'
         )
-            ->join(
+            ->leftjoin(
                 'usr_app_clientes as cliente',
-                'formulario_ingreso.cliente_id',
+                'orden_servicio.cliente_id',
                 '=',
                 'cliente.id'
             )
-            ->select(
-                'usr_app_historico_concepto_candidatos.*',
-                'formulario_ingreso.id as formulario_ingreso_id',
-                'formulario_ingreso.cargo',
-                'cliente.razon_social',
-                'formulario_ingreso.numero_radicado'
+            ->leftjoin(
+                'usr_app_motivo_cancela_servicio as motivo',
+                'motivo.id',
+                '=',
+                'usr_app_candadato_servicio.motivo_cancelacion'
             )
-            ->where('usr_app_historico_concepto_candidatos.candidato_id', $user_candidato->id)
-            ->where('usr_app_historico_concepto_candidatos.tipo', 1)
+            ->leftjoin(
+                'usr_app_lista_cargos as cargo',
+                'orden_servicio.cargo_solicitado_id',
+                '=',
+                'cargo.id'
+            )
+            ->select(
+                'usr_app_candadato_servicio.*',
+                'cargo.nombre as cargo',
+                'cliente.razon_social as razon_social',
+                'orden_servicio.numero_radicado',
+                'motivo.nombre as motivo'
+            )
+            ->where('usr_app_candadato_servicio.usuario_id', $usuario_id)
+            ->where('usr_app_candadato_servicio.estado_id', 3)
             ->get();
 
         $historico_conceptos_servicios_generales = HistoricoConceptosCandidatosModel::select(
@@ -809,7 +834,7 @@ class RecepcionEmpleadoController extends Controller
             if ($validarCandidato['status'] == 'success') {
                 //guardar orden de servicio
                 $ordenServiciolienteController = new OrdenServiciolienteController;
-                $ordenServicioCandidato = $ordenServiciolienteController->candidatoRegistradoServicio($candidato->usuario_id, $request->id_servicio, true);
+                $ordenServicioCandidato = $ordenServiciolienteController->candidatoRegistradoServicio($candidato->usuario_id, $request->id_servicio, 2, true);
                 $formularioGestionIngresoController = new formularioGestionIngresoController;
                 $radicadoSeiya = $formularioGestionIngresoController->formularioingresoservicioCandidatoUnico($request, $ordenServicioCandidato)->getData();
                 if ($radicadoSeiya->status == '200') {
@@ -821,6 +846,19 @@ class RecepcionEmpleadoController extends Controller
                 /*    $messageError = $validarCandidato->message; */
                 return $validarCandidato;
             }
+        }
+    }
+    public function deleteReferencia($cod_emp, $num_ref)
+    {
+        try {
+
+            $novasoftReferencia = ReferenciasFormularioEmpleado::where('cod_emp', $cod_emp)
+                ->where('num_ref', $num_ref)
+                ->first();
+            $novasoftReferencia->delete();
+            return response()->json(['status' => 'success', 'message' => 'Referencia eliminada de manera exitosa']);
+        } catch (\Exception $e) {
+            return response()->json(['status' => 'error', 'message' => 'Error al eliminar referencia, por favor intenta nuevamente']);
         }
     }
 }

@@ -3014,7 +3014,7 @@ class formularioGestionIngresoController extends Controller
         set_time_limit(0);
         $ordenServicioCandidato = CandidatoServicioModel::find($orden_servicio_candidato_id);
         $OrdenServiciolienteController = new OrdenServiciolienteController;
-        $ordenServicio = $OrdenServiciolienteController->byid($ordenServicioCandidato->servicio_id)->getData();
+        $ordenServicio = $OrdenServiciolienteController->byid($request->id_servicio)->getData();
         $RecepcionEmpleadoController = new RecepcionEmpleadoController;
         $candidato = $RecepcionEmpleadoController->searchByIdOnUsuariosCandidato($ordenServicioCandidato->usuario_id)->getData();
         $nombre_completo = $candidato->primer_nombre . " " . $candidato->primer_apellido;
@@ -3077,3 +3077,4 @@ class formularioGestionIngresoController extends Controller
         return response()->json(['status' => '200', 'message' => 'ok']);
     }
 }
+
