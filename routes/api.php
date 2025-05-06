@@ -162,9 +162,31 @@ use App\Http\Controllers\RecepcionEmpleadoController;
 use App\Http\Controllers\GenerarZipController;
 use App\Http\Controllers\limitesCrmController;
 use App\Models\SeguimientoCrm;
+use App\Http\Controllers\AuthCandidatosController;
 use App\Http\Controllers\enviarCorreoDDController;
 use App\Http\Controllers\IndicadoresDDController;
+use App\Http\Controllers\HistoricoProfesionalesController;
 use App\Http\Controllers\MotivoServicioController;
+use App\Http\Controllers\TipoUsuarioLoginController;
+use App\Http\Controllers\UsuariodebidaDiligenciaController;
+use App\Http\Controllers\TiposUsuarioController;
+use App\Http\Controllers\EpsController;
+use App\Http\Controllers\GeneroCandidatosController;
+use App\Http\Controllers\IdiomasController;
+use App\Http\Controllers\SectorAcademicoController;
+use App\Http\Controllers\SectorEconomicoCandidatosController;
+use App\Http\Controllers\CentrosDeTrabajoSeiyaController;
+use App\Http\Controllers\SectorEconomicoController;
+use App\Http\Controllers\SectorEconomicoProfesionalController;
+use App\Http\Controllers\UsuarioDisponibleServicioController;
+use App\Http\Controllers\AsignacionServicioController;
+use App\Http\Controllers\RolesUsuariosInternosController;
+use App\Http\Controllers\CumpleRequisitosController;
+use App\Http\Controllers\CargosCandidatoController;
+use App\Http\Controllers\EstadoServicioController;
+use App\Http\Controllers\EstadoCandidatoServicioController;
+use App\Http\Controllers\MotivoCancelaServicioController;
+use App\Http\Controllers\PdfEditController;
 
 /*
 |--------------------------------------------------------------------------
@@ -177,29 +199,71 @@ use App\Http\Controllers\MotivoServicioController;
 |
 */
 
+
+
+
 // TODO: Colocar los name a las rutas 
+
 Route::group([
   'middleware' => ['api', \Fruitcake\Cors\HandleCors::class],
   'prefix' => 'v1'
-
 ], function ($router) {
+
+  //centros de trabajo
+  Route::post('/centrosdetarabajoborradomasivo', [CentrosDeTrabajoSeiyaController::class, 'borradomasivo']);
+  Route::get('/centrosdetarabajobyid/{id}', [CentrosDeTrabajoSeiyaController::class, 'searchById']);
+  Route::put('/centrosdetarabajobyid/{id}', [CentrosDeTrabajoSeiyaController::class, 'logicDelete']);
+  Route::get('/centrosdetarabajo/{cantidad}', [CentrosDeTrabajoSeiyaController::class, 'index']);
+  Route::get('/centrosdetarabajofiltro/{cadena}', [CentrosDeTrabajoSeiyaController::class, 'candidatosFiltro']);
+  Route::get('/centrosdetarabajobycliente/{cliente_id}', [CentrosDeTrabajoSeiyaController::class, 'searchByClienteId']);
+  Route::post('/centrosdetarabajo', [CentrosDeTrabajoSeiyaController::class, 'create']);
+  Route::post('/importar-centros-trabajo', [CentrosDeTrabajoSeiyaController::class, 'inyectarCentrosTrabajo']);
+  //tipos de usuario
+  Route::get('/tiposUsuario', [TiposUsuarioController::class, 'index']);
+  Route::post('/tiposUsuario', [TiposUsuarioController::class, 'create']);
+  Route::put('/tiposUsuario', [TiposUsuarioController::class, 'update']);
+
+  Route::get('userloguedCandidatos', [AuthCandidatosController::class, 'userloguedCandidato']);
+  Route::post('/loginCandidatos', [AuthController::class, 'login']);
+  Route::post('/registerCandidatos', [AuthCandidatosController::class, 'createUserCandidato']);
+  Route::get('/mostrarcandidatos', [AuthCandidatosController::class, 'mostrarUsuarios']);
+  Route::get('/updatePoliticasTratamiento/{id}', [AuthCandidatosController::class, 'updateTratamientoDatos']);
+  /*  Route::get('userloguedCandidatos', [UsuarioController::class, 'userloguedCandidato']); */
+  /*  Route::get('/userloguedCandidatos/{userType}', [UsuarioController::class, 'userlogued']); */  //Historico pofesionales
+  Route::get('/historicoprofesionalesdd', [HistoricoProfesionalesController::class, 'index']);
+  Route::get('/historicoprofesionalesdd/{cliente_id}', [HistoricoProfesionalesController::class, 'index']);
+
+  //Roles usuarios internos
+  Route::get('/rolesusuariosinternos', [RolesUsuariosInternosController::class, 'index']);
+  Route::post('/rolesusuariosinternos', [RolesUsuariosInternosController::class, 'create']);
+  Route::put('/rolesusuariosinternos', [RolesUsuariosInternosController::class, 'update']);
+  Route::delete('/rolesusuariosinternos', [RolesUsuariosInternosController::class, 'destroy']);
+
 
   Route::post('/login', [AuthController::class, 'login']);
   Route::post('/register', [AuthController::class, 'register']);
+  Route::post('/enviartoken/{num_doc}', [AuthCandidatosController::class, 'enviarTokenRecuperacion']);
+  Route::post('/recuperarcontrasena', [AuthCandidatosController::class, 'recuperarContraseña']);
+  Route::put('/actualizarcandidatousuario/{id}', [AuthCandidatosController::class, 'updateCandidatoUser']);
+  Route::post('/verificarCorreo', [AuthCandidatosController::class, 'verificarCorreo']);
+  // Route::post('/register2', [AuthUsuarioController::class, 'register']);
   Route::post('/logout', [AuthController::class, 'logout']);
   Route::post('/refresh', [AuthController::class, 'refresh']);
   Route::get('/user-profile', [AuthController::class, 'userProfile']);
 
   // Usuarios
   Route::get('/allUsers', [UsuarioController::class, 'index2']);
-  Route::get('/users/{cantidad}', [UsuarioController::class, 'index']);
+  Route::get('/users/{cantidad}/{tipo}', [UsuarioController::class, 'index']);
+  Route::get('/usersbyrolinterno/{rol}', [UsuarioController::class, 'byRolInterno']);
   Route::get('/users/{filtro}/{cantidad}', [UsuarioController::class, 'filtro']);
+  Route::get('/usersfiltro/{filtro}/{cantidad}', [UsuarioController::class, 'filtro']);
   Route::get('/userslist', [UsuarioController::class, 'userslist']);
   Route::get('/userlogued', [UsuarioController::class, 'userlogued']);
   Route::get('/userbyid/{id}', [UsuarioController::class, 'userById']);
   Route::delete('/user/{id}', [UsuarioController::class, 'destroy']);
   // Route::post('/user', [UsuarioController::class, 'create']); 
   Route::post('/user', [UsuarioController::class, 'update']);
+  Route::post('/user2', [UsuarioController::class, 'update2']);
   Route::put('/updateUserVendedor/{id}', [UsuarioController::class, 'updateVendedorId']);
   // Route::get('/usuariosporcontrato', [UsuarioController::class, 'usuariosporcontrato']); 
   // Route::get('/usuariosporcontrato/{id}', [UsuarioController::class, 'usuariosporcontrato2']); 
@@ -212,6 +276,31 @@ Route::group([
   Route::get('/categoriasMenulista', [categoriaMenuController::class, 'lista']);
   Route::post('/categoriasMenuborradomasivo', [categoriaMenuController::class, 'borradomasivo']);
 
+  //Genero Candidatos
+  Route::get('/generoCandidatos', [GeneroCandidatosController::class, 'index']);
+  Route::post('/generoCandidatos', [GeneroCandidatosController::class, 'create']);
+  Route::put('/generoCandidatos/{id}', [GeneroCandidatosController::class, 'update']);
+
+
+  //eps
+  Route::get('/eps', [EpsController::class, 'index']);
+  Route::post('/eps', [EpsController::class, 'create']);
+
+  //sectores academicos
+  Route::get('/sectoracademico', [SectorAcademicoController::class, 'index']);
+  Route::post('/sectoracademico', [SectorAcademicoController::class, 'create']);
+
+  //idiomas
+  Route::get('/idiomas', [IdiomasController::class, 'index']);
+  Route::post('/idiomas', [IdiomasController::class, 'create']);
+
+  //sectores economicos candidatos
+  Route::get('/sectoreconomicocandidato', [SectorEconomicoCandidatosController::class, 'index']);
+  Route::post('/sectoreconomicocandidato', [SectorEconomicoCandidatosController::class, 'create']);
+
+  //cargos candidato
+  Route::get('/cargosCandidato', [CargosCandidatoController::class, 'index']);
+  Route::post('/cargos-candidatos/importar', [CargosCandidatoController::class, 'store']);
 
   // Opciones de menú
   Route::get('/menuslista', [MenuController::class, 'index']);
@@ -347,6 +436,7 @@ Route::group([
 
   // Lista trump
   Route::get('/listatrump/{codigo}', [ListaTrumpController::class, 'index']);
+  Route::post('/listatrump', [ListaTrumpController::class, 'create']);
 
   // Procesos especiales
   Route::get('/procesosespeciales', [ProcesosEspecialesController::class, 'index']);
@@ -422,7 +512,7 @@ Route::group([
   // Tipo de proveedor
   Route::get('/tipoproveedor', [TipoProveedorController::class, 'index']);
 
-  // Tipo de cliente
+  // Tipo de archivo
   Route::get('/tipoarchivo', [TipoDocumentoController::class, 'index']);
   Route::get('/tipoarchivo/{id}', [TipoDocumentoController::class, 'byid']);
 
@@ -478,6 +568,9 @@ Route::group([
 
   // Codigos ciiu
   Route::get('/codigociiu', [CodigoCiiuController::class, 'index']);
+  Route::get('/codigociiu/{cantidad}', [CodigoCiiuController::class, 'tabla']);
+  Route::post('/codigociiucodigosector', [CodigoCiiuController::class, 'codigo_sector']);
+  Route::get('/codigociiubyid/{id}', [CodigoCiiuController::class, 'byid']);
   Route::post('/codigociiu', [CodigoCiiuController::class, 'create']);
   Route::post('/codigociiu/{id}', [CodigoCiiuController::class, 'update']);
   Route::delete('/codigociiu/{id}', [CodigoCiiuController::class, 'destroy']);
@@ -529,6 +622,7 @@ Route::group([
 
   // Requisitos del cargo
   Route::get('/requisito', [RequisitoController::class, 'index']);
+  Route::get('/requisitosCandidatos', [RequisitoController::class, 'index2']);
   Route::post('/requisito', [RequisitoController::class, 'create']);
   Route::post('/requisito/{id}', [RequisitoController::class, 'update']);
   Route::delete('/requisito/{id}', [RequisitoController::class, 'destroy']);
@@ -557,7 +651,6 @@ Route::group([
   Route::post('/categoriacargo/{id}', [CategoriaCargoController::class, 'update']);
   Route::delete('/categoriacargo/{id}', [CategoriaCargoController::class, 'destroy']);
 
-
   // Subcategorias cargos
   Route::get('/subcategoriacargo/{id}', [SubCategoriaCargoController::class, 'index']);
   Route::post('/subcategoriacargo', [SubCategoriaCargoController::class, 'create']);
@@ -573,14 +666,15 @@ Route::group([
 
   // lista examenes
   Route::get('/listaexamenes/{id}', [ListaExamenController::class, 'index']);
+  Route::get('/listaexamenes', [ListaExamenController::class, 'index2']);
   Route::post('/listaexamenes', [ListaExamenController::class, 'create']);
   Route::post('/listaexamenes/{id}', [ListaExamenController::class, 'update']);
   Route::delete('/listaexamenes/{id}', [ListaExamenController::class, 'destroy']);
 
   // Cargos cliente
-  Route::get('/cargoscliente', [CargoClienteController::class, 'index']);
-  Route::post('/cargoscliente', [CargoClienteController::class, 'create']);
-  Route::post('/cargoscliente/{id}', [CargoClienteController::class, 'update']);
+  Route::get('/cargoscliente/{id}', [CargoClienteController::class, 'index']);
+  Route::post('/cargoscliente/{id}', [CargoClienteController::class, 'create']);
+  Route::put('/cargoscliente/{id}', [CargoClienteController::class, 'update']);
   Route::delete('/cargoscliente/{id}', [CargoClienteController::class, 'destroy']);
 
   // Tipos de operaciones internacionales
@@ -618,6 +712,8 @@ Route::group([
   Route::delete('/formulariocliente/{id}', [formularioDebidaDiligenciaController::class, 'destroy']);
   Route::get('/actualizaestadofirma/{item_id}/{estado_id}/{responsable_id}', [formularioDebidaDiligenciaController::class, 'actualizaestadofirma']);
   Route::get('/versiondebidadiligencia', [formularioDebidaDiligenciaController::class, 'versionformulario']);
+
+  Route::get('/formularioclientenit/{nit}', [formularioDebidaDiligenciaController::class, 'formularioclientenit']);
 
   Route::get('/formulariocliente/generarpdf/{id}', [formularioDebidaDiligenciaController::class, 'generarPdf']);
 
@@ -714,10 +810,14 @@ Route::group([
   Route::delete('/laboratorioos/{id}', [LaboratorioOrdenServicioController::class, 'destroy']);
 
   //   Orden Servicio 
-  Route::get('/ordenservicio', [OrdenServiciolienteController::class, 'index']);
+  Route::get('/ordenservicio/{cantidad}', [OrdenServiciolienteController::class, 'index']);
+  Route::get('/ordenserviciobyid/{id}', [OrdenServiciolienteController::class, 'byid']);
   Route::post('/ordenservicio', [OrdenServiciolienteController::class, 'create']);
+  Route::get('/ordenserviciofiltro/{cadena}', [OrdenServiciolienteController::class, 'filtro']);
   Route::post('/ordenservicio/{id}', [OrdenServiciolienteController::class, 'update']);
   Route::delete('/ordenservicio/{id}', [OrdenServiciolienteController::class, 'destroy']);
+  Route::get('/ordenservicioseiya/{id}', [OrdenServiciolienteController::class, 'ordenservicioseiya']);
+  Route::post('/cargamasivaservicio/{id}', [OrdenServiciolienteController::class, 'cargamasivaservicio']);
 
 
   //   Motivo servicio 
@@ -732,6 +832,7 @@ Route::group([
   Route::post('/ordenserviciocliente', [OrdenServiciolienteController::class, 'create']);
   Route::post('/ordenserviciocliente/{id}', [OrdenServiciolienteController::class, 'update']);
   Route::delete('/ordenserviciocliente/{id}', [OrdenServiciolienteController::class, 'destroy']);
+  Route::get('/ordenservicioclientebyprofesional', [OrdenServiciolienteController::class, 'getServiciosByProfesional']);
 
   // OrdenServicioServicioSolicitadoController
   Route::get('/ordenserviciosolicitado', [OrdenServicioServicioSolicitadoController::class, 'index']);
@@ -807,6 +908,7 @@ Route::group([
 
   // Estados firma
   Route::get('/estadosfirma', [EstadosFirmaController::class, 'index']);
+  Route::get('/estadosfirma2', [EstadosFirmaController::class, 'index2']);
   Route::post('/estadosfirma', [EstadosFirmaController::class, 'create']);
   Route::put('/estadosfirma/{id}', [EstadosFirmaController::class, 'update']);
   Route::delete('/estadosfirma/{id}', [EstadosFirmaController::class, 'destroy']);
@@ -852,12 +954,14 @@ Route::group([
   Route::post('/interaccioncliente', [ClienteInteraccionController::class, 'create']);
 
   Route::get('/archivosingreso', [ArchivosFormularioIngresoController::class, 'index']);
+  Route::put('/archivosingreso', [ArchivosFormularioIngresoController::class, 'update']);
   Route::get('/afp', [AfpFormularioIngresoController::class, 'index']);
 
   Route::get('/formularioingreso/{cantidad}', [formularioGestionIngresoController::class, 'index']);
   Route::post('/formularioIngreso/filtrofechaingreso/{cantidad}', [formularioGestionIngresoController::class, 'filtroFechaIngreso']);
   Route::get('/formularioingresobyid/{id}', [formularioGestionIngresoController::class, 'byid']);
   Route::post('/formularioingreso', [formularioGestionIngresoController::class, 'create']);
+  Route::post('/formularioingresoservicio', [formularioGestionIngresoController::class, 'formularioingresoservicio']);
   Route::post('/formularioingresopendientes', [formularioGestionIngresoController::class, 'pendientes']);
   Route::get('/formularioingresopendientes/{cantidad}', [formularioGestionIngresoController::class, 'pendientes2']);
   Route::post('/formularioingreso/{id}', [formularioGestionIngresoController::class, 'update']);
@@ -917,8 +1021,9 @@ Route::group([
 
   //Rutas para el formulario publico de recepcion de empleados
   Route::get('/recepcionEmpleado', [RecepcionEmpleadoController::class, 'index']);
-  Route::post('/recepcionEmpleado', [RecepcionEmpleadoController::class, 'create']);
-  Route::put('/recepcionEmpleado/{cod_emp}', [RecepcionEmpleadoController::class, 'updateByCodEmp']);
+  Route::post('/recepcionEmpleado', [RecepcionEmpleadoController::class, 'createNovasoft']);
+  Route::put('/recepcionEmpleado/{cod_emp}', [RecepcionEmpleadoController::class, 'updateByCodEmpNovasoft']);
+  Route::put('/recepcionEmpleadoseiya/{usuario_id}', [RecepcionEmpleadoController::class, 'createSeiya']);
   Route::get('/recepcionEmpleado/{cod_emp}', [RecepcionEmpleadoController::class, 'searchByCodEmp']);
   Route::get('/paisesFormularioEmpleado', [PaisesFormualrioEmpleadoController::class, 'index']);
   Route::get('/ciudadesFormularioEmpleado', [CiudadesFormularioEmpleadoController::class, 'index']);
@@ -929,9 +1034,17 @@ Route::group([
   Route::get('/nivelAcademicoFormEmpleado', [NivelAcademicoFormEmpleadoController::class, 'index']);
   Route::get('/grupoEtnicoEmpleado', [GrupoEtnicoFormEmpleadoController::class, 'index']);
   Route::get('/familiaresFormularioEmpleado', [FamiliaresFormEmpleadoController::class, 'index']);
-
+  Route::get('/formulariocandidato/{usuario_id}', [RecepcionEmpleadoController::class, 'searchByIdOnUsuariosCandidato']);
+  Route::delete('/experiencialaboralcanidato/{id}', [RecepcionEmpleadoController::class, 'deleteExperienciaLaboral']);
+  Route::delete('/idiomacandidato/{id}', [RecepcionEmpleadoController::class, 'deleteIdiomaCandidato']);
+  Route::get('/consultaFormularioCandidato/{cantidad}', [RecepcionEmpleadoController::class, 'indexFormularioCandidatos']);
+  Route::get('/consultaFormularioCandidatofiltro/{cadena}', [RecepcionEmpleadoController::class, 'candidatosFiltro']);
+  Route::delete('/cumplerequisitocandidato/{id}', [CumpleRequisitosController::class, 'destroy']);
+  Route::delete('/eliminarrefenciapersonal/{cod_emp}/{num_ref}', [RecepcionEmpleadoController::class, 'deleteReferencia']);
+  Route::get('/buscardocumentolistacandidatos/{documento}', [RecepcionEmpleadoController::class, 'buscardocumentolistacandidato']);
   //ruta para generar el archivo zip de seiya
   Route::get('/descargarZip/{idRadicado}/{idCliente}', [GenerarZipController::class, 'descargarArchivosById']);
+  Route::post('/addcandidatoservicio', [RecepcionEmpleadoController::class, 'addCandidatoServicio']);
 
 
 
@@ -946,7 +1059,7 @@ Route::group([
   Route::get('/vacantesocupadas/{anio}', [IndicadoresSeyaController::class, 'vacantesocupadas']);
   Route::get('/ingresoempledosmes/{anio}', [IndicadoresSeyaController::class, 'ingresoempledosmes']);
 
-
+  Route::post('/ingresoserviciocandidato/{orden_servicio_candidato_id}', [formularioGestionIngresoController::class, 'formularioingresoservicioCandidatoUnico']);
   Route::post('/borrar_nc/{id}', [formularioGestionIngresoController::class, 'borrar_nc']);
   Route::get('/hora', [formularioGestionIngresoController::class, 'hora']);
 
@@ -1010,6 +1123,66 @@ Route::group([
   Route::get('/tablasandroid_usr_app_pqrsf_crm', [VersionTablasAndroidController::class, 'usr_app_pqrsf_crm']);
   Route::get('/tablasandroid_usr_app_cliente_debida_diligencia', [VersionTablasAndroidController::class, 'usr_app_clientes']);
 
+  Route::get('/tipousuariologin', [TipoUsuarioLoginController::class, 'index']);
+
+  Route::post('/usuariocliente', [UsuariodebidaDiligenciaController::class, 'create']);
+  Route::post('/usuariocliente/{id}', [UsuariodebidaDiligenciaController::class, 'update']);
+
+  Route::get('/sectoreconomico/{cantidad}', [SectorEconomicoController::class, 'index']);
+  Route::get('/sectoreconomicolista', [SectorEconomicoController::class, 'lista']);
+  Route::get('/sectoreconomico/{id}', [SectorEconomicoController::class, 'byid']);
+  Route::post('/sectoreconomico', [SectorEconomicoController::class, 'create']);
+  Route::post('/sectoreconomicobyid/{id}', [SectorEconomicoController::class, 'update']);
+  Route::delete('/sectoreconomico/{id}', [SectorEconomicoController::class, 'destroy']);
+
+
+  Route::get('/usuariointernorol/{id}', [SectorEconomicoProfesionalController::class, 'usuariointernorol']);
+
+  Route::get('/asignacionUsuarios', [UsuarioController::class, 'asignacionUsuarios']);
+
+
+  Route::get('/profesionalSector/{cantidad}', [SectorEconomicoProfesionalController::class, 'index']);
+  Route::post('/profesionalsector', [SectorEconomicoProfesionalController::class, 'create']);
+  Route::get('/profesionalSectorbyid/{id}', [SectorEconomicoProfesionalController::class, 'byid']);
+  Route::delete('/profesionalSector/{id}', [SectorEconomicoProfesionalController::class, 'destroy']);
+  Route::post('/profesionalSectorborradomasivo', [SectorEconomicoProfesionalController::class, 'borradomasivo']);
+
+
+
+  Route::get('/usuariodisponibleservicio', [UsuarioDisponibleServicioController::class, 'index']);
+  Route::post('/usuariodisponibleservicio', [UsuarioDisponibleServicioController::class, 'create']);
+
+
+  Route::get('/asignacionServicio', [AsignacionServicioController::class, 'index']);
+  Route::post('/asignacionServicio', [AsignacionServicioController::class, 'ordenservicio']);
+  Route::post('/cancelaservicio/{id}', [AsignacionServicioController::class, 'cancelaservicio']);
+  Route::get('/listaclienteservicio', [AsignacionServicioController::class, 'clienteservicio']);
+  Route::post('/cancelacandidatoservicio/{servicio_id}/{candidato_id}', [AsignacionServicioController::class, 'cancelacandidatoservicio']);
+  Route::get('/clienteresponsableservicio/{id}', [AsignacionServicioController::class, 'responsableservicio']);
+
+
+
+  Route::get('/rolusuariointerno', [RolesUsuariosInternosController::class, 'index']);
+
+  Route::get('/validacandidato/{numero_documento}/{index}/{tipo_documento}', [RecepcionEmpleadoController::class, 'validacandidato']);
+
+  Route::get('/estadoservicio', [EstadoServicioController::class, 'index']);
+  Route::get('/estadocandidatoservicio', [EstadoCandidatoServicioController::class, 'index']);
+
+  Route::get('/motivocancelaservicio', [MotivoCancelaServicioController::class, 'index']);
+
+  //   EstadoServicioController
+  // EstadoCandidatoServicioController
+
+
+  // Route::get('/codigociiutabla/{cantidad}', [SectorEconomicoProfesionalController::class, 'tabla']);
+  // Route::post('/codigociiucodigosector', [SectorEconomicoProfesionalController::class, 'codigo_sector']);
+  // Route::get('/codigociiubyid/{id}', [SectorEconomicoProfesionalController::class, 'byid']);
+
+
+
+
+
   Route::get('/clear-cache', function () {
     echo Artisan::call('config:clear');
     echo Artisan::call('config:cache');
@@ -1027,4 +1200,5 @@ Route::group([
   // estos endpoint se usan para asignar a un empleado el lider correspondiente
   // Route::get('/examen/{cedula}', [ExamenPruebaController::class, 'examen']);
   // Route::get('/examenprueba', [ExamenPruebaController::class, 'create']);
+  Route::post('/lovepdf', [PdfEditController::class, 'compress']);
 });

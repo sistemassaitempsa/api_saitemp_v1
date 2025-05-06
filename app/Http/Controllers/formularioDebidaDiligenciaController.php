@@ -49,8 +49,10 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\enviarCorreoDDController;
 use App\Models\NovedadesDD;
-
+use App\Models\HistoricoProfesionalesModel;
 use App\Models\VersionTablasAndroid;
+use App\Http\Controllers\HistoricoProfesionalesController;
+use App\Traits\Permisos;
 
 // use App\Events\EventoPrueba2;
 
@@ -60,6 +62,7 @@ use App\Models\VersionTablasAndroid;
 
 class formularioDebidaDiligenciaController extends Controller
 {
+    use Permisos;
     /**
      * Display a listing of the resource.
      *
@@ -84,10 +87,9 @@ class formularioDebidaDiligenciaController extends Controller
     }
     public function consultacliente($cantidad)
     {
-        $permisos = $this->validaPermiso();
+        $permisos = $this->permisos();
 
         $user = auth()->user();
-        // $year_actual = date('Y');
 
         $result = cliente::join('gen_vendedor as ven', 'ven.cod_ven', '=', 'usr_app_clientes.vendedor_id')
             ->leftJoin('usr_app_estados_firma as estf', 'estf.id', '=', 'usr_app_clientes.estado_firma_id')
@@ -341,6 +343,9 @@ class formularioDebidaDiligenciaController extends Controller
                 ->where('usr_app_clientes.id', '=', $id)
                 ->first();
 
+            $historico_profesionales_controller = new HistoricoProfesionalesController;
+            $historico = $historico_profesionales_controller->byClienteId($id, false);
+            $result['historico_profesionales'] = $historico;
 
             $seguimiento = RegistroCambio::join('usr_app_clientes as cli', 'cli.id', 'usr_app_registro_cambios.cliente_id')
                 ->select(
@@ -813,7 +818,6 @@ class formularioDebidaDiligenciaController extends Controller
         }
     }
 
-
     public function formularioclientenit($nit)
     {
         $result = Cliente::where('nit', '=', $nit)
@@ -830,15 +834,10 @@ class formularioDebidaDiligenciaController extends Controller
 
     public function filtro($cadena)
     {
-        $permisos = $this->validaPermiso();
+        $permisos = $this->permisos();
 
         $user = auth()->user();
         $year_actual = date('Y');
-        // $objeto = (object) [
-        //     'mensaje' => 'Filtrando empresas',
-        //     'componente' => 'navbar/debida-diligencia/clientes'
-        // ];
-        // event(new EventoPrueba2($objeto));
         try {
             $consulta = base64_decode($cadena);
             $valores = explode("/", $consulta);
@@ -1035,7 +1034,6 @@ class formularioDebidaDiligenciaController extends Controller
             $cliente->responsable_id = $request->responsable_id;
             $cliente->contratacion_observacion = $request['contratacion_observacion'];
             $cliente->save();
-
 
             $seguimiento_estado = new ClientesSeguimientoEstado;
             $seguimiento_estado->responsable_inicial =  $user->nombres . ' ' . $user->apellidos;
@@ -1391,7 +1389,7 @@ class formularioDebidaDiligenciaController extends Controller
     {
         $estado__nuevo_id = $request->estado_firma_id;
         $user = auth()->user();
-        $permisos = $this->validaPermiso();
+        $permisos = $this->permisos();
         $cliente = Cliente::where('usr_app_clientes.id', '=', $id)
             ->select()
             ->first();
@@ -1507,6 +1505,37 @@ class formularioDebidaDiligenciaController extends Controller
                 $novedad->usuario_corrige = $request['usuario_corregir_id'];
                 $novedad->save();
             }
+
+            $historico_profesionales_controller = new HistoricoProfesionalesController;
+            $historico = $historico_profesionales_controller->byClienteId($id, false);
+
+            if (!$historico || ($historico->usuario_nomina_id !== $request['profesional_nomina_id'] ||  $historico->usuario_cartera_id !== $request['profesional_cartera_id'] || $historico->usuario_sst_id !== $request['profesional_sst'])) {
+                $historico_profesionales = new HistoricoProfesionalesModel;
+                $historico_profesionales->cliente_id = $id;
+                if ($request['profesional_sst_id']) {
+                    $historico_profesionales->profesional_sst = $request['profesional_sst'];
+                    $historico_profesionales->usuario_sst_id = $request['profesional_sst_id'];
+                    $historico_profesionales->anotacion_sst = $request['anotacion_sst'];
+                }
+                if ($request['profesional_cartera_id']) {
+                    $historico_profesionales->profesional_cartera = $request['profesional_cartera'];
+                    $historico_profesionales->usuario_cartera_id = $request['profesional_cartera_id'];
+                    $historico_profesionales->anotacion_cartera = $request['anotacion_cartera'];
+                }
+                if ($request['profesional_nomina_id']) {
+                    $historico_profesionales->profesional_nomina = $request['profesional_nomina'];
+                    $historico_profesionales->usuario_nomina_id  = $request['profesional_nomina_id'];
+                    $historico_profesionales->anotacion_nomina = $request['anotacion_nomina'];
+                }
+                $historico_profesionales->save();
+            } else {
+
+                $historico->anotacion_nomina = $request['anotacion_nomina'];
+                $historico->anotacion_cartera = $request['anotacion_cartera'];
+                $historico->anotacion_sst = $request['anotacion_sst'];
+                $historico->save();
+            }
+
 
 
 
@@ -2190,7 +2219,7 @@ class formularioDebidaDiligenciaController extends Controller
         /* $numeroResponsables = $usuarios->count(); */
 
         // Obtener el registro de ingreso
-        $permisos = $this->validaPermiso();
+        $permisos = $this->permisos();
 
 
         if ($registro_ingreso->responsable_id != null && $registro_ingreso->responsable_id != $user->id && !in_array('34', $permisos)) {
@@ -2234,7 +2263,7 @@ class formularioDebidaDiligenciaController extends Controller
             $registro_ingreso = cliente::where('usr_app_clientes.id', '=', $item_id)
                 ->first();
 
-            $permisos = $this->validaPermiso();
+            $permisos = $this->permisos();
 
             $last_registro = ClientesSeguimientoEstado::where('usr_app_clientes_seguimiento_estado.cliente_id', $item_id)
                 ->select()->orderBy('id', 'desc')->first();

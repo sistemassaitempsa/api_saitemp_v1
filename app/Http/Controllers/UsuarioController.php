@@ -7,38 +7,26 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
+use App\Traits\AutenticacionGuard;
+use App\Models\UsuariosInternosModel;
 
 class UsuarioController extends Controller
 {
+    use AutenticacionGuard;
     /**
      * Display a listing of the resource.
      *
      * @return \Illuminate\Http\Response
      */
-    public function index($cantidad)
+    public function index($cantidad, $tipo)
     {
-
-        $users = user::join("usr_app_roles", "usr_app_roles.id", "=", "usr_app_usuarios.rol_id")
-            ->join("usr_app_estados_usuario ", "usr_app_estados_usuario .id", "=", "usr_app_usuarios.estado_id")
-            ->select(
-                "usr_app_roles.nombre as rol",
-                "usr_app_usuarios.nombres",
-                "usr_app_usuarios.apellidos",
-                "usr_app_usuarios.usuario",
-                "usr_app_usuarios.email",
-                "usr_app_usuarios.id as id_user",
-                "usr_app_estados_usuario .nombre as estado",
-
-            )
-            ->paginate($cantidad);
-        return response()->json($users);
+        $lista = $this->listaUsuarios($cantidad, $tipo);
+        return $lista;
     }
 
     public function index2()
     {
-        $users = user::select(
-            // "usr_app_usuarios.nombres",
-            // "usr_app_usuarios.apellidos",
+        $users = UsuariosInternosModel::select(
             DB::raw("CONCAT(REPLACE(nombres, 'null', ''), ' ', REPLACE(apellidos, 'null', '')) AS nombre")
 
         )
@@ -48,6 +36,7 @@ class UsuarioController extends Controller
 
     public function filtro($filtro, $cantidad)
     {
+
         $users = user::join("usr_app_roles", "usr_app_roles.id", "=", "usr_app_usuarios.rol_id")
             ->join("usr_app_estados_usuario ", "usr_app_estados_usuario .id", "=", "usr_app_usuarios.estado_id")
             ->where('usr_app_usuarios.nombres', 'like', '%' . $filtro . '%')
@@ -59,7 +48,7 @@ class UsuarioController extends Controller
                 "usr_app_usuarios.apellidos",
                 "usr_app_usuarios.usuario",
                 "usr_app_usuarios.email",
-                "usr_app_usuarios.id as id_user",
+                "usr_app_usuarios.id as usuario_id",
                 "usr_app_estados_usuario .nombre as estado",
             )
             ->paginate($cantidad);
@@ -77,71 +66,16 @@ class UsuarioController extends Controller
             ->get();
         return response()->json($result);
     }
-
-
     public function userlogued()
     {
-        $id = auth()->id();
-        $users = user::join("usr_app_roles", "usr_app_roles.id", "=", "usr_app_usuarios.rol_id")
-            ->join("usr_app_estados_usuario", "usr_app_estados_usuario.id", "=", "usr_app_usuarios.estado_id")
-            ->where('usr_app_usuarios.id', '=', $id)
-            ->select(
-                "usr_app_roles.nombre as rol",
-                "usr_app_usuarios.nombres",
-                "usr_app_usuarios.apellidos",
-                "usr_app_usuarios.documento_identidad",
-                "usr_app_usuarios.usuario",
-                "usr_app_usuarios.email",
-                "usr_app_roles.id",
-                'usr_app_usuarios.id as usuario_id',
-                "usr_app_estados_usuario.nombre as estado",
-                "usr_app_usuarios.vendedor_id",
-            )
-            ->get();
-        if (count($users) == 0) {
-            $users = user::join("usr_app_roles", "usr_app_roles.id", "=", "usr_app_usuarios.rol_id")
-                ->join("usr_app_estados_usuario", "usr_app_estados_usuario.id", "=", "usr_app_usuarios.estado_id")
-                ->where('usr_app_usuarios.id', '=', $id)
-                ->select(
-                    "usr_app_usuarios.nombres",
-                    "usr_app_usuarios.apellidos",
-                    "usr_app_usuarios.usuario",
-                    "usr_app_usuarios.email",
-                    "usr_app_usuarios.id as id_user",
-                    "usr_app_roles.nombre as rol",
-                    "usr_app_roles.id",
-                    'usr_app_usuarios.id as usuario_id',
-                    "estado_usuarios.nombre as estado",
-                    "usr_app_estados_usuario.id as id_estado",
-                )
-                ->get();
-            return response()->json($users);
-        } else {
-            return response()->json($users);
-        }
+        $user = $this->getUserRelaciones();
+        return $user;
     }
 
     public function userById($id)
     {
-
-        $users = user::join("usr_app_roles", "usr_app_roles.id", "=", "usr_app_usuarios.rol_id")
-            ->join("usr_app_estados_usuario", "usr_app_estados_usuario.id", "=", "usr_app_usuarios.estado_id")
-            ->where('usr_app_usuarios.id', '=', $id)
-            ->select(
-                "usr_app_usuarios.nombres",
-                "usr_app_usuarios.apellidos",
-                "usr_app_usuarios.documento_identidad",
-                "usr_app_usuarios.usuario",
-                "usr_app_usuarios.email",
-                "usr_app_usuarios.id as id_user",
-                "usr_app_roles.nombre as rol",
-                "usr_app_roles.id as id_rol",
-                "usr_app_estados_usuario.nombre as estado",
-                "usr_app_estados_usuario.id as id_estado",
-
-            )
-            ->get();
-        return response()->json($users);
+        $user = $this->getUserRelaciones($id);
+        return $user;
     }
 
     public function infoLogin($id)
@@ -149,7 +83,6 @@ class UsuarioController extends Controller
         $users = user::join("usr_app_roles", "usr_app_roles.id", "=", "usr_app_usuarios.rol_id")
             ->where('usr_app_usuarios.id', '=', $id)
             ->select(
-
                 "usr_app_roles.nombre as rol",
                 "usr_app_usuarios.nombres as nombres",
                 "usr_app_usuarios.apellidos as apellidos",
@@ -226,10 +159,9 @@ class UsuarioController extends Controller
      */
     public function update(Request $request)
     {
-        $user = user::find($request->id_user);
-
+        $user = UsuariosInternosModel::where('usuario_id', '=', $request->id_user)->first();
+        $login = user::find($request->id_user);
         $archivos = $request->files->all();
-
         if ($user->imagen_firma_1 != null && count($archivos) > 0) {
             $rutaArchivo1 = base_path('public') . $user->imagen_firma_1;
             if (file_exists($rutaArchivo1)) {
@@ -260,19 +192,40 @@ class UsuarioController extends Controller
 
         try {
 
+            $login->estado_id = $request->estado_id !== "null" ? $request->estado_id : null;
+            $login->rol_id = $request->rol_id !== "null" ? $request->rol_id : null;
+            $login->save();
+
             $user->nombres = $request->nombres !== "null" ? $request->nombres : null;
             $user->apellidos = $request->apellidos !== "null" ? $request->apellidos : null;
             $user->documento_identidad = $request->documento_identidad !== "null" ? $request->documento_identidad : null;
-            $user->usuario = $request->usuario !== "null" ? $request->usuario : null;
-            $user->email = $request->email !== "null" ? $request->email : null;
-            $user->estado_id = $request->estado_id !== "null" ? $request->estado_id : null;
-            $user->rol_id = $request->rol_id !== "null" ? $request->rol_id : null;
+            $user->correo = $request->usuario !== "null" ? $request->usuario : null;
+            if ($request->rol_interno_id != '') {
+                $user->rol_usuario_interno_id = $request->rol_interno_id;
+            }
             if ($request->contrasena_correo != '') {
                 $user->contrasena_correo = Crypt::encryptString($request->contrasena_correo);
             }
             if ($request->password != null || $request->password != "") {
-                $user->password = app('hash')->make($request->password);
+                $login->password = app('hash')->make($request->password);
             }
+            if ($user->save() && $login->save()) {
+                return response()->json(['status' => 'success', 'message' => 'Usuario actualizado exitosamente']);
+            }
+        } catch (\Exception $e) {
+            return $e;
+        }
+    }
+
+
+    public function update2(Request $request)
+    {
+        $user = user::find($request->id_user);
+
+        try {
+
+            $user->rol_usuario_interno_id = $request->rol_usuario_interno_id;
+
             if ($user->save()) {
                 return response()->json(['status' => 'success', 'message' => 'Usuario actualizado exitosamente']);
             }
@@ -280,6 +233,36 @@ class UsuarioController extends Controller
             return $e;
         }
     }
+
+
+    public function asignacionUsuarios()
+    {
+        $result = User::all();
+        foreach ($result as $usuario) {
+            // if ($usuario->id > 3) {
+            $nombres = explode(" ", $usuario->nombres);
+            $nombre1 = isset($nombres[0]) ? $nombres[0] : '';
+            $nombre2 = isset($nombres[1]) ? $nombres[1] : '';
+            $apellido1 = isset($nombres[2]) ? $nombres[2] : '';
+            $apellido2 = isset($nombres[3]) ? $nombres[3] : '';
+
+            $nuevoUsuario = new UsuariosInternosModel();
+            $nuevoUsuario->usuario_id = $usuario->id;
+            $nuevoUsuario->nombres = trim("$nombre1 $nombre2");
+            $nuevoUsuario->apellidos = trim("$apellido1 $apellido2");
+            $nuevoUsuario->documento_identidad = $usuario->documento_identidad ?? '';
+            $nuevoUsuario->correo = $usuario->usuario;
+            $nuevoUsuario->contrasena_correo = $usuario->contrasena_correo;
+            $nuevoUsuario->imagen_firma_1 = $usuario->imagen_firma_1;
+            $nuevoUsuario->imagen_firma_2 = $usuario->imagen_firma_2;
+            $nuevoUsuario->rol_usuario_interno_id = 1;
+            $nuevoUsuario->save();
+            // }
+        }
+
+        return response()->json("Usuarios insertados con éxito");
+    }
+
 
 
 
@@ -302,10 +285,23 @@ class UsuarioController extends Controller
             return response()->json(['status' => 'error', 'message' => 'Error al eliminar el usuario']);
         }
     }
+
     public function updateVendedorId(Request $request, $id)
     {
         $result = user::find($id);
         $result->vendedor_id = $request->vendedor_id;
         $result->save();
+    }
+
+    public function byRolInterno($rol)
+    {
+        $result = user::select(
+            'id',
+            DB::raw("CONCAT(nombres,' ',apellidos)  AS nombre"),
+            'usuario AS email',
+            'lider',
+        )->where('rol_usuario_interno_id', $rol)
+            ->get();
+        return response()->json($result);
     }
 }

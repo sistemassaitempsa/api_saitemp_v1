@@ -160,7 +160,7 @@ class ApiFirmaElectronicaController extends Controller
                 "Firmantes" => $firmantes,
                 "NombreCreador" => "Saitemp S.A",
                 "Notificacion" => "5",
-                "Callback" => "https://debidadiligencia.saitempsa.com:8484/aplicaciones/api2/public/api/v1/seguimientocrm2",
+                "Callback" => "https://debidadiligencia.alinstantesas.com/aplicaciones/api2/public/api/v1/seguimientocrm2",
                 "DiasVence" => "30",
                 "FirmaGrafica" => "0"
             ];
@@ -350,72 +350,95 @@ class ApiFirmaElectronicaController extends Controller
 
     public function consultaFirmantes($id)
     {
-        $contrato = HistoricoContratosDDModel::where('usr_app_historico_contratos_dd.transaccion_id', '=', $id)->where('activo', '=', 1)
+        $contrato = HistoricoContratosDDModel::where('usr_app_historico_contratos_dd.transaccion_id', $id)
+            ->where('activo', 1)
             ->first();
+
+        if (!$contrato) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Contrato no encontrado'
+            ], 404);
+        }
+
         $url_validart = Config::get('app.VALIDART_URL');
-        $end_point = '/api/Transaccion/firmantes/' . $id;
+        $end_point = "/api/Transaccion/firmantes/{$id}";
         $takenToken = $this->takeTokenValidart();
 
-        if ($takenToken['status'] == 'success') {
-            $token = $takenToken['token']['token'];
-            try {
-                $response = Http::withHeaders(['Authorization' => 'Bearer ' . $token])->get($url_validart . $end_point);
-                if ($response->successful()) {
-                    $firmantes = $response->json();
-                    foreach ($firmantes as $firmante) {
-                        if ($firmante['email'] == $contrato->correo_enviado_empresa) {
-                            if ($firmante['estado'] == 1) {
-                                $contrato->firmado_empresa = 1;
-                                $contrato->estado_contrato = "Firmado";
-                                $fechaOriginal = $firmante['fecha'];
-                                $fechaConvertida = Carbon::parse($fechaOriginal)->format('Y-m-d H:i:s');
-                                $contrato->fecha_firma_empresa = $fechaConvertida;
-                            }
-                            if ($firmante['estado'] == 2) {
-                                $contrato->firmado_empresa = 0;
-                                $contrato->estado_contrato = "Anulado";
-                            }
-                        }
-                        if ($firmante['email'] == $contrato->correo_enviado_cliente) {
-                            if ($firmante['estado'] == 1) {
-                                $contrato->firmado_cliente = 1;
-                                $fechaOriginal = $firmante['fecha'];
-                                $fechaConvertida = Carbon::parse($fechaOriginal)->format('Y-m-d H:i:s');
-                                $contrato->estado_contrato = "Firmado por el cliente";
-                                $contrato->fecha_firma_cliente = $fechaConvertida;
-                            }
-                            if ($firmante['estado'] == 2) {
-                                $contrato->firmado_cliente = 0;
-                                $contrato->estado_contrato = "Anulado";
-                            }
-                        }
-                    }
-                    if ($contrato->firmado_cliente == 1 && $contrato->firmado_empresa = 1) {
-                        $contrato->estado_contrato = "Firmado";
-                    }
-                    $contrato->save();
-                    return [
-                        'status' => 'success',
-                        'response' => $response->json(),
-                        'contrato' => $contrato
-                    ];
-                } else {
-                    return response()->json([
-                        'status' => 'error',
-                        'message' => $response->json()
-                    ], $response->status());
-                }
-            } catch (\Exception $e) {
-                return response()->json([
-                    'status' => 'error',
-                    'message' => $e->getMessage(),
-                ], 500);
-            }
-        } else {
+        if ($takenToken['status'] !== 'success') {
             return response()->json([
                 'status' => 'error',
                 'message' => $takenToken['message'] ?? 'No se pudo obtener el token'
             ]);
+        }
+
+        $token = $takenToken['token']['token'];
+
+        try {
+            $response = Http::withHeaders([
+                'Authorization' => "Bearer {$token}"
+            ])->get("{$url_validart}{$end_point}");
+
+            if (!$response->successful()) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => $response->json()
+                ], $response->status());
+            }
+
+            $firmantes = $response->json();
+
+            if (!is_array($firmantes)) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Respuesta inesperada del servicio'
+                ], 500);
+            }
+
+            foreach ($firmantes as $firmante) {
+                $fechaConvertida = Carbon::parse($firmante['fecha'])->format('Y-m-d H:i:s');
+
+                switch (true) {
+                    case $firmante['email'] == $contrato->correo_enviado_empresa:
+                        if ($firmante['estado'] == 1) {
+                            $contrato->firmado_empresa = 1;
+                            $contrato->estado_contrato = "Firmado";
+                            $contrato->fecha_firma_empresa = $fechaConvertida;
+                        } elseif ($firmante['estado'] == 2) {
+                            $contrato->firmado_empresa = 0;
+                            $contrato->estado_contrato = "Anulado";
+                        }
+                        break;
+
+                    case $firmante['email'] == $contrato->correo_enviado_cliente:
+                        if ($firmante['estado'] == 1) {
+                            $contrato->firmado_cliente = 1;
+                            $contrato->estado_contrato = "Firmado por el cliente";
+                            $contrato->fecha_firma_cliente = $fechaConvertida;
+                        } elseif ($firmante['estado'] == 2) {
+                            $contrato->firmado_cliente = 0;
+                            $contrato->estado_contrato = "Anulado";
+                        }
+                        break;
+                }
+            }
+
+            if ($contrato->firmado_cliente == 1 && $contrato->firmado_empresa == 1) {
+                $contrato->estado_contrato = "Firmado";
+            }
+
+            $contrato->save();
+
+            return response()->json([
+                'status' => 'success',
+                'response' => $firmantes,
+                'contrato' => $contrato
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => $e->getMessage(),
+            ], 500);
         }
     }
     public function consultaProcesoFirma($id)

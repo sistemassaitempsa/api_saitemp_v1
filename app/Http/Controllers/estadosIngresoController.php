@@ -14,7 +14,7 @@ class estadosIngresoController extends Controller
      */
     public function index()
     {
-        $result = estadosIngreso::select(
+        $result = estadosIngreso::where('id','!=',14)->select(
             'id',
             'nombre',
             'color'

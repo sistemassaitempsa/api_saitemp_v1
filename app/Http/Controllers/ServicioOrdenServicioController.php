@@ -4,9 +4,14 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\ServicioOrdenServicio;
+use App\Traits\AutenticacionGuard;
+use App\Models\cliente;
+use Illuminate\Support\Facades\DB;
+use App\Models\user;
 
 class ServicioOrdenServicioController extends Controller
 {
+    use AutenticacionGuard;
     /**
      * Display a listing of the resource.
      *
@@ -18,8 +23,37 @@ class ServicioOrdenServicioController extends Controller
             'id',
             'nombre'
         )
-        ->get();
+            ->get();
         return response()->json($result);
+    }
+
+    public function datoscliente()
+    {
+        $user = $this->getUserRelaciones();
+        $data = $user->getData(true);
+        if ($data['tipo_usuario_id'] == 2) {
+            $result = cliente::join('usr_app_actividades_ciiu as ac', 'ac.id', '=', 'usr_app_clientes.actividad_ciiu_id')
+                ->join('usr_app_codigos_ciiu as cc', 'cc.id', '=', 'ac.codigo_ciiu_id')
+                ->join('usr_app_sector_economico as se', 'se.id', '=', 'cc.sector_economico_id')
+                ->where('usr_app_clientes.nit', '=', $data['nit'])
+                ->orWhere('usr_app_clientes.numero_identificacion', '=', $data['nit'])
+                ->select(
+                    'usr_app_clientes.id',
+                    'usr_app_clientes.razon_social',
+                    DB::raw('COALESCE(nit, numero_identificacion) as nit'),
+                    'ac.codigo_actividad as actividad_ciiu',
+                    'se.nombre as sector_economico',
+                    'se.id as sector_economico_id'
+                )->first();
+            $result->nombre_contacto = $data['nombre_contacto'];
+            $result->telefono_contacto = $data['telefono_contacto'];
+            $result->cargo_contacto = $data['cargo_contacto'];
+            return $result;
+        }
+        if ($data['tipo_usuario_id'] == 1) {
+            return '';
+        }
+        return '';
     }
 
     /**
