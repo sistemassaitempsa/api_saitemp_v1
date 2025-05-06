@@ -25,7 +25,7 @@ use TCPDF;
 use Illuminate\Support\Facades\DB;
 use App\Traits\Permisos;
 use App\Traits\AutenticacionGuard;
-
+use App\Exports\SalidasNoConformeExport;
 
 
 class formularioGestionIngresoController extends Controller
@@ -2638,9 +2638,9 @@ class formularioGestionIngresoController extends Controller
                 $prefijoCampo = 'cat.';
                 $campoActual = 'nombre';
             } elseif ($campoActual === 'subsanado') {
-                if ($valorCompararActual == 'Si') {
+                if (strtolower(trim($valorCompararActual)) == 'si') {
                     $valorCompararActual = 1;
-                } else {
+                } else if (strtolower(trim($valorCompararActual)) == 'no') {
                     $valorCompararActual = 0;
                 }
             } else {
@@ -2681,12 +2681,112 @@ class formularioGestionIngresoController extends Controller
         }
 
         $result = $query->paginate($cantidad);
+        $result->getCollection()->transform(function ($item) {
+            $item->subsanado = $item->subsanado == 1 ? 'Sí' : 'No';
+            return $item;
+        });
         return response()->json($result);
     }
 
-    public function exportsncseiya($cadena)
+    public function exportsncseiya($cadena, $cantidad = 10)
     {
-        return $cadena;
+        $cadenaJSON = base64_decode($cadena);
+        $cadenaUTF8 = mb_convert_encoding($cadenaJSON, 'UTF-8', 'ISO-8859-1');
+        $arrays = explode('/', $cadenaUTF8);
+        $arraysDecodificados = array_map('json_decode', $arrays);
+
+
+        $campo = $arraysDecodificados[0];
+        $operador = $arraysDecodificados[1];
+        $valor_comparar = $arraysDecodificados[2];
+        $valor_comparar2 = $arraysDecodificados[3];
+
+        $query = SalidaNoConformeseiya::join('usr_app_procesos_snc_seiya as pro', 'pro.id', 'usr_app_salida_n_conforme_seiya.proceso_id')
+            ->join('usr_app_categorias_snc_seiya as cat', 'cat.id', 'usr_app_salida_n_conforme_seiya.categoria_snc_id')
+            ->join('usr_app_formulario_ingreso as fi', 'fi.id', 'usr_app_salida_n_conforme_seiya.orden_servicio_id')
+            ->join('usr_app_clientes as cli', 'cli.id', 'fi.cliente_id')
+            ->select(
+                'usr_app_salida_n_conforme_seiya.id',
+                'cli.razon_social',
+                'fi.numero_radicado',
+                'usr_app_salida_n_conforme_seiya.responsable_corregir',
+                'usr_app_salida_n_conforme_seiya.descripcion',
+                'usr_app_salida_n_conforme_seiya.subsanado',
+                'pro.nombre as proceso',
+                'cat.nombre as categoria',
+                'usr_app_salida_n_conforme_seiya.created_at',
+                'usr_app_salida_n_conforme_seiya.updated_at',
+                'usr_app_salida_n_conforme_seiya.correcion_aplicada',
+                'usr_app_salida_n_conforme_seiya.corrigio_novedad',
+            )
+            ->orderby('usr_app_salida_n_conforme_seiya.id', 'DESC');
+
+
+        $numElementos = count($campo);
+
+        for ($i = 0; $i < $numElementos; $i++) {
+            $campoActual = $campo[$i];
+            $operadorActual = $operador[$i];
+            $valorCompararActual = $valor_comparar[$i];
+
+            $prefijoCampo = '';
+            if ($campoActual === 'razon_social') {
+                $prefijoCampo = 'cli.';
+                $campoActual = 'razon_social';
+            } elseif ($campoActual === 'numero_radicado') {
+                $prefijoCampo = 'fi.';
+                $campoActual = 'numero_radicado';
+            } elseif ($campoActual === 'proceso') {
+                $prefijoCampo = 'pro.';
+                $campoActual = 'nombre';
+            } elseif ($campoActual === 'categoria') {
+                $prefijoCampo = 'cat.';
+                $campoActual = 'nombre';
+            } elseif ($campoActual === 'subsanado') {
+                if (strtolower(trim($valorCompararActual)) == 'si') {
+                    $valorCompararActual = 1;
+                } else if (strtolower(trim($valorCompararActual)) == 'no') {
+                    $valorCompararActual = 0;
+                }
+            } else {
+                $prefijoCampo = 'usr_app_salida_n_conforme_seiya.';
+            }
+
+            switch ($operadorActual) {
+                case 'Menor que':
+                    $query->where($prefijoCampo . $campoActual, '<', $valorCompararActual);
+                    break;
+                case 'Mayor que':
+                    $query->where($prefijoCampo . $campoActual, '>', $valorCompararActual);
+                    break;
+                case 'Menor o igual que':
+                    $query->where($prefijoCampo . $campoActual, '<=', $valorCompararActual);
+                    break;
+                case 'Mayor o igual que':
+                    $query->where($prefijoCampo . $campoActual, '>=', $valorCompararActual);
+                    break;
+                case 'Igual a número':
+                    $query->where($prefijoCampo . $campoActual, '=', $valorCompararActual);
+                    break;
+                case 'Entre':
+                    $valorComparar2Actual = $valor_comparar2[$i];
+                    $query->whereDate($prefijoCampo . $campoActual, '>=', $valorCompararActual);
+                    $query->whereDate($prefijoCampo . $campoActual, '<=', $valorComparar2Actual);
+                    break;
+                case 'Igual a':
+                    $query->where($prefijoCampo . $campoActual, '=', $valorCompararActual);
+                    break;
+                case 'Igual a fecha':
+                    $query->whereDate($prefijoCampo . $campoActual, '=', $valorCompararActual);
+                    break;
+                case 'Contiene':
+                    $query->where($prefijoCampo . $campoActual, 'like', '%' . $valorCompararActual . '%');
+                    break;
+            }
+        }
+
+        $result = $query->get();
+        return (new SalidasNoConformeExport($result))->download('exportData.xlsx', \Maatwebsite\Excel\Excel::XLSX);
     }
 
     public function borrar_nc($id)

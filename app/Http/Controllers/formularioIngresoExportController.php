@@ -139,8 +139,7 @@ class formularioIngresoExportController extends Controller
             }
         }
 
-        // Al final, ejecutar la consulta y obtener los resultados
-        $resultados = $query->get(); // paginamos los resultados
+        $resultados = $query->get(); 
 
         foreach ($resultados as $item) {
             $item->fecha_examen = $item->fecha_examen ? date('d/m/Y H:i', strtotime($item->fecha_examen)) : null;
