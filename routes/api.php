@@ -130,6 +130,7 @@ use App\Http\Controllers\formularioGestionIngresoController;
 use App\Http\Controllers\estadosIngresoController;
 use App\Http\Controllers\FormularioIngresoTipoServicioController;
 use App\Http\Controllers\formularioIngresoExportController;
+use App\Http\Controllers\ProcesoSNCController;
 use App\Http\Controllers\ObservacionEstadoFormIngresoController;
 use App\Http\Controllers\SedeController;
 use App\Http\Controllers\SolicitanteCrmController;
@@ -187,6 +188,9 @@ use App\Http\Controllers\EstadoServicioController;
 use App\Http\Controllers\EstadoCandidatoServicioController;
 use App\Http\Controllers\MotivoCancelaServicioController;
 use App\Http\Controllers\PdfEditController;
+use App\Http\Controllers\EstadoResponsableOrdenServicioController;
+use App\Http\Controllers\EstadoCandidatoServioOrdenServicioController;
+
 
 /*
 |--------------------------------------------------------------------------
@@ -973,12 +977,21 @@ Route::group([
   Route::get('/buscardocumentolistai/{documento}', [formularioGestionIngresoController::class, 'buscardocumentolistai']);
   Route::delete('/eliminararchivosingreso/{item}/{id}', [formularioGestionIngresoController::class, 'eliminararchivo']);
   Route::post('/asignacionmasivaformularioingreso/{id_estado}/{id_encargado}', [formularioGestionIngresoController::class, 'asignacionmasiva']);
+  Route::post('/actualizasnc', [formularioGestionIngresoController::class, 'actualizasnc']);
+  Route::get('/sncseiya/{cadena}', [formularioGestionIngresoController::class, 'sncseiya']);
+  Route::get('/sncseiyafiltro/{cadena}/{cantidad}', [formularioGestionIngresoController::class, 'sncseiyafiltro']);
+  Route::get('/exportsncseiya/{cadena}', [formularioGestionIngresoController::class, 'exportsncseiya']);
 
+  Route::get('/procesos_snc', [ProcesoSNCController::class, 'index']);
   Route::get('/observacionestado', [ObservacionEstadoFormIngresoController::class, 'index']);
   Route::get('/limitesCrm', [limitesCrmController::class, 'getLimitesCrm']);
   Route::get('/recortarObservacion', [SeguimientoCrmController::class, 'recortarObservacion']);
 
   Route::get('/estadosingresos', [estadosIngresoController::class, 'index']);
+  Route::get('/estadosingresos/{cantidad}', [estadosIngresoController::class, 'tabla']);
+  Route::post('/estadosingresos', [estadosIngresoController::class, 'create']);
+  Route::post('/estadosingresos/{id}', [estadosIngresoController::class, 'update']);
+  Route::delete('/estadosingresos/{id}', [estadosIngresoController::class, 'destroy']);
   Route::get('/actualizaestadoingreso/{item}/{estado}', [formularioGestionIngresoController::class, 'actualizaestadoingreso']);
   Route::get('/actualizaResponsableingreso/{item}/{responsable_id}/{nombre}', [formularioGestionIngresoController::class, 'actualizaResponsableingreso']);
   Route::get('/responsableingresos/{estado}', [formularioGestionIngresoController::class, 'responsableingresos']);
@@ -1169,7 +1182,24 @@ Route::group([
   Route::get('/estadoservicio', [EstadoServicioController::class, 'index']);
   Route::get('/estadocandidatoservicio', [EstadoCandidatoServicioController::class, 'index']);
 
+  Route::post('/estadocandidatoservicio/{id}', [EstadoCandidatoServicioController::class, 'update']);
+  Route::get('/estadocandidatoserviciotabla', [EstadoCandidatoServicioController::class, 'tabla']);
+
   Route::get('/motivocancelaservicio', [MotivoCancelaServicioController::class, 'index']);
+  
+  Route::get('/estadoresponsable/{cantidad}', [EstadoResponsableOrdenServicioController::class, 'index']);
+  Route::post('/estadoresponsable', [EstadoResponsableOrdenServicioController::class, 'create']);
+  Route::delete('/estadoresponsable/{id}', [EstadoResponsableOrdenServicioController::class, 'destroy']);
+  Route::post('/estadoresponsableborradomasivo', [EstadoResponsableOrdenServicioController::class, 'borradomasivo']);
+  Route::get('/estadoresponsablefiltro/{cadena}/{cantidad}', [EstadoResponsableOrdenServicioController::class, 'filtro']);
+  
+  
+  Route::get('/estadocandidatoordenservicio', [EstadoCandidatoServioOrdenServicioController::class, 'index']);
+  Route::post('/estadocandidatoordenservicio', [EstadoCandidatoServioOrdenServicioController::class, 'create']);
+  Route::get('/estadocandidatoordenservicio/{cantidad}', [EstadoCandidatoServioOrdenServicioController::class, 'tabla']);
+  Route::post('/estadocandidatoordenservicioborradomasivo', [EstadoCandidatoServioOrdenServicioController::class, 'borradomasivo']);
+  Route::delete('/estadocandidatoordenservicio/{id}', [EstadoCandidatoServioOrdenServicioController::class, 'destroy']);
+  Route::get('/estadocandidatoordenserviciofiltro/{cadena}/{cantidad}', [EstadoCandidatoServioOrdenServicioController::class, 'filtro']);
 
   //   EstadoServicioController
   // EstadoCandidatoServicioController

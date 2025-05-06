@@ -19,16 +19,19 @@ use Carbon\Carbon;
 use App\Events\NotificacionSeiya;
 use App\Models\HistoricoConceptosCandidatosModel;
 use App\Models\UsuariosCandidatosModel;
+use App\Models\SalidaNoConformeseiya;
+use App\Models\EstadoCandidatoServioOrdenServicioModel;
 use TCPDF;
 use Illuminate\Support\Facades\DB;
 use App\Traits\Permisos;
-
-// use App\Events\EventoPrueba2;
+use App\Traits\AutenticacionGuard;
+use App\Exports\SalidasNoConformeExport;
 
 
 class formularioGestionIngresoController extends Controller
 {
     use Permisos;
+    use AutenticacionGuard;
     /**
      * Display a listing of the resource.
      *
@@ -37,7 +40,9 @@ class formularioGestionIngresoController extends Controller
     public function index($cantidad)
     {
         $permisos = $this->permisos();
-        $user = auth()->user();
+        // $user = auth()->user();
+        $user = $this->getUserRelaciones();
+        $user = $user->getData(true);
 
         $result = formularioGestionIngreso::leftJoin('usr_app_clientes as cli', 'cli.id', 'usr_app_formulario_ingreso.cliente_id')
             ->leftJoin('usr_app_municipios as mun', 'mun.id', 'usr_app_formulario_ingreso.municipio_id')
@@ -133,7 +138,9 @@ class formularioGestionIngresoController extends Controller
     public function actualizaestadoingreso($item_id, $estado_id, $responsable_id = null,  $responsable_actual = null, $estado_inicial = null)
     {
 
-        $user = auth()->user();
+        // $user = auth()->user();
+        $user = $this->getUserRelaciones();
+        $user = $user->getData(true);
         $usuarios = FormularioIngresoResponsable::where('usr_app_formulario_ingreso_responsable.estado_ingreso_id', '=', $estado_id)
             ->join('usr_app_usuarios as usr', 'usr.id', '=', 'usr_app_formulario_ingreso_responsable.usuario_id')
             ->select(
@@ -152,7 +159,7 @@ class formularioGestionIngresoController extends Controller
 
         $permisos = $this->permisos();
 
-        if ($registro_ingreso->responsable_id != null && $registro_ingreso->responsable_id != $user->id && !in_array('31', $permisos)) {
+        if ($registro_ingreso->responsable_id != null && $registro_ingreso->responsable_id != $user['id'] && !in_array('31', $permisos)) {
             return response()->json(['status' => 'error', 'message' => 'Solo el responsable puede realizar esta acción.']);
         }
 
@@ -168,7 +175,7 @@ class formularioGestionIngresoController extends Controller
         $seguimiento_estado->estado_ingreso_inicial = $estado_inicial != null ? $estado_inicial : $registro_ingreso->estado_ingreso_id;
         $seguimiento_estado->estado_ingreso_final =   $estado_id;
         $seguimiento_estado->formulario_ingreso_id =  $item_id;
-        $seguimiento_estado->actualiza_registro =   $user->nombres . ' ' .  $user->apellidos;
+        $seguimiento_estado->actualiza_registro =   $user['nombres'] . ' ' .  $user['apellidos'];
         $seguimiento_estado->save();
 
         // Actualizar el registro de ingreso con el estado y el responsable
@@ -228,14 +235,16 @@ class formularioGestionIngresoController extends Controller
     {
         DB::beginTransaction();
         try {
-            $user = auth()->user();
+            // $user = auth()->user();
+            $user = $this->getUserRelaciones();
+            $user = $user->getData(true);
             $registro_ingreso = formularioGestionIngreso::where('usr_app_formulario_ingreso.id', '=', $item_id)
                 ->first();
 
             $permisos = $this->permisos();
 
 
-            if ($registro_ingreso->responsable_id != null && $registro_ingreso->responsable_id != $user->id && !in_array('31', $permisos)) {
+            if ($registro_ingreso->responsable_id != null && $registro_ingreso->responsable_id != $user['id'] && !in_array('31', $permisos)) {
                 return response()->json(['status' => 'error', 'message' => 'Solo el responsable puede realizar esta acción.']);
             }
 
@@ -245,7 +254,7 @@ class formularioGestionIngresoController extends Controller
             $seguimiento_estado->estado_ingreso_inicial =  $registro_ingreso->estado_ingreso_id;
             $seguimiento_estado->estado_ingreso_final =  $registro_ingreso->estado_ingreso_id;
             $seguimiento_estado->formulario_ingreso_id =  $item_id;
-            $seguimiento_estado->actualiza_registro =   $user->nombres . ' ' .  $user->apellidos;
+            $seguimiento_estado->actualiza_registro =    $user['nombres'] . ' ' .  $user['apellidos'];
 
             $seguimiento_estado->save();
 
@@ -270,8 +279,10 @@ class formularioGestionIngresoController extends Controller
 
     public function validaPermiso()
     {
-        $user = auth()->user();
-        $responsable = UsuarioPermiso::where('usr_app_permisos_usuarios.usuario_id', '=', $user->id)
+        // $user = auth()->user();
+        $user = $this->getUserRelaciones();
+        $user = $user->getData(true);
+        $responsable = UsuarioPermiso::where('usr_app_permisos_usuarios.usuario_id', '=', $user['id'])
             ->select(
                 'permiso_id'
             )
@@ -290,6 +301,7 @@ class formularioGestionIngresoController extends Controller
                 'usuario_id',
                 DB::raw("CONCAT(nombres,' ',apellidos)  AS nombre")
             )
+            ->orderby('nombres')
             ->get();
         return response()->json($usuarios);
     }
@@ -436,6 +448,25 @@ class formularioGestionIngresoController extends Controller
             ->orderby('usr_app_formulario_ingreso_seguimiento_estado.id', 'desc')
             ->get();
         $result['seguimiento_estados'] = $seguimiento_estados;
+
+        $salidasNoConforme = SalidaNoConformeseiya::join('usr_app_procesos_snc_seiya as pro', 'pro.id', 'usr_app_salida_n_conforme_seiya.proceso_id')
+            ->join('usr_app_categorias_snc_seiya as cat', 'cat.id', 'usr_app_salida_n_conforme_seiya.categoria_snc_id')
+            ->where('orden_servicio_id', $id)
+            ->select(
+                'usr_app_salida_n_conforme_seiya.id',
+                'usr_app_salida_n_conforme_seiya.responsable_corregir',
+                'usr_app_salida_n_conforme_seiya.descripcion',
+                'usr_app_salida_n_conforme_seiya.subsanado',
+                'pro.nombre as proceso',
+                'cat.nombre as categoria',
+                'usr_app_salida_n_conforme_seiya.created_at',
+                'usr_app_salida_n_conforme_seiya.updated_at',
+                'usr_app_salida_n_conforme_seiya.correcion_aplicada',
+                'usr_app_salida_n_conforme_seiya.corrigio_novedad',
+            )
+            ->orderby('usr_app_salida_n_conforme_seiya.id', 'DESC')
+            ->get();
+        $result['salidas_no_conforme'] = $salidasNoConforme;
         return response()->json($result);
     }
 
@@ -1502,7 +1533,9 @@ class formularioGestionIngresoController extends Controller
     public function filtroFechaIngreso(Request $request, $cantidad = null)
     {
         $permisos = $this->permisos();
-        $user = auth()->user();
+        // $user = auth()->user();
+        $user = $this->getUserRelaciones();
+        $user = $user->getData(true);
         $result = formularioGestionIngreso::leftJoin('usr_app_clientes as cli', 'cli.id', 'usr_app_formulario_ingreso.cliente_id')
             ->leftJoin('usr_app_municipios as mun', 'mun.id', 'usr_app_formulario_ingreso.municipio_id')
             ->LeftJoin('usr_app_estados_ingreso as est', 'est.id', 'usr_app_formulario_ingreso.estado_ingreso_id')
@@ -1553,7 +1586,7 @@ class formularioGestionIngresoController extends Controller
                 ->orderBy('cli.contratacion_hora_confirmacion', 'ASC');
         }
         if ($request['filtro_mios'] == true) {
-            $result->where('usr_app_formulario_ingreso.responsable_id', '=', $user->id);
+            $result->where('usr_app_formulario_ingreso.responsable_id', '=', $user['id']);
         } else if ($request['ordenar_prioridad'] == false) {
             $result->orderby('usr_app_formulario_ingreso.id', 'DESC');
         }
@@ -1582,7 +1615,6 @@ class formularioGestionIngresoController extends Controller
         $operador = $arraysDecodificados[1];
         $valor_comparar = $arraysDecodificados[2];
         $valor_comparar2 = $arraysDecodificados[3];
-        $permisos = $this->permisos();
         $query = FormularioGestionIngreso::leftJoin('usr_app_clientes as cli', 'cli.id', 'usr_app_formulario_ingreso.cliente_id')
             ->leftJoin('usr_app_municipios as mun', 'mun.id', 'usr_app_formulario_ingreso.municipio_id')
             ->LeftJoin('usr_app_estados_ingreso as est', 'est.id', 'usr_app_formulario_ingreso.estado_ingreso_id')
@@ -1894,9 +1926,10 @@ class formularioGestionIngresoController extends Controller
             $replica = 1;
         }
         DB::beginTransaction();
-        $user = auth()->user();
+        $user = $this->getUserRelaciones();
+        $user = $user->getData(true);
         $ids = [];
-        $responsable_actual =  $user->nombres . ' ' . str_replace("null", "", $user->apellidos);
+        $responsable_actual =  $user['nombres'] . ' ' . str_replace("null", "", $user['apellidos']);
         for ($i = 0; $i < $replica; $i++) {
             try {
                 $result = new formularioGestionIngreso;
@@ -1923,7 +1956,7 @@ class formularioGestionIngresoController extends Controller
                 } else {
                     $result->estado_ingreso_id = $request->estado_id;
                 }
-                $result->responsable = $user->nombres . ' ' . $user->apellidos;
+                $result->responsable = $user['nombres'] . ' ' . str_replace("null", "", $user['apellidos']);
                 $result->tipo_servicio_id = $request->tipo_servicio_id;
                 $result->numero_vacantes = $request->numero_vacantes;
                 $result->numero_contrataciones = $request->numero_contrataciones;
@@ -1943,7 +1976,7 @@ class formularioGestionIngresoController extends Controller
                 $result->subsidio_transporte = $request->consulta_subsidio;
                 $result->estado_vacante = $request->consulta_vacante;
                 $result->tipo_documento_id = $request->tipo_identificacion;
-                $result->observacion_estado = $request->consulta_observacion_estado;
+                $result->observacion_estado = $request->consulta_categoria_snc;
                 $result->correo_laboratorio = $request->correo_laboratorio;
                 $result->contacto_empresa = $request->contacto_empresa;
                 $result->responsable_id = $request->encargado_id;
@@ -1954,6 +1987,7 @@ class formularioGestionIngresoController extends Controller
                 if ($request->n_servicio != null) {
                     $result->n_servicio = $request->n_servicio;
                 }
+
                 $result->save();
 
                 $laboratorio = new RegistroIngresoLaboratorio;
@@ -1963,7 +1997,7 @@ class formularioGestionIngresoController extends Controller
 
                 $seguimiento = new FormularioIngresoSeguimiento;
                 $seguimiento->estado_ingreso_id = $request->estado_id;
-                $seguimiento->usuario = $user->nombres . ' ' . $user->apellidos;
+                $seguimiento->usuario = $user['nombres'] . ' ' . str_replace("null", "", $user['apellidos']);
                 $seguimiento->formulario_ingreso_id = $result->id;
                 $seguimiento->save();
 
@@ -1976,7 +2010,6 @@ class formularioGestionIngresoController extends Controller
                     $this->eventoSocket($request->encargado_id);
                 }
             } catch (\Exception $e) {
-                // Revertir la transacción si se produce alguna excepción
                 DB::rollback();
                 // return $e;
                 return response()->json(['status' => 'error', 'message' => 'Error al guardar formulario, por favor intente nuevamente']);
@@ -2008,9 +2041,10 @@ class formularioGestionIngresoController extends Controller
         // }
 
         DB::beginTransaction();
-        $user = auth()->user();
+        $user = $this->getUserRelaciones();
+        $user = $user->getData(true);
         $ids = [];
-        $responsable_actual =  $user->nombres . ' ' . str_replace("null", "", $user->apellidos);
+        $responsable_actual =  $user['nombres'] . ' ' . str_replace("null", "", $user['apellidos']);
         for ($i = 0; $i < $replica; $i++) {
             try {
                 $result = new formularioGestionIngreso;
@@ -2034,7 +2068,7 @@ class formularioGestionIngresoController extends Controller
                 } else {
                     $result->estado_ingreso_id = $request->estado_id;
                 }
-                $result->responsable = $user->nombres . ' ' . $user->apellidos;
+                $result->responsable = $user['nombres'] . ' ' . str_replace("null", "", $user['apellidos']);
                 $result->tipo_servicio_id = $request->tipo_servicio_id;
                 $result->numero_vacantes = $request->numero_vacantes;
                 $result->numero_contrataciones = $request->numero_contrataciones;
@@ -2053,7 +2087,7 @@ class formularioGestionIngresoController extends Controller
                 $result->subsidio_transporte = $request->consulta_subsidio;
                 $result->estado_vacante = $request->consulta_vacante;
                 $result->tipo_documento_id = $request->tipo_identificacion;
-                $result->observacion_estado = $request->consulta_observacion_estado;
+                $result->observacion_estado = $request->consulta_categoria_snc;
                 $result->correo_laboratorio = $request->correo_laboratorio;
                 $result->contacto_empresa = $request->contacto_empresa;
                 $result->responsable_id = $request->encargado_id;
@@ -2091,6 +2125,13 @@ class formularioGestionIngresoController extends Controller
                 // }
                 $result->save();
 
+                // TODO:
+                $orden_servicio = OrdenServcio::where('numero_radicado', '=', $result->n_servicio)->first();
+                $candidato_servicio = CandidatoServicioModel::where('servicio_id', '=', $orden_servicio->id)->first();
+                $estado_candidato = EstadoCandidatoServioOrdenServicioModel::where('estado_orden_servicio_id', '=', $result->estado_id)->first();
+                $candidato_servicio->estado_id =  $estado_candidato->estado_candidato_servicio_id;
+                $candidato_servicio->save();
+
                 $laboratorio = new RegistroIngresoLaboratorio;
                 $laboratorio->registro_ingreso_id  = $result->id;
                 $laboratorio->laboratorio_medico_id = $request->laboratorio_medico_id;
@@ -2098,7 +2139,7 @@ class formularioGestionIngresoController extends Controller
 
                 $seguimiento = new FormularioIngresoSeguimiento;
                 $seguimiento->estado_ingreso_id = $request->estado_id;
-                $seguimiento->usuario = $user->nombres . ' ' . $user->apellidos;
+                $seguimiento->usuario = $user['nombres'] . ' ' . str_replace("null", "", $user['apellidos']);
                 $seguimiento->formulario_ingreso_id = $result->id;
                 $seguimiento->save();
 
@@ -2118,7 +2159,7 @@ class formularioGestionIngresoController extends Controller
         }
 
         DB::commit();
-        $numero_radicados_seiya = formularioGestionIngreso::select('id')->where('n_servicio', '=', $request->n_servicio)->get();
+        $numero_radicados_seiya = formularioGestionIngreso::select('id')->where('n_servicio', '=', $request->n_servicio)->first();
         $orden_servicio = OrdenServcio::where('numero_radicado', '=', $request->n_servicio)->first();
         $orden_servicio->numero_radicados_seiya = $numero_radicados_seiya->count();
         $orden_servicio->save();
@@ -2140,15 +2181,17 @@ class formularioGestionIngresoController extends Controller
 
     public function pendientes(Request $request)
     {
-        $user = auth()->user();
+        // $user = auth()->user();
+        $user = $this->getUserRelaciones();
+        $user = $user->getData(true);
         $lista = $request->all();
         foreach ($lista as $item) {
-            $existeIngreso = FormularioIngresoPendientes::where('registro_ingreso_id', $item)->where('usuario_id', $user->id)->first();
+            $existeIngreso = FormularioIngresoPendientes::where('registro_ingreso_id', $item)->where('usuario_id', $user['id'])->first();
 
             if (!$existeIngreso) {
                 $result = new FormularioIngresoPendientes;
                 $result->registro_ingreso_id = $item;
-                $result->usuario_id = $user->id;
+                $result->usuario_id = $user['id'];
                 $result->save();
             }
         }
@@ -2158,12 +2201,14 @@ class formularioGestionIngresoController extends Controller
     public function pendientes2($cantidad)
     {
 
-        $user = auth()->user();
+        // $user = auth()->user();
+        $user = $this->getUserRelaciones();
+        $user = $user->getData(true);
         $result = formularioGestionIngreso::leftJoin('usr_app_clientes as cli', 'cli.id', 'usr_app_formulario_ingreso.cliente_id')
             ->leftJoin('usr_app_municipios as mun', 'mun.id', 'usr_app_formulario_ingreso.municipio_id')
             ->LeftJoin('usr_app_estados_ingreso as est', 'est.id', 'usr_app_formulario_ingreso.estado_ingreso_id')
             ->LeftJoin('usr_app_formulario_ingreso_pendientes as pen', 'pen.registro_ingreso_id', 'usr_app_formulario_ingreso.id')
-            ->where('pen.usuario_id', '=', $user->id)
+            ->where('pen.usuario_id', '=', $user['id'])
             ->select(
                 'usr_app_formulario_ingreso.id',
                 'usr_app_formulario_ingreso.created_at',
@@ -2326,7 +2371,9 @@ class formularioGestionIngresoController extends Controller
     {
         DB::beginTransaction();
         try {
-            $user = auth()->user();
+            // $user = auth()->user();
+            $user = $this->getUserRelaciones();
+            $user = $user->getData(true);
             $ids = [];
             array_push($ids, $id);
             $estado_id = $request->estado_id;
@@ -2336,28 +2383,17 @@ class formularioGestionIngresoController extends Controller
 
             $permisos = $this->permisos();
 
-            if ($result->responsable_id != null && $result->responsable_id != $user->id && !in_array('44', $permisos)) {
+            if ($result->responsable_id != null && $result->responsable_id != $user['id'] && !in_array('44', $permisos)) {
 
                 $seguimiento = new FormularioIngresoSeguimiento;
                 $seguimiento->estado_ingreso_id = $request->estado_id;
-                $seguimiento->usuario =  $user->nombres . ' ' . str_replace("null", "", $user->apellidos);
+                $seguimiento->usuario = $user['nombres'] . ' ' . str_replace("null", "", $user['apellidos']);
                 $seguimiento->formulario_ingreso_id = $id;
                 $seguimiento->save();
 
                 return response()->json(['status' => '200', 'message' => 'ok', 'registro_ingreso_id' => $ids]);
             }
-            if (!$result->candidato_id) {
-                $result->correo_notificacion_usuario = $request->correo_candidato;
-                $result->numero_contacto = $request->numero_contacto;
-                $result->numero_identificacion = $request->numero_identificacion;
-                $result->tipo_documento_id = $request->tipo_identificacion;
-                $result->nombre_completo = $request->nombre_completo;
-            }
             $result->fecha_ingreso = $request->fecha_ingreo;
-            $result->cliente_id = $request->empresa_cliente_id;
-            $result->cargo = $request->cargo;
-            $result->salario = $request->salario;
-            $result->municipio_id = $request->municipio_id;
             $result->eps = $request->eps;
             $result->afp_id = $request->afp_id;
             $result->estradata = $request->consulta_stradata;
@@ -2380,7 +2416,7 @@ class formularioGestionIngresoController extends Controller
             $result->recomendaciones_examen = $request->recomendaciones_examen;
             $result->novedades_examenes = $request->novedades_examenes;
             $result->subsidio_transporte = $request->consulta_subsidio;
-            $result->observacion_estado = $request->consulta_observacion_estado;
+            $result->observacion_estado = $request->consulta_categoria_snc;
             $result->correo_laboratorio = $request->correo_laboratorio;
             $result->contacto_empresa = $request->contacto_empresa;
             $result->responsable_id = $request->encargado_id;
@@ -2404,17 +2440,18 @@ class formularioGestionIngresoController extends Controller
                     $historico_concepto->save();
                 }
             }
-            if ($result->observacion_estado == 'Servicio no conforme') {
-                $result->afectacion_servicio = $request->afectacion_servicio;
-            } else {
-                $result->afectacion_servicio = null;
+
+            if ($request->proceso_snc_id != 1) {
+                $salidaNoConforme = new SalidaNoConformeseiya;
+                $salidaNoConforme->proceso_id = $request->proceso_snc_id;
+                $salidaNoConforme->categoria_snc_id = $request->categoria_snc_id;
+                $salidaNoConforme->responsable_corregir = $request->consulta_encargado_corregir;
+                $salidaNoConforme->descripcion = $request->afectacion_servicio;
+                $salidaNoConforme->subsanado = 0;
+                $salidaNoConforme->orden_servicio_id = $id;
+                $salidaNoConforme->save();
             }
 
-            if ($result->observacion_estado == 'Servicio no conforme') {
-                $result->responsable_corregir = $request->consulta_encargado_corregir;
-            } else {
-                $result->responsable_corregir = null;
-            }
 
             if ($request->estado_id == 10) {
                 $result->estado_vacante = 'Cerrado';
@@ -2430,10 +2467,16 @@ class formularioGestionIngresoController extends Controller
             $result->n_servicio = $request->n_servicio == null ? null : $request->n_servicio;
             $result->save();
 
+            // TODO:
+            $orden_servicio = OrdenServcio::where('numero_radicado', '=', $result->n_servicio)->first();
+            $candidato_servicio = CandidatoServicioModel::where('servicio_id', '=', $orden_servicio->id)->first();
+            $estado_candidato = EstadoCandidatoServioOrdenServicioModel::where('estado_orden_servicio_id', '=', $request->estado_id)->first();
+            $candidato_servicio->estado_id =  $estado_candidato->estado_candidato_servicio_id;
+            $candidato_servicio->save();
 
             $seguimiento = new FormularioIngresoSeguimiento;
             $seguimiento->estado_ingreso_id = $request->estado_id;
-            $seguimiento->usuario =  $user->nombres . ' ' . str_replace("null", "", $user->apellidos);
+            $seguimiento->usuario =  $user['nombres'] . ' ' . str_replace("null", "", $user['apellidos']);
             $seguimiento->formulario_ingreso_id = $id;
             $seguimiento->save();
 
@@ -2466,17 +2509,284 @@ class formularioGestionIngresoController extends Controller
                 $seguimiento_estado->estado_ingreso_inicial = $estado_inicial;
                 $seguimiento_estado->estado_ingreso_final =   $request->estado_id;
                 $seguimiento_estado->formulario_ingreso_id =  $id;
-                $seguimiento_estado->actualiza_registro =   $user->nombres . ' ' . str_replace("null", "", $user->apellidos);
+                $seguimiento_estado->actualiza_registro =   $user['nombres'] . ' ' . str_replace("null", "", $user['apellidos']);
                 $seguimiento_estado->save();
             }
             DB::commit();
             return response()->json(['status' => '200', 'message' => 'ok', 'registro_ingreso_id' => $ids]);
         } catch (\Exception $e) {
-            // Revertir la transacción si se produce alguna excepción
             DB::rollback();
             return $e;
             return response()->json(['status' => 'error', 'message' => 'Error al guardar formulario, por favor verifique el llenado de todos los campos e intente nuevamente']);
         }
+    }
+
+    public function actualizasnc(Request $request)
+    {
+
+        try {
+            DB::beginTransaction();
+            $salidasNoConforme = $request->all();
+            $user = $this->getUserRelaciones();
+            $user = $user->getData(true);
+
+            foreach ($salidasNoConforme as $key => $snc) {
+                $salidaNoConforme = SalidaNoConformeseiya::find($snc['id']);
+                if ($salidaNoConforme->subsanado == 1) {
+                    continue;
+                }
+                $salidaNoConforme->corrigio_novedad =  $user['nombres'] . ' ' . str_replace("null", "", $user['apellidos']);
+                $salidaNoConforme->corrigio_novedad_usuario_id = $user['id'];
+                $salidaNoConforme->correcion_aplicada = $request[$key]['correcion_aplicada'];
+                if ($salidaNoConforme->correcion_aplicada != "") {
+                    $salidaNoConforme->subsanado = 1;
+                }
+                $salidaNoConforme->save();
+            }
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(["status" => "error", "message" => "error al guardar el registro."]);
+        }
+        DB::commit();
+        return response()->json(["status" => "success", "message" => "Registro guardadi exitosamente."]);
+    }
+
+    public function sncseiya()
+    {
+        $result = SalidaNoConformeseiya::join('usr_app_procesos_snc_seiya as pro', 'pro.id', 'usr_app_salida_n_conforme_seiya.proceso_id')
+            ->join('usr_app_categorias_snc_seiya as cat', 'cat.id', 'usr_app_salida_n_conforme_seiya.categoria_snc_id')
+            ->join('usr_app_formulario_ingreso as fi', 'fi.id', 'usr_app_salida_n_conforme_seiya.orden_servicio_id')
+            ->join('usr_app_clientes as cli', 'cli.id', 'fi.cliente_id')
+            ->select(
+                'usr_app_salida_n_conforme_seiya.id',
+                'cli.razon_social',
+                'fi.numero_radicado',
+                'usr_app_salida_n_conforme_seiya.responsable_corregir',
+                'usr_app_salida_n_conforme_seiya.descripcion',
+                'usr_app_salida_n_conforme_seiya.subsanado',
+                'pro.nombre as proceso',
+                'cat.nombre as categoria',
+                'usr_app_salida_n_conforme_seiya.created_at',
+                'usr_app_salida_n_conforme_seiya.updated_at',
+                'usr_app_salida_n_conforme_seiya.correcion_aplicada',
+                'usr_app_salida_n_conforme_seiya.corrigio_novedad',
+            )
+            ->orderby('usr_app_salida_n_conforme_seiya.id', 'DESC')
+            ->paginate();
+
+        $result->getCollection()->transform(function ($item) {
+            $item->subsanado = $item->subsanado == 1 ? 'Sí' : 'No';
+            return $item;
+        });
+
+        return response()->json($result);
+    }
+
+    public function sncseiyafiltro($cadena, $cantidad)
+    {
+        $cadenaJSON = base64_decode($cadena);
+        $cadenaUTF8 = mb_convert_encoding($cadenaJSON, 'UTF-8', 'ISO-8859-1');
+        $arrays = explode('/', $cadenaUTF8);
+        $arraysDecodificados = array_map('json_decode', $arrays);
+
+        $campo = $arraysDecodificados[0];
+        $operador = $arraysDecodificados[1];
+        $valor_comparar = $arraysDecodificados[2];
+        $valor_comparar2 = $arraysDecodificados[3];
+
+
+
+        $query = SalidaNoConformeseiya::join('usr_app_procesos_snc_seiya as pro', 'pro.id', 'usr_app_salida_n_conforme_seiya.proceso_id')
+            ->join('usr_app_categorias_snc_seiya as cat', 'cat.id', 'usr_app_salida_n_conforme_seiya.categoria_snc_id')
+            ->join('usr_app_formulario_ingreso as fi', 'fi.id', 'usr_app_salida_n_conforme_seiya.orden_servicio_id')
+            ->join('usr_app_clientes as cli', 'cli.id', 'fi.cliente_id')
+            ->select(
+                'usr_app_salida_n_conforme_seiya.id',
+                'cli.razon_social',
+                'fi.numero_radicado',
+                'usr_app_salida_n_conforme_seiya.responsable_corregir',
+                'usr_app_salida_n_conforme_seiya.descripcion',
+                'usr_app_salida_n_conforme_seiya.subsanado',
+                'pro.nombre as proceso',
+                'cat.nombre as categoria',
+                'usr_app_salida_n_conforme_seiya.created_at',
+                'usr_app_salida_n_conforme_seiya.updated_at',
+                'usr_app_salida_n_conforme_seiya.correcion_aplicada',
+                'usr_app_salida_n_conforme_seiya.corrigio_novedad',
+            )
+            ->orderby('usr_app_salida_n_conforme_seiya.id', 'DESC');
+
+
+        $numElementos = count($campo);
+
+        for ($i = 0; $i < $numElementos; $i++) {
+            $campoActual = $campo[$i];
+            $operadorActual = $operador[$i];
+            $valorCompararActual = $valor_comparar[$i];
+
+            $prefijoCampo = '';
+            if ($campoActual === 'razon_social') {
+                $prefijoCampo = 'cli.';
+                $campoActual = 'razon_social';
+            } elseif ($campoActual === 'numero_radicado') {
+                $prefijoCampo = 'fi.';
+                $campoActual = 'numero_radicado';
+            } elseif ($campoActual === 'proceso') {
+                $prefijoCampo = 'pro.';
+                $campoActual = 'nombre';
+            } elseif ($campoActual === 'categoria') {
+                $prefijoCampo = 'cat.';
+                $campoActual = 'nombre';
+            } elseif ($campoActual === 'subsanado') {
+                if (strtolower(trim($valorCompararActual)) == 'si') {
+                    $valorCompararActual = 1;
+                } else if (strtolower(trim($valorCompararActual)) == 'no') {
+                    $valorCompararActual = 0;
+                }
+            } else {
+                $prefijoCampo = 'usr_app_salida_n_conforme_seiya.';
+            }
+
+            switch ($operadorActual) {
+                case 'Menor que':
+                    $query->where($prefijoCampo . $campoActual, '<', $valorCompararActual);
+                    break;
+                case 'Mayor que':
+                    $query->where($prefijoCampo . $campoActual, '>', $valorCompararActual);
+                    break;
+                case 'Menor o igual que':
+                    $query->where($prefijoCampo . $campoActual, '<=', $valorCompararActual);
+                    break;
+                case 'Mayor o igual que':
+                    $query->where($prefijoCampo . $campoActual, '>=', $valorCompararActual);
+                    break;
+                case 'Igual a número':
+                    $query->where($prefijoCampo . $campoActual, '=', $valorCompararActual);
+                    break;
+                case 'Entre':
+                    $valorComparar2Actual = $valor_comparar2[$i];
+                    $query->whereDate($prefijoCampo . $campoActual, '>=', $valorCompararActual);
+                    $query->whereDate($prefijoCampo . $campoActual, '<=', $valorComparar2Actual);
+                    break;
+                case 'Igual a':
+                    $query->where($prefijoCampo . $campoActual, '=', $valorCompararActual);
+                    break;
+                case 'Igual a fecha':
+                    $query->whereDate($prefijoCampo . $campoActual, '=', $valorCompararActual);
+                    break;
+                case 'Contiene':
+                    $query->where($prefijoCampo . $campoActual, 'like', '%' . $valorCompararActual . '%');
+                    break;
+            }
+        }
+
+        $result = $query->paginate($cantidad);
+        $result->getCollection()->transform(function ($item) {
+            $item->subsanado = $item->subsanado == 1 ? 'Sí' : 'No';
+            return $item;
+        });
+        return response()->json($result);
+    }
+
+    public function exportsncseiya($cadena, $cantidad = 10)
+    {
+        $cadenaJSON = base64_decode($cadena);
+        $cadenaUTF8 = mb_convert_encoding($cadenaJSON, 'UTF-8', 'ISO-8859-1');
+        $arrays = explode('/', $cadenaUTF8);
+        $arraysDecodificados = array_map('json_decode', $arrays);
+
+
+        $campo = $arraysDecodificados[0];
+        $operador = $arraysDecodificados[1];
+        $valor_comparar = $arraysDecodificados[2];
+        $valor_comparar2 = $arraysDecodificados[3];
+
+        $query = SalidaNoConformeseiya::join('usr_app_procesos_snc_seiya as pro', 'pro.id', 'usr_app_salida_n_conforme_seiya.proceso_id')
+            ->join('usr_app_categorias_snc_seiya as cat', 'cat.id', 'usr_app_salida_n_conforme_seiya.categoria_snc_id')
+            ->join('usr_app_formulario_ingreso as fi', 'fi.id', 'usr_app_salida_n_conforme_seiya.orden_servicio_id')
+            ->join('usr_app_clientes as cli', 'cli.id', 'fi.cliente_id')
+            ->select(
+                'usr_app_salida_n_conforme_seiya.id',
+                'cli.razon_social',
+                'fi.numero_radicado',
+                'usr_app_salida_n_conforme_seiya.responsable_corregir',
+                'usr_app_salida_n_conforme_seiya.descripcion',
+                'usr_app_salida_n_conforme_seiya.subsanado',
+                'pro.nombre as proceso',
+                'cat.nombre as categoria',
+                'usr_app_salida_n_conforme_seiya.created_at',
+                'usr_app_salida_n_conforme_seiya.updated_at',
+                'usr_app_salida_n_conforme_seiya.correcion_aplicada',
+                'usr_app_salida_n_conforme_seiya.corrigio_novedad',
+            )
+            ->orderby('usr_app_salida_n_conforme_seiya.id', 'DESC');
+
+
+        $numElementos = count($campo);
+
+        for ($i = 0; $i < $numElementos; $i++) {
+            $campoActual = $campo[$i];
+            $operadorActual = $operador[$i];
+            $valorCompararActual = $valor_comparar[$i];
+
+            $prefijoCampo = '';
+            if ($campoActual === 'razon_social') {
+                $prefijoCampo = 'cli.';
+                $campoActual = 'razon_social';
+            } elseif ($campoActual === 'numero_radicado') {
+                $prefijoCampo = 'fi.';
+                $campoActual = 'numero_radicado';
+            } elseif ($campoActual === 'proceso') {
+                $prefijoCampo = 'pro.';
+                $campoActual = 'nombre';
+            } elseif ($campoActual === 'categoria') {
+                $prefijoCampo = 'cat.';
+                $campoActual = 'nombre';
+            } elseif ($campoActual === 'subsanado') {
+                if (strtolower(trim($valorCompararActual)) == 'si') {
+                    $valorCompararActual = 1;
+                } else if (strtolower(trim($valorCompararActual)) == 'no') {
+                    $valorCompararActual = 0;
+                }
+            } else {
+                $prefijoCampo = 'usr_app_salida_n_conforme_seiya.';
+            }
+
+            switch ($operadorActual) {
+                case 'Menor que':
+                    $query->where($prefijoCampo . $campoActual, '<', $valorCompararActual);
+                    break;
+                case 'Mayor que':
+                    $query->where($prefijoCampo . $campoActual, '>', $valorCompararActual);
+                    break;
+                case 'Menor o igual que':
+                    $query->where($prefijoCampo . $campoActual, '<=', $valorCompararActual);
+                    break;
+                case 'Mayor o igual que':
+                    $query->where($prefijoCampo . $campoActual, '>=', $valorCompararActual);
+                    break;
+                case 'Igual a número':
+                    $query->where($prefijoCampo . $campoActual, '=', $valorCompararActual);
+                    break;
+                case 'Entre':
+                    $valorComparar2Actual = $valor_comparar2[$i];
+                    $query->whereDate($prefijoCampo . $campoActual, '>=', $valorCompararActual);
+                    $query->whereDate($prefijoCampo . $campoActual, '<=', $valorComparar2Actual);
+                    break;
+                case 'Igual a':
+                    $query->where($prefijoCampo . $campoActual, '=', $valorCompararActual);
+                    break;
+                case 'Igual a fecha':
+                    $query->whereDate($prefijoCampo . $campoActual, '=', $valorCompararActual);
+                    break;
+                case 'Contiene':
+                    $query->where($prefijoCampo . $campoActual, 'like', '%' . $valorCompararActual . '%');
+                    break;
+            }
+        }
+
+        $result = $query->get();
+        return (new SalidasNoConformeExport($result))->download('exportData.xlsx', \Maatwebsite\Excel\Excel::XLSX);
     }
 
     public function borrar_nc($id)
@@ -2560,7 +2870,8 @@ class formularioGestionIngresoController extends Controller
     public function asignacionmasiva(Request $request, $id_estado, $id_encargado)
     {
         $array = $request->all();
-        $user = auth()->user();
+        $user = $this->getUserRelaciones();
+        $user = $user->getData(true);
         $permisos = $this->permisos();
         $responsable = User::find($id_encargado);
         $cantidad = count($array);
@@ -2571,7 +2882,7 @@ class formularioGestionIngresoController extends Controller
                 try {
                     $registro_ingreso = formularioGestionIngreso::where('usr_app_formulario_ingreso.id', '=', $id)
                         ->first();
-                    if ($registro_ingreso->responsable_id != null && $registro_ingreso->responsable_id != $user->id && !in_array('31', $permisos)) {
+                    if ($registro_ingreso->responsable_id != null && $registro_ingreso->responsable_id != $user['id'] && !in_array('31', $permisos)) {
                         $bandera = false;
                     }
                     if (!in_array('35', $permisos)) {
@@ -2584,7 +2895,7 @@ class formularioGestionIngresoController extends Controller
                     $seguimiento_estado->estado_ingreso_inicial =  $registro_ingreso->estado_ingreso_id;
                     $seguimiento_estado->estado_ingreso_final =  $id_estado;
                     $seguimiento_estado->formulario_ingreso_id =  $id;
-                    $seguimiento_estado->actualiza_registro =   $user->nombres . ' ' .  str_replace('null', '', $responsable->apellidos);
+                    $seguimiento_estado->actualiza_registro =   $user['nombres'] . ' ' .  str_replace('null', '', $user->apellidos);
 
                     $seguimiento_estado->save();
 
@@ -2647,10 +2958,10 @@ class formularioGestionIngresoController extends Controller
     public function borradomasivo(Request $request)
     {
         try {
-            $user = auth()->user();
+            $user = $this->getUserRelaciones();
+            $user = $user->getData(true);
             for ($i = 0; $i < count($request->id); $i++) {
-                $result = FormularioIngresoPendientes::where('registro_ingreso_id', '=', $request->id[$i])->where('usuario_id', $user->id)->first();
-                // return $result;
+                $result = FormularioIngresoPendientes::where('registro_ingreso_id', '=', $request->id[$i])->where('usuario_id', $user['id'])->first();
                 $result->delete();
             }
             return response()->json(['status' => 'success', 'message' => 'Registros eliminados exitosamente']);
@@ -2661,49 +2972,6 @@ class formularioGestionIngresoController extends Controller
 
     public function consultaseguimiento($id)
     {
-        // $seguimiento_estados = FormularioIngresoSeguimientoEstado::join('usr_app_estados_ingreso as ei', 'ei.id', '=', 'usr_app_formulario_ingreso_seguimiento_estado.estado_ingreso_inicial')
-        //     ->join('usr_app_estados_ingreso as ef', 'ef.id', '=', 'usr_app_formulario_ingreso_seguimiento_estado.estado_ingreso_final')
-        //     ->where('usr_app_formulario_ingreso_seguimiento_estado.estado_ingreso_final', $id)
-        //     ->select(
-        //         'usr_app_formulario_ingreso_seguimiento_estado.responsable_inicial',
-        //         'usr_app_formulario_ingreso_seguimiento_estado.responsable_final',
-        //         'ei.nombre as estado_ingreso_inicial',
-        //         'ef.nombre as estado_ingreso_final',
-        //         'usr_app_formulario_ingreso_seguimiento_estado.actualiza_registro',
-        //         DB::raw("FORMAT(usr_app_formulario_ingreso_seguimiento_estado.created_at, 'dd/MM/yyyy HH:mm:ss') as fecha_radicado"),
-        //         'usr_app_formulario_ingreso_seguimiento_estado.formulario_ingreso_id',
-
-
-        //     )
-        //     ->orderby('usr_app_formulario_ingreso_seguimiento_estado.formulario_ingreso_id', 'desc')
-        //     ->get();
-
-        // $array = [];
-
-        // for ($i = 0; $i < count($seguimiento_estados) - 1; $i++) {
-        //     if ($seguimiento_estados[$i]->formulario_ingreso_id != $seguimiento_estados[$i + 1]->formulario_ingreso_id) {
-        //         // Si los IDs no son iguales, inserta el actual
-        //         array_push($array, $seguimiento_estados[$i]);
-        //     } else {
-        //         // Si los IDs son iguales, compara las fechas
-        //         if (Carbon::parse($seguimiento_estados[$i]->created_at) > Carbon::parse($seguimiento_estados[$i + 1]->created_at)) {
-        //             array_push($array, $seguimiento_estados[$i]);
-        //         } else {
-        //             array_push($array, $seguimiento_estados[$i + 1]);
-        //         }
-
-        //         // Salta el siguiente elemento ya que ha sido comparado e insertado
-        //         $i++;
-        //     }
-        // }
-
-        // // Asegúrate de agregar el último elemento si no ha sido comparado
-        // if ($i == count($seguimiento_estados) - 1) {
-        //     array_push($array, $seguimiento_estados[$i]);
-        // }
-        // $result['cantidad'] = count($array);
-        // $result['seguimiento_estados'] = $array;
-        // return response()->json($result);
         $seguimiento_estados = FormularioIngresoSeguimientoEstado::join('usr_app_estados_ingreso as ei', 'ei.id', '=', 'usr_app_formulario_ingreso_seguimiento_estado.estado_ingreso_inicial')
             ->join('usr_app_estados_ingreso as ef', 'ef.id', '=', 'usr_app_formulario_ingreso_seguimiento_estado.estado_ingreso_final')
             ->join('usr_app_formulario_ingreso as formulario', 'formulario.id', '=', 'usr_app_formulario_ingreso_seguimiento_estado.formulario_ingreso_id')
@@ -2723,9 +2991,7 @@ class formularioGestionIngresoController extends Controller
                 'usr_app_formulario_ingreso_seguimiento_estado.formulario_ingreso_id',
                 'usr_app_formulario_ingreso_seguimiento_estado.created_at',
                 'tipo_servicio.nombre_servicio',
-                // 'formulario.profesional',
                 DB::raw("COALESCE(formulario.profesional, '') as profesional"),
-                // 'formulario.n_servicio'
                 DB::raw("COALESCE(formulario.n_servicio, '') as n_servicio"),
                 DB::raw("COALESCE(formulario.afectacion_servicio, '') as afectacion_servicio"),
             )
@@ -2753,8 +3019,9 @@ class formularioGestionIngresoController extends Controller
         $candidato = $RecepcionEmpleadoController->searchByIdOnUsuariosCandidato($ordenServicioCandidato->usuario_id)->getData();
         $nombre_completo = $candidato->primer_nombre . " " . $candidato->primer_apellido;
         DB::beginTransaction();
-        $user = auth()->user();
-        $responsable_actual =  $user->nombres . ' ' . str_replace("null", "", $user->apellidos);
+        $user = $this->getUserRelaciones();
+        $user = $user->getData(true);
+        $responsable_actual =  $user['nombres'] . ' ' . str_replace("null", "", $user['apellidos']);
         try {
             $result = new formularioGestionIngreso;
             $result->eps = $candidato->eps_nombre;
@@ -2784,7 +3051,7 @@ class formularioGestionIngresoController extends Controller
 
             $seguimiento = new FormularioIngresoSeguimiento;
             $seguimiento->estado_ingreso_id = $request->estado_id;
-            $seguimiento->usuario = $user->nombres . ' ' . $user->apellidos;
+            $seguimiento->usuario = $user['nombres'] . ' ' . str_replace("null", "", $user['apellidos']);
             $seguimiento->formulario_ingreso_id = $result->id;
             $seguimiento->save();
 
@@ -2810,3 +3077,4 @@ class formularioGestionIngresoController extends Controller
         return response()->json(['status' => '200', 'message' => 'ok']);
     }
 }
+
