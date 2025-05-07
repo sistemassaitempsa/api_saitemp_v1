@@ -984,6 +984,7 @@ Route::group([
 
   Route::get('/procesos_snc', [ProcesoSNCController::class, 'index']);
   Route::get('/observacionestado', [ObservacionEstadoFormIngresoController::class, 'index']);
+  Route::get('/observacionestadoDD', [ObservacionEstadoFormIngresoController::class, 'index2']);
   Route::get('/limitesCrm', [limitesCrmController::class, 'getLimitesCrm']);
   Route::get('/recortarObservacion', [SeguimientoCrmController::class, 'recortarObservacion']);
 
@@ -1186,14 +1187,14 @@ Route::group([
   Route::get('/estadocandidatoserviciotabla', [EstadoCandidatoServicioController::class, 'tabla']);
 
   Route::get('/motivocancelaservicio', [MotivoCancelaServicioController::class, 'index']);
-  
+
   Route::get('/estadoresponsable/{cantidad}', [EstadoResponsableOrdenServicioController::class, 'index']);
   Route::post('/estadoresponsable', [EstadoResponsableOrdenServicioController::class, 'create']);
   Route::delete('/estadoresponsable/{id}', [EstadoResponsableOrdenServicioController::class, 'destroy']);
   Route::post('/estadoresponsableborradomasivo', [EstadoResponsableOrdenServicioController::class, 'borradomasivo']);
   Route::get('/estadoresponsablefiltro/{cadena}/{cantidad}', [EstadoResponsableOrdenServicioController::class, 'filtro']);
-  
-  
+
+
   Route::get('/estadocandidatoordenservicio', [EstadoCandidatoServioOrdenServicioController::class, 'index']);
   Route::post('/estadocandidatoordenservicio', [EstadoCandidatoServioOrdenServicioController::class, 'create']);
   Route::get('/estadocandidatoordenservicio/{cantidad}', [EstadoCandidatoServioOrdenServicioController::class, 'tabla']);

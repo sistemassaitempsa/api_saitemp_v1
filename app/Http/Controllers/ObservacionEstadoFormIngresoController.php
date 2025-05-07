@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\ObservacionEstadoFormIngreso;
+use App\Models\ObservacionEstadoModel;
 use App\Models\UsuarioPermiso;
 use App\Traits\Permisos;
 
@@ -32,10 +33,31 @@ class ObservacionEstadoFormIngresoController extends Controller
             'id',
             'nombre'
         )
-        ->get();
+            ->get();
         return response()->json($result);
     }
-    
+
+    public function index2()
+    {
+        // $permisos = $this->permisos();
+        // $result = ObservacionEstadoFormIngreso::when(!in_array('45', $permisos), function ($query) {
+        //     return $query->where('id','17');
+        // })
+        // ->select(
+        //     'id',
+        //     'nombre'
+        // )
+        // ->get();
+        // return response()->json($result);
+        // $permisos = $this->permisos();
+        $result = ObservacionEstadoModel::select(
+            'id',
+            'nombre'
+        )
+            ->get();
+        return response()->json($result);
+    }
+
     public function validaPermiso()
     {
         $user = auth()->user();
