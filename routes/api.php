@@ -265,6 +265,9 @@ Route::group([
   Route::get('/userlogued', [UsuarioController::class, 'userlogued']);
   Route::get('/userbyid/{id}', [UsuarioController::class, 'userById']);
   Route::delete('/user/{id}', [UsuarioController::class, 'destroy']);
+  Route::get('/usersbyrolinternosst', [UsuarioController::class, 'byRolSst']);
+  Route::get('/usersbyrolinternocartera', [UsuarioController::class, 'byRolCartera']);
+  Route::get('/usersbyrolinternonomina', [UsuarioController::class, 'byRolNomina']);
   // Route::post('/user', [UsuarioController::class, 'create']); 
   Route::post('/user', [UsuarioController::class, 'update']);
   Route::post('/user2', [UsuarioController::class, 'update2']);
