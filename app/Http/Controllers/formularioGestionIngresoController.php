@@ -1711,13 +1711,27 @@ class formularioGestionIngresoController extends Controller
                     $query->whereDate($prefijoCampo . $campoActual, '<=', $valorComparar2Actual);
                     break;
                 case 'Igual a':
-                    $query->where($prefijoCampo . $campoActual, '=', $valorCompararActual);
+                    if ($campoActual === 'numero_documento') {
+                        $query->where(function ($subquery) use ($valorCompararActual) {
+                            $subquery->where('usr_app_formulario_ingreso.numero_identificacion', $valorCompararActual)
+                                ->orWhere('can.num_doc', $valorCompararActual);
+                        });
+                    } else {
+                        $query->where($prefijoCampo . $campoActual, '=', $valorCompararActual);
+                    }
                     break;
                 case 'Igual a fecha':
                     $query->whereDate($prefijoCampo . $campoActual, '=', $valorCompararActual);
                     break;
                 case 'Contiene':
-                    $query->where($prefijoCampo . $campoActual, 'like', '%' . $valorCompararActual . '%');
+                    if ($campoActual === 'numero_documento') {
+                        $query->where(function ($subquery) use ($valorCompararActual) {
+                            $subquery->where('usr_app_formulario_ingreso.numero_identificacion', 'like', '%' . $valorCompararActual . '%')
+                                ->orWhere('can.num_doc', 'like', '%' . $valorCompararActual . '%');
+                        });
+                    }else {
+                        $query->where($prefijoCampo . $campoActual, 'like', '%' . $valorCompararActual . '%');
+                    }
                     break;
             }
         }
@@ -3077,4 +3091,3 @@ class formularioGestionIngresoController extends Controller
         return response()->json(['status' => '200', 'message' => 'ok']);
     }
 }
-

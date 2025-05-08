@@ -190,6 +190,7 @@ use App\Http\Controllers\MotivoCancelaServicioController;
 use App\Http\Controllers\PdfEditController;
 use App\Http\Controllers\EstadoResponsableOrdenServicioController;
 use App\Http\Controllers\EstadoCandidatoServioOrdenServicioController;
+use App\Http\Controllers\AsignacionEstadosController;
 
 
 /*
@@ -1150,6 +1151,7 @@ Route::group([
 
 
   Route::get('/usuariointernorol/{id}', [SectorEconomicoProfesionalController::class, 'usuariointernorol']);
+  Route::get('/sectorEconomicoProfesional', [SectorEconomicoProfesionalController::class, 'sectorEconomicoProfesional']);
 
   Route::get('/asignacionUsuarios', [UsuarioController::class, 'asignacionUsuarios']);
 
@@ -1182,24 +1184,32 @@ Route::group([
   Route::get('/estadoservicio', [EstadoServicioController::class, 'index']);
   Route::get('/estadocandidatoservicio', [EstadoCandidatoServicioController::class, 'index']);
 
+  Route::post('/estadocandidatoservicio', [EstadoCandidatoServicioController::class, 'create']);
   Route::post('/estadocandidatoservicio/{id}', [EstadoCandidatoServicioController::class, 'update']);
-  Route::get('/estadocandidatoserviciotabla', [EstadoCandidatoServicioController::class, 'tabla']);
+  Route::get('/estadocandidatoservicio/{id}', [EstadoCandidatoServicioController::class, 'tabla']);
+  Route::delete('/estadocandidatoservicio/{id}', [EstadoCandidatoServicioController::class, 'destroy']);
 
   Route::get('/motivocancelaservicio', [MotivoCancelaServicioController::class, 'index']);
-  
+
   Route::get('/estadoresponsable/{cantidad}', [EstadoResponsableOrdenServicioController::class, 'index']);
   Route::post('/estadoresponsable', [EstadoResponsableOrdenServicioController::class, 'create']);
   Route::delete('/estadoresponsable/{id}', [EstadoResponsableOrdenServicioController::class, 'destroy']);
   Route::post('/estadoresponsableborradomasivo', [EstadoResponsableOrdenServicioController::class, 'borradomasivo']);
   Route::get('/estadoresponsablefiltro/{cadena}/{cantidad}', [EstadoResponsableOrdenServicioController::class, 'filtro']);
-  
-  
+
+
   Route::get('/estadocandidatoordenservicio', [EstadoCandidatoServioOrdenServicioController::class, 'index']);
   Route::post('/estadocandidatoordenservicio', [EstadoCandidatoServioOrdenServicioController::class, 'create']);
   Route::get('/estadocandidatoordenservicio/{cantidad}', [EstadoCandidatoServioOrdenServicioController::class, 'tabla']);
   Route::post('/estadocandidatoordenservicioborradomasivo', [EstadoCandidatoServioOrdenServicioController::class, 'borradomasivo']);
   Route::delete('/estadocandidatoordenservicio/{id}', [EstadoCandidatoServioOrdenServicioController::class, 'destroy']);
   Route::get('/estadocandidatoordenserviciofiltro/{cadena}/{cantidad}', [EstadoCandidatoServioOrdenServicioController::class, 'filtro']);
+
+  Route::get('/asignacionestados', [AsignacionEstadosController::class, 'index']);
+  Route::put('/asignacionestados', [AsignacionEstadosController::class, 'update']);
+
+
+
 
   //   EstadoServicioController
   // EstadoCandidatoServicioController

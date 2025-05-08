@@ -105,8 +105,7 @@ class EstadoCandidatoServicioController extends Controller
     public function destroy($id)
     {
         try {
-            $result = EstadoCandidatoServicioModel::find($id)->delete();
-            $result->delete();
+            EstadoCandidatoServicioModel::find($id)->delete();
             return response()->json(['status' => 'success', 'message' => 'Registro actualizado exitosamente.']);
         } catch (\Exception $e) {
             return $e;
