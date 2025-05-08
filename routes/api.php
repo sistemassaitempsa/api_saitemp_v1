@@ -985,6 +985,7 @@ Route::group([
 
   Route::get('/procesos_snc', [ProcesoSNCController::class, 'index']);
   Route::get('/observacionestado', [ObservacionEstadoFormIngresoController::class, 'index']);
+  Route::get('/observacionestadoDD', [ObservacionEstadoFormIngresoController::class, 'index2']);
   Route::get('/limitesCrm', [limitesCrmController::class, 'getLimitesCrm']);
   Route::get('/recortarObservacion', [SeguimientoCrmController::class, 'recortarObservacion']);
 
