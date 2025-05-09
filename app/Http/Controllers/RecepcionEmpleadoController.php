@@ -834,7 +834,7 @@ class RecepcionEmpleadoController extends Controller
             if ($validarCandidato['status'] == 'success') {
                 //guardar orden de servicio
                 $ordenServiciolienteController = new OrdenServiciolienteController;
-                $ordenServicioCandidato = $ordenServiciolienteController->candidatoRegistradoServicio($candidato->usuario_id, $request->id_servicio, 2, true);
+                $ordenServicioCandidato = $ordenServiciolienteController->candidatoRegistradoServicio($candidato->usuario_id, $request->id_servicio, 14, true);
                 $formularioGestionIngresoController = new formularioGestionIngresoController;
                 $radicadoSeiya = $formularioGestionIngresoController->formularioingresoservicioCandidatoUnico($request, $ordenServicioCandidato)->getData();
                 if ($radicadoSeiya->status == '200') {
